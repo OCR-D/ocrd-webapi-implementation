@@ -1,6 +1,7 @@
 ### What is this repo about?
 This is a first attempt to implement (some of) this api-calls with fastapi:
 <https://github.com/OCR-D/spec/blob/master/openapi.yml>
+<https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1>
 
 ### Templates for api-calls
 generated with <https://github.com/koxudaxi/fastapi-code-generator>
