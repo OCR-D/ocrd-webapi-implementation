@@ -1,0 +1,10 @@
+{
+    "workspace": {
+        "@id": "test-copy-id",
+        "description": ""
+    },
+    "input_file_grps": "OCR-D-IMG",
+    "output_file_grps": "OCR-D-SEG-BLOCK-DOCKER",
+    "page_id": "",
+    "parameters": {}
+}

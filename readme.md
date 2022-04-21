@@ -11,6 +11,10 @@ generated with <https://github.com/koxudaxi/fastapi-code-generator>
 ### Start Dev-Server
 `uvicorn ocrd-webapi-test.main:app --host 0.0.0.0 --reload`
 
-### POST-request with Curl:
+### Example Requests with Curl:
+Post/Upload Workspace:
 `curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F
  file=@things/example_ws.ocrd.zip`
+
+Post/Start Processor:
+`curl -X POST http://localhost:8000/processor/ocrd-tesserocr-segment-region -H 'content-type: application/json' -d '@things/processor-request-example.json'`

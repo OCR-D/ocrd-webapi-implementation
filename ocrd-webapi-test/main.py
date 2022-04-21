@@ -1,16 +1,20 @@
-from fastapi import FastAPI, UploadFile, File
-from pydantic import BaseSettings
 import datetime
 import os
-import psutil
-from typing import List, Optional
-import aiofiles
-import uuid
 import subprocess
+import uuid
+from typing import List
+
+import aiofiles
+import psutil
+from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseSettings
 
 from .models import (
     DiscoveryResponse,
     Workspace,
+    Processor,
+    ProcessorJob,
+    ProcessorArgs,
 )
 
 
@@ -54,7 +58,7 @@ async def discovery() -> DiscoveryResponse:
     #       (I plan to use docker `ocrd/all` container) does this mean has_docker and has_ocrd_all
     #       must both be true?
     res = DiscoveryResponse()
-    res.ram = psutil.virtual_memory().total / (1024.0**3)
+    res.ram = psutil.virtual_memory().total / (1024.0 ** 3)
     res.cpu_cores = os.cpu_count()
     res.has_cuda = False
     res.has_ocrd_all = True
@@ -101,3 +105,39 @@ async def post_workspace(file: UploadFile = File(...)) -> None | Workspace:
     os.remove(dest)
 
     return Workspace(id=uid, description="Workspace")
+
+
+# TODO: had to disable RespnoseModel. Try to fix and activate again?!
+# @app.post('/processor/{executable}', response_model=ProcessorJob)
+@app.post('/processor/{executable}')
+async def run_processor(executable: str, body: ProcessorArgs = ...) -> ProcessorJob:
+    """
+    Run an OCR-D-Processor on a workspace
+
+    Args:
+        executable (str): Name of ocr-d processor. For example `ocrd-tesserocr-segment-region`
+        body (ProcessorArgs): json-object with necessary args to call processor
+    Returns:
+        ProcessorJob: Properties for running job like workspace, ocrd-tool.json.
+    """
+    # TODO: try to execute command on running container. Is this even possible?
+    # TODO: verify that executeable is valid before invoking docker
+    user_id = subprocess.run(["id", "-u"], capture_output=True).stdout.decode().strip()
+    # TODO: verify provided workspace exists
+    workspace_dir = os.path.join(settings.workspaces_dir, body.workspace.id)
+
+    # TODO: add -O and -I only if necessary, depending on if present in body
+    pcall = ["docker", "run", "--user", user_id, "--workdir", "/data", "--volume", f"{workspace_dir}/data:/data",
+             "--", "ocrd/all:medium", executable, "-I", body.input_file_grps, "-O", body.output_file_grps]
+    p = subprocess.run(pcall, capture_output=True)
+    if p.returncode > 0:
+        print(f"error executing docker-command: {p.stderr.decode().strip()}")
+        # TODO: if request fails caller must be informed? Or start process in background and users have to inform
+        # themselfs
+    # TODO: get ocrd-tools.json somehow and insert as __root__ somehow
+    proc = Processor(__root__="doch")
+    proc.__root__ = "nein"
+    ws = Workspace(id=body.workspace.id, description="Workspace")
+    res = ProcessorJob(proc, ws)
+    # TODO: ProcessorJob must be saved somewhere. Database?
+    return res
