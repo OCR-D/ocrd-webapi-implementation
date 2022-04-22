@@ -1,14 +1,17 @@
+"""
+Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/openapi.yml
+"""
 import datetime
 import os
 import subprocess
 import uuid
-from typing import List
+from typing import List, Union
 
+from fastapi import FastAPI, UploadFile, File, Path, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseSettings
 import aiofiles
 import psutil
-from fastapi import FastAPI, UploadFile, File
-from pydantic import BaseSettings
-
 from .models import (
     DiscoveryResponse,
     Workspace,
@@ -19,7 +22,12 @@ from .models import (
 
 
 class Settings(BaseSettings):
-    workspaces_dir: str = f"{os.getenv('HOME')}/zeugs-ohne-backup/ocrd_webapi/workspaces"
+    """
+    fast-API way to create constants: https://fastapi.tiangolo.com/advanced/settings/
+    """
+    base_dir: str = f"{os.getenv('HOME')}/zeugs-ohne-backup/ocrd_webapi"
+    workspaces_dir: str = f"{base_dir}/workspaces"
+    job_dir: str = f"{base_dir}/jobs"
     workspace_zipname: str = "workspace.zip"
 
 
@@ -44,16 +52,26 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
+    """
+    Executed once on startup
+    """
     os.makedirs(settings.workspaces_dir, exist_ok=True)
+    os.makedirs(settings.job_dir, exist_ok=True)
 
 
 @app.get("/")
 async def test():
+    """
+    to test if server is running on root-path
+    """
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
 @app.get("/discovery", response_model=DiscoveryResponse)
 async def discovery() -> DiscoveryResponse:
+    """
+    Discovery of capabilities of the server
+    """
     # TODO: ask someone: what is the meaning of `has_ocrd_all` and `has_docker`? If docker is used,
     #       (I plan to use docker `ocrd/all` container) does this mean has_docker and has_ocrd_all
     #       must both be true?
@@ -74,13 +92,33 @@ def get_workspaces() -> List[Workspace]:
     TODO: right now id is just the id. I don't understand this `@` correctly but maybe it must be
           an URL where this workspace is available
     """
-    wd: str = settings.workspaces_dir
+    wsd: str = settings.workspaces_dir
     res: List = [
-        Workspace(id=f, description="Workspace")
-        for f in os.listdir(wd)
-        if os.path.isdir(os.path.join(wd, f))
+        # TODO: is it possible to automatically create the path?!
+        Workspace(id=f"http://localhost:8000/workspace/{f}", description="Workspace")
+        for f in os.listdir(wsd)
+        if os.path.isdir(os.path.join(wsd, f))
     ]
     return res
+
+
+@app.get('/workspace/{workspace_id}', response_model=Workspace)
+def get_workspace(workspace_id: str) -> Union[Workspace, JSONResponse]:
+    """
+    Test if workspace existing
+    """
+    print(f"get workspace: {workspace_id}")
+    if not os.path.exists(os.path.join(settings.workspaces_dir, workspace_id)):
+        # TODO: Use exception handler and set return-type back to just `Workspace`
+        #   https://fastapi.tiangolo.com/tutorial/handling-errors/#install-custom-exception-handlers
+        return JSONResponse(
+            status_code=404,
+            content={},
+        )
+    # TODO: creating path from id must be a function or something because needed more than once
+    return Workspace(id=f"http://localhost:8000/workspace/{workspace_id}",
+                     description="Workspace")
+
 
 
 @app.post("/workspace", response_model=None, responses={"201": {"model": Workspace}})
@@ -95,16 +133,16 @@ async def post_workspace(file: UploadFile = File(...)) -> None | Workspace:
     os.mkdir(workspace_dir)
     dest = os.path.join(workspace_dir, settings.workspace_zipname)
 
-    async with aiofiles.open(dest, "wb") as f:
+    async with aiofiles.open(dest, "wb") as fpt:
         while content := await file.read(1024):
-            await f.write(content)
+            await fpt.write(content)
 
     # TODO: async?!
-    subprocess.run(["unzip", dest, "-d", workspace_dir], stdout=subprocess.DEVNULL)
+    subprocess.run(["unzip", dest, "-d", workspace_dir], stdout=subprocess.DEVNULL, check=True)
     # TODO: validate workspace with ocrd-all
     os.remove(dest)
-
-    return Workspace(id=uid, description="Workspace")
+    # TODO: external functionality to get workspace-id-path
+    return Workspace(id=f"http://localhost:8000/workspace/{uid}", description="Workspace")
 
 
 # TODO: had to disable RespnoseModel. Try to fix and activate again?!
@@ -122,22 +160,22 @@ async def run_processor(executable: str, body: ProcessorArgs = ...) -> Processor
     """
     # TODO: try to execute command on running container. Is this even possible?
     # TODO: verify that executeable is valid before invoking docker
-    user_id = subprocess.run(["id", "-u"], capture_output=True).stdout.decode().strip()
+    user_id = subprocess.run(["id", "-u"], capture_output=True, check=True).stdout.decode().strip()
     # TODO: verify provided workspace exists
     workspace_dir = os.path.join(settings.workspaces_dir, body.workspace.id)
 
     # TODO: add -O and -I only if necessary, depending on if present in body
-    pcall = ["docker", "run", "--user", user_id, "--workdir", "/data", "--volume", f"{workspace_dir}/data:/data",
-             "--", "ocrd/all:medium", executable, "-I", body.input_file_grps, "-O", body.output_file_grps]
-    p = subprocess.run(pcall, capture_output=True)
-    if p.returncode > 0:
-        print(f"error executing docker-command: {p.stderr.decode().strip()}")
-        # TODO: if request fails caller must be informed? Or start process in background and users have to inform
-        # themselfs
+    pcall = ["docker", "run", "--user", user_id, "--rm", "--workdir", "/data", "--volume",
+             f"{workspace_dir}/data:/data", "--", "ocrd/all:medium", executable, "-I",
+             body.input_file_grps, "-O", body.output_file_grps]
+    proc = subprocess.run(pcall, capture_output=True, check=False)
+    if proc.returncode > 0:
+        print(f"error executing docker-command: {proc.stderr.decode().strip()}")
+        # TODO: if request fails caller must be informed? Or start process in background and users
+        #       have to inform themselfs via ProcessorJob-Interface?
     # TODO: get ocrd-tools.json somehow and insert as __root__ somehow
-    proc = Processor(__root__="doch")
-    proc.__root__ = "nein"
-    ws = Workspace(id=body.workspace.id, description="Workspace")
-    res = ProcessorJob(proc, ws)
-    # TODO: ProcessorJob must be saved somewhere. Database?
+    proc = Processor(__root__='{"TODO": "deliver ocrd-tool.json"}')
+    workspace = Workspace(id=body.workspace.id, description="Workspace")
+    res = ProcessorJob(proc, workspace)
+    # TODO: ProcessorJob must be saved somewhere. Create dir on disc with jobs
     return res

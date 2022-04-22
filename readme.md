@@ -17,4 +17,10 @@ Post/Upload Workspace:
  file=@things/example_ws.ocrd.zip`
 
 Post/Start Processor:
-`curl -X POST http://localhost:8000/processor/ocrd-tesserocr-segment-region -H 'content-type: application/json' -d '@things/processor-request-example.json'`
+`curl -X POST http://localhost:8000/processor/ocrd-tesserocr-segment-region -H 'content-type: application/json' -d '@things/example-processor-request.json'`
+
+Get workspace list:
+`curl http://localhost:8000/workspace | jq`
+
+Get single workspace:
+`curl http://localhost:8000/workspace/95b1378b-61a8-49b7-97dc-c030ecfe9094`
