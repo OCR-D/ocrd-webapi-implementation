@@ -7,7 +7,7 @@ import subprocess
 import uuid
 from typing import List, Union
 
-from fastapi import FastAPI, UploadFile, File, Path, HTTPException
+from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseSettings
 import aiofiles
@@ -19,6 +19,11 @@ from .models import (
     ProcessorJob,
     ProcessorArgs,
 )
+from .utils import (
+    to_workspace_path,
+    Empty404Exception,
+)
+from .constants import SERVER_PATH
 
 
 class Settings(BaseSettings):
@@ -35,7 +40,7 @@ settings = Settings()
 app = FastAPI(
     title="OCR-D Web API",
     description="HTTP API for offering OCR-D processing",
-    contact={"email": "test@example.com"},  # TODO: update if needed
+    contact={"email": "test@example.com"},
     license={
         "name": "Apache 2.0",
         "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
@@ -43,11 +48,16 @@ app = FastAPI(
     version="0.0.1",
     servers=[
         {
-            "url": "http://localhost:8000",  # TODO: update if needed
+            "url": SERVER_PATH,
             "description": "The URL of your server offering the OCR-D API.",
         }
     ],
 )
+
+
+@app.exception_handler(Empty404Exception)
+async def empty404_exception_handler(request: Request, exc: Empty404Exception):
+    return JSONResponse(status_code=404, content={})
 
 
 @app.on_event("startup")
@@ -72,7 +82,7 @@ async def discovery() -> DiscoveryResponse:
     """
     Discovery of capabilities of the server
     """
-    # TODO: ask someone: what is the meaning of `has_ocrd_all` and `has_docker`? If docker is used,
+    # TODO: what is the meaning of `has_ocrd_all` and `has_docker`? If docker is used,
     #       (I plan to use docker `ocrd/all` container) does this mean has_docker and has_ocrd_all
     #       must both be true?
     res = DiscoveryResponse()
@@ -88,14 +98,10 @@ async def discovery() -> DiscoveryResponse:
 def get_workspaces() -> List[Workspace]:
     """
     Return a list of all existing workspaces
-
-    TODO: right now id is just the id. I don't understand this `@` correctly but maybe it must be
-          an URL where this workspace is available
     """
     wsd: str = settings.workspaces_dir
     res: List = [
-        # TODO: is it possible to automatically create the path?!
-        Workspace(id=f"http://localhost:8000/workspace/{f}", description="Workspace")
+        Workspace(id=to_workspace_path(f), description="Workspace")
         for f in os.listdir(wsd)
         if os.path.isdir(os.path.join(wsd, f))
     ]
@@ -103,30 +109,19 @@ def get_workspaces() -> List[Workspace]:
 
 
 @app.get('/workspace/{workspace_id}', response_model=Workspace)
-def get_workspace(workspace_id: str) -> Union[Workspace, JSONResponse]:
+def get_workspace(workspace_id: str) -> Workspace:
     """
-    Test if workspace existing
+    Test if workspace exists
     """
-    print(f"get workspace: {workspace_id}")
     if not os.path.exists(os.path.join(settings.workspaces_dir, workspace_id)):
-        # TODO: Use exception handler and set return-type back to just `Workspace`
-        #   https://fastapi.tiangolo.com/tutorial/handling-errors/#install-custom-exception-handlers
-        return JSONResponse(
-            status_code=404,
-            content={},
-        )
-    # TODO: creating path from id must be a function or something because needed more than once
-    return Workspace(id=f"http://localhost:8000/workspace/{workspace_id}",
-                     description="Workspace")
-
+        raise Empty404Exception()
+    return Workspace(id=to_workspace_path(workspace_id), description="Workspace")
 
 
 @app.post("/workspace", response_model=None, responses={"201": {"model": Workspace}})
 async def post_workspace(file: UploadFile = File(...)) -> None | Workspace:
     """
     Create a new workspace
-
-    TODO: @id might be wrongly set, because URL could be expected
     """
     uid = str(uuid.uuid4())
     workspace_dir = os.path.join(settings.workspaces_dir, uid)
@@ -141,8 +136,7 @@ async def post_workspace(file: UploadFile = File(...)) -> None | Workspace:
     subprocess.run(["unzip", dest, "-d", workspace_dir], stdout=subprocess.DEVNULL, check=True)
     # TODO: validate workspace with ocrd-all
     os.remove(dest)
-    # TODO: external functionality to get workspace-id-path
-    return Workspace(id=f"http://localhost:8000/workspace/{uid}", description="Workspace")
+    return Workspace(id=to_workspace_path(uid), description="Workspace")
 
 
 # TODO: had to disable RespnoseModel. Try to fix and activate again?!
