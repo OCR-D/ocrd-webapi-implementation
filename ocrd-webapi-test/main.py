@@ -6,6 +6,7 @@ import os
 import subprocess
 import uuid
 import asyncio
+import functools
 from typing import List
 
 from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
@@ -153,20 +154,41 @@ async def run_processor(executable: str, body: ProcessorArgs = ...) -> Processor
         body (ProcessorArgs): json-object with necessary args to call processor
     Returns:
         ProcessorJob: Properties for running job like workspace, ocrd-tool.json.
+
+    TODO:
+    - test params
+    - create ProcessorJob and save it to disk:
+        - ProcessorJob:
+            - Job:
+                - id
+                - description
+                - state
+            - Processor:
+                - ocrd-tool.json
+            - Workspace:
+                - id
+                - description
+    - return function (HTTP 200) but init next step before:
+        - https://fastapi.tiangolo.com/tutorial/background-tasks/
+        - run docker-command
+        - modify ProcessorJob on disk if finished
     """
     # TODO: try to execute command on running container. Is this even possible?
     # TODO: verify that executeable is valid before invoking docker
-    user_id = subprocess.run(["id", "-u"], capture_output=True, check=True).stdout.decode().strip()
-    # TODO: verify provided workspace exists
     workspace_dir = os.path.join(WORKSPACES_DIR, body.workspace.id)
+    if not os.path.exists(workspace_dir):
+        raise ResponseException(422, "Workspace not existing")
 
+    user_id = subprocess.run(["id", "-u"], capture_output=True, check=True).stdout.decode().strip()
     pcall = ["docker", "run", "--user", user_id, "--rm", "--workdir", "/data", "--volume",
              f"{workspace_dir}/data:/data", "--", "ocrd/all:medium", executable]
     if body.input_file_grps:
         pcall.extend(["-I", body.input_file_grps])
     if body.input_file_grps:
         pcall.extend(["-O", body.output_file_grps])
-    # TODO: add body.parameters if specified to `pcall`
+
+    if body.parameters:
+        pcall.extend(list(functools.reduce(lambda x, y: x + y, body.parameters.items())))
 
     proc = await asyncio.create_subprocess_exec(*pcall, stderr=asyncio.subprocess.PIPE)
     _, stderr = await proc.communicate()
