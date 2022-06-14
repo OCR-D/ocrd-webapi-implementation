@@ -33,6 +33,10 @@ from .constants import (
     JOB_DIR,
     WORKSPACE_ZIPNAME,
 )
+from workflow_service import WorkflowService
+from workspace_service import WorkspaceService
+from discovery_service import DiscoveryService
+
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -50,7 +54,9 @@ app = FastAPI(
         }
     ],
 )
-
+discovery_service = DiscoveryService()
+workspace_service = WorkspaceService()
+worfklow_service = WorkflowService()
 
 @app.exception_handler(ResponseException)
 async def exception_handler_empty404(request: Request, exc: ResponseException):
@@ -85,13 +91,7 @@ async def discovery() -> DiscoveryResponse:
     # TODO: what is the meaning of `has_ocrd_all` and `has_docker`? If docker is used,
     #       (I plan to use docker `ocrd/all:medium` container) does this mean has_docker and
     #       has_ocrd_all  must both be true?
-    res = DiscoveryResponse()
-    res.ram = psutil.virtual_memory().total / (1024.0 ** 3)
-    res.cpu_cores = os.cpu_count()
-    res.has_cuda = False
-    res.has_ocrd_all = True
-    res.has_docker = True
-    return res
+    return discovery_service.discovery()
 
 
 @app.get("/workspace", response_model=List[Workspace])
@@ -99,12 +99,8 @@ def get_workspaces() -> List[Workspace]:
     """
     Return a list of all existing workspaces
     """
-    res: List = [
-        Workspace(id=to_workspace_url(f), description="Workspace")
-        for f in os.listdir(WORKSPACES_DIR)
-        if os.path.isdir(to_workspace_dir(f))
-    ]
-    return res
+    workspace_service.get_workspace()
+
 
 
 @app.get('/workspace/{workspace_id}', response_model=Workspace)
@@ -140,66 +136,3 @@ async def post_workspace(file: UploadFile = File(...)) -> None | Workspace:
         raise ResponseException(400, {"description": "Invalid workspace"})
 
     return Workspace(id=to_workspace_url(uid), description="Workspace")
-
-
-# TODO: had to disable ResponseModel. Try to fix and activate again?!
-# @app.post('/processor/{executable}', response_model=ProcessorJob)
-@app.post('/processor/{executable}')
-async def run_processor(executable: str, body: ProcessorArgs = ...) -> ProcessorJob:
-    """
-    Run an OCR-D-Processor on a workspace
-
-    Args:
-        executable (str): Name of ocr-d processor. For example `ocrd-tesserocr-segment-region`
-        body (ProcessorArgs): json-object with necessary args to call processor
-    Returns:
-        ProcessorJob: Properties for running job like workspace, ocrd-tool.json.
-
-    TODO:
-    - test params
-    - create ProcessorJob and save it to disk:
-        - ProcessorJob:
-            - Job:
-                - id
-                - description
-                - state
-            - Processor:
-                - ocrd-tool.json
-            - Workspace:
-                - id
-                - description
-    - return function (HTTP 200) but init next step before:
-        - https://fastapi.tiangolo.com/tutorial/background-tasks/
-        - run docker-command
-        - modify ProcessorJob on disk if finished
-    """
-    # TODO: try to execute command on running container. Is this even possible?
-    # TODO: verify that executeable is valid before invoking docker
-    workspace_dir = os.path.join(WORKSPACES_DIR, body.workspace.id)
-    if not os.path.exists(workspace_dir):
-        raise ResponseException(422, "Workspace not existing")
-
-    user_id = subprocess.run(["id", "-u"], capture_output=True, check=True).stdout.decode().strip()
-    pcall = ["docker", "run", "--user", user_id, "--rm", "--workdir", "/data", "--volume",
-             f"{workspace_dir}/data:/data", "--", "ocrd/all:medium", executable]
-    if body.input_file_grps:
-        pcall.extend(["-I", body.input_file_grps])
-    if body.input_file_grps:
-        pcall.extend(["-O", body.output_file_grps])
-
-    if body.parameters:
-        pcall.extend(list(functools.reduce(lambda x, y: x + y, body.parameters.items())))
-
-    proc = await asyncio.create_subprocess_exec(*pcall, stderr=asyncio.subprocess.PIPE)
-    _, stderr = await proc.communicate()
-
-    if proc.returncode > 0:
-        print(f"error executing docker-command: {stderr.decode().strip()}")
-        # TODO: if request fails caller must be informed? Or start process in background and users
-        #       have to inform themselfs via ProcessorJob-Interface?
-    # TODO: get ocrd-tools.json somehow and insert as __root__ somehow
-    proc = Processor(__root__='{"TODO": "deliver ocrd-tool.json"}')
-    workspace = Workspace(id=body.workspace.id, description="Workspace")
-    res = ProcessorJob(proc, workspace)
-    # TODO: ProcessorJob must be saved somewhere. Create dir on disc with jobs
-    return res
