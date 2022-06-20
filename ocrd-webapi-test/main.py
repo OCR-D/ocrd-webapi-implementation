@@ -33,9 +33,9 @@ from .constants import (
     JOB_DIR,
     WORKSPACE_ZIPNAME,
 )
-from workflow_service import WorkflowService
-from workspace_service import WorkspaceService
-from discovery_service import DiscoveryService
+from workflow import Workflow
+from workspace import Workspace
+from discovery import Discovery
 
 
 app = FastAPI(
@@ -54,9 +54,9 @@ app = FastAPI(
         }
     ],
 )
-discovery_service = DiscoveryService()
-workspace_service = WorkspaceService()
-worfklow_service = WorkflowService()
+discovery = Discovery()
+workspace = Workspace()
+worfklow = Workflow()
 
 @app.exception_handler(ResponseException)
 async def exception_handler_empty404(request: Request, exc: ResponseException):
@@ -81,36 +81,6 @@ async def test():
     to test if server is running on root-path
     """
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-
-
-@app.get("/discovery", response_model=DiscoveryResponse)
-async def discovery() -> DiscoveryResponse:
-    """
-    Discovery of capabilities of the server
-    """
-    # TODO: what is the meaning of `has_ocrd_all` and `has_docker`? If docker is used,
-    #       (I plan to use docker `ocrd/all:medium` container) does this mean has_docker and
-    #       has_ocrd_all  must both be true?
-    return discovery_service.discovery()
-
-
-@app.get("/workspace", response_model=List[Workspace])
-def get_workspaces() -> List[Workspace]:
-    """
-    Return a list of all existing workspaces
-    """
-    workspace_service.get_workspace()
-
-
-
-@app.get('/workspace/{workspace_id}', response_model=Workspace)
-def get_workspace(workspace_id: str) -> Workspace:
-    """
-    Test if workspace exists
-    """
-    if not os.path.exists(to_workspace_dir(workspace_id)):
-        raise ResponseException(404)
-    return Workspace(id=to_workspace_url(workspace_id), description="Workspace")
 
 
 @app.post("/workspace", response_model=None, responses={"201": {"model": Workspace}})
