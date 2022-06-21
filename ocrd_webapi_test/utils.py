@@ -7,7 +7,7 @@ from .constants import (
     WORKSPACES_DIR,
 )
 from enum import Enum
-from typing import Dict
+from typing import Dict, Union
 
 __all__ = [
     "ResponseException",
@@ -23,7 +23,7 @@ class ResponseException(Exception):
     """
     Exception to return a response
     """
-    def __init__(self, status_code: int, body: dict | None = None):
+    def __init__(self, status_code: int, body: Union[dict, None] = None):
         self.status_code = status_code
         self.body = body
 

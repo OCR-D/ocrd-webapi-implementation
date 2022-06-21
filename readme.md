@@ -9,7 +9,7 @@ generated with <https://github.com/koxudaxi/fastapi-code-generator>
 
 
 ### Start Dev-Server
-`uvicorn ocrd-webapi-test.main:app --host 0.0.0.0 --reload`
+`uvicorn ocrd_webapi_test.main:app --host 0.0.0.0 --reload`
 
 ### Example Requests with Curl:
 Post/Upload Workspace:

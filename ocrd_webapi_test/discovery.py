@@ -14,20 +14,20 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseSettings
 import aiofiles
 import psutil
-from .models import (
+from ocrd_webapi_test.models import (
     DiscoveryResponse,
     Workspace,
     Processor,
     ProcessorJob,
     ProcessorArgs,
 )
-from .utils import (
+from ocrd_webapi_test.utils import (
     to_workspace_url,
     to_workspace_dir,
     ResponseException,
     validate_workspace
 )
-from .constants import (
+from ocrd_webapi_test.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
     JOB_DIR,
