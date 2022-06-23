@@ -7,6 +7,7 @@ import subprocess
 import uuid
 import asyncio
 import functools
+import shutil
 from typing import List
 
 from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
@@ -78,6 +79,9 @@ class WorkspaceManager:
         3. if existing return workspaceRsrc
         4. if not return None
         """
+        possible_dir = to_workspace_dir(workspace_id)
+        if not os.path.isdir(possible_dir):
+            return None
         return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
 
 

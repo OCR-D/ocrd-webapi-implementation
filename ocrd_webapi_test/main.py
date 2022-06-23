@@ -108,8 +108,22 @@ async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
 
     curl http://localhost:8000/workspace/-the-id-of-ws
     """
-    workspace = workspace_manager.get_workspace_rsrc(workspace_id):
-    if workspace:
-        # TODO: return workspace as in post-method
-    else:
-        # TODO: return empty 404
+    workspace = workspace_manager.get_workspace_rsrc(workspace_id)
+    if not workspace:
+        raise ResponseException(404, {})
+    return workspace
+
+@app.get("/workspace2/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
+    """
+    return workspace as bagit
+
+    curl http://localhost:8000/workspace2/the-id-of-ws
+    """
+    # TODO: zip with shutil.make_archive: `shutil.make_archive(output_filename, 'zip', dir_name)`
+    # https: // stackoverflow.com / questions / 1855095 / how - to - create - a - zip - archive - of - a - directory
+    # https://stackoverflow.com/questions/55873174/how-do-i-return-an-image-in-fastapi
+    workspace = workspace_manager.get_workspace_rsrc(workspace_id)
+    if not workspace:
+        raise ResponseException(404, {})
+    return workspace
