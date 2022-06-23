@@ -16,14 +16,12 @@ import aiofiles
 import psutil
 from ocrd_webapi_test.models import (
     DiscoveryResponse,
-    Workspace,
+    WorkspaceRsrc,
     Processor,
     ProcessorJob,
     ProcessorArgs,
 )
 from ocrd_webapi_test.utils import (
-    to_workspace_url,
-    to_workspace_dir,
     ResponseException,
     validate_workspace
 )

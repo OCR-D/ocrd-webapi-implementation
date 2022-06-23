@@ -28,12 +28,12 @@ class Resource(BaseModel):
         allow_population_by_field_name = True
 
 
-class Workspace(Resource):
+class WorkspaceRsrc(Resource):
     pass
 
 
 class ProcessorArgs(BaseModel):
-    workspace: Optional[Workspace] = None
+    workspace: Optional[WorkspaceRsrc] = None
     input_file_grps: Optional[str] = None
     output_file_grps: Optional[str] = None
     page_id: Optional[str] = None
@@ -57,9 +57,10 @@ class Processor(BaseModel):
 
 class ProcessorJob(Job):
     processor: Optional[Processor] = None
-    workspace: Optional[Workspace] = None
+    workspace: Optional[WorkspaceRsrc] = None
 
-    def __init__(self, processor: Optional[Processor] = None, workspace: Optional[Workspace] = None):
+    def __init__(self, processor: Optional[Processor] = None,
+                 workspace: Optional[WorkspaceRsrc] = None):
 
         # TODO: Id must be the path to the Processor Job
         id="dummy-1"

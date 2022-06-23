@@ -34,20 +34,6 @@ class JobState(Enum):
     STOPPED = 3
 
 
-def to_workspace_url(workspace_id: str) -> str:
-    """
-    create url where workspace is available
-    """
-    return f"{SERVER_PATH}/workspace/{workspace_id}"
-
-
-def to_workspace_dir(workspace_id: str) -> str:
-    """
-    return path to workspace with id `workspace_id`. No check if existing
-    """
-    return os.path.join(WORKSPACES_DIR, workspace_id)
-
-
 async def validate_workspace(uuid) -> bool:
     """
     validate workspace with ocrd-docker and return true if valid

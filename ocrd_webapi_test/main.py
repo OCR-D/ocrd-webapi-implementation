@@ -15,16 +15,13 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseSettings
 from ocrd_webapi_test.models import (
     DiscoveryResponse,
-    Workspace,
+    WorkspaceRsrc,
     Processor,
     ProcessorJob,
     ProcessorArgs,
 )
 from ocrd_webapi_test.utils import (
-    to_workspace_url,
-    to_workspace_dir,
     ResponseException,
-    validate_workspace
 )
 from ocrd_webapi_test.constants import (
     SERVER_PATH,
@@ -33,7 +30,7 @@ from ocrd_webapi_test.constants import (
     WORKSPACE_ZIPNAME,
 )
 from ocrd_webapi_test.workflow import Workflow
-from ocrd_webapi_test.workspace import WorkspaceManager
+from ocrd_webapi_test.workspace_manager import WorkspaceManager
 from ocrd_webapi_test.discovery import Discovery
 
 
@@ -56,6 +53,7 @@ app = FastAPI(
 initLogging()
 log = getLogger('ocrd_webapi_test.main')
 workspace_manager = WorkspaceManager()
+
 
 @app.exception_handler(ResponseException)
 async def exception_handler_empty404(request: Request, exc: ResponseException):
@@ -81,13 +79,37 @@ async def test():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
-@app.post("/workspace", response_model=None, responses={"201": {"model": Workspace}})
-async def post_workspace(file: UploadFile) -> Union[None, Workspace]:
+# noinspection PyBroadException TODO: remove
+@app.post("/workspace", response_model=None, responses={"201": {"model": WorkspaceRsrc}})
+async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     Create a new workspace
+
+    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F file=@things/example_ws.ocrd.zip
     """
     try:
-        workspace_manager.create_workspace_from_zip(file)
+        return await workspace_manager.create_workspace_from_zip(file)
     except Exception as e:
+        # TODO: exception mapping to repsonse code:
+        #   - return 422 if workspace invalid etc.
+        #   - return 500 for unexpected errors
         log.exception("error in post_workspace")
         return None
+
+@app.get("/items/{item_id}")
+async def read_item(item_id):
+    return {"item_id": item_id}
+
+
+@app.get("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
+    """
+    Get an existing workspace
+
+    curl http://localhost:8000/workspace/-the-id-of-ws
+    """
+    workspace = workspace_manager.get_workspace_rsrc(workspace_id):
+    if workspace:
+        # TODO: return workspace as in post-method
+    else:
+        # TODO: return empty 404
