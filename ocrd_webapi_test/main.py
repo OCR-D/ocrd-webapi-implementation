@@ -9,6 +9,7 @@ import uuid
 import asyncio
 import functools
 from typing import List, Union
+from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -101,6 +102,16 @@ async def read_item(item_id):
     return {"item_id": item_id}
 
 
+@app.get("/workspace", response_model=None, responses={"200": {"model": [WorkspaceRsrc]}})
+async def get_workspace(workspace_id: str) -> [WorkspaceRsrc]:
+    """
+    Get an existing workspace
+
+    curl http://localhost:8000/workspace/-the-id-of-ws
+    """
+    return workspace_manager.get_workspaces(workspace_id)
+
+
 @app.get("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
@@ -120,10 +131,35 @@ async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
 
     curl http://localhost:8000/workspace2/the-id-of-ws
     """
-    # TODO: zip with shutil.make_archive: `shutil.make_archive(output_filename, 'zip', dir_name)`
-    # https: // stackoverflow.com / questions / 1855095 / how - to - create - a - zip - archive - of - a - directory
-    # https://stackoverflow.com/questions/55873174/how-do-i-return-an-image-in-fastapi
-    workspace = workspace_manager.get_workspace_rsrc(workspace_id)
+    bag_path = workspace_manager.get_workspace_bag(workspace_id)
+    if not bag_path:
+        raise ResponseException(404)
+    # TODO: remove bag after dispatch with workspace_manager.delete_workspace_bag() use
+    #       fast-api-background-tasks for that: https://fastapi.tiangolo.com/tutorial/background-tasks/
+    return FileResponse(bag_path)
+
+@app.delete("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
+    """
+    Delete a workspace
+    TODO: curl-command to do it
+    TODO: what about 410 (Gone):
+        - (how to) keep track of deleted workspaces?
+            - create a Database with information about workspaces? Could be usefull for other tasks
+              too
+            - keep empty Directories of deleted workspaces for a while?
+    """
+    workspace = workspace_manager.delete_workspace(workspace_id)
+    if not workspace:
+        raise ResponseException(404, {})
+    return workspace
+
+@app.put("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+async def put_workspace(workspace_id: str) -> WorkspaceRsrc:
+    """
+    Update or create a workspace
+    """
+    workspace = workspace_manager.put_workspace(workspace_id)
     if not workspace:
         raise ResponseException(404, {})
     return workspace
