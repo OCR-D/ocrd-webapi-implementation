@@ -1,28 +1,13 @@
 """
 module for functionality regarding the workspace section of the api
 """
-import datetime
 import os
-import subprocess
 import uuid
-import asyncio
-import functools
-import shutil
 from typing import List, Union
 
-from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseSettings
 import aiofiles
 from ocrd_webapi_test.models import (
-    DiscoveryResponse,
     WorkspaceRsrc,
-    Processor,
-    ProcessorJob,
-    ProcessorArgs,
-)
-from ocrd_webapi_test.utils import (
-    ResponseException,
 )
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd.workspace import Workspace
@@ -30,11 +15,7 @@ from ocrd.workspace import Workspace
 from ocrd_webapi_test.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
-    JOB_DIR,
     WORKSPACE_ZIPNAME,
-)
-from ocrd_utils import (
-    unzip_file_to_dir
 )
 from ocrd_validators.ocrd_zip_validator import (
     OcrdZipValidator
@@ -43,6 +24,8 @@ from ocrd import Resolver
 from ocrd_utils import getLogger
 
 log = getLogger('ocrd_webapi_test.workspace_manager')
+
+
 # noinspection PyMethodMayBeStatic TODO: remove
 # TODO: add types to all method-declarations
 class WorkspaceManager:
@@ -76,7 +59,7 @@ class WorkspaceManager:
         valid = OcrdZipValidator(resolver, workspace_dir).validate().is_valid()
         if not valid:
             # TODO: raise custom Exception, catch in main and return appropriate error-code
-            raise  Exception("zip is not valid")
+            raise Exception("zip is not valid")
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
@@ -125,7 +108,6 @@ class WorkspaceManager:
         # TODO: mets-location can be changed in bag. I think this fails in that case. Write a test
         #       for that and change accordingly if neccessary. a way to get mets_basename has to be
         #       found
-        mets_basename = "mets.xml"
         dest = generate_bag_dest()
         mets = "mets.xml"
         # TODO: what happens to the identifier of unpacked bag. I think it is removed. So maybe
@@ -192,6 +174,7 @@ def to_workspace_dir(workspace_id: str) -> str:
     return path to workspace with id `workspace_id`. No check if existing
     """
     return os.path.join(WORKSPACES_DIR, workspace_id)
+
 
 def generate_bag_dest() -> str:
     """

@@ -1,35 +1,10 @@
 """
 module for implementing the discovery section of the api
 """
-import datetime
 import os
-import subprocess
-import uuid
-import asyncio
-import functools
-from typing import List
-
-from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseSettings
-import aiofiles
 import psutil
 from ocrd_webapi_test.models import (
     DiscoveryResponse,
-    WorkspaceRsrc,
-    Processor,
-    ProcessorJob,
-    ProcessorArgs,
-)
-from ocrd_webapi_test.utils import (
-    ResponseException,
-    validate_workspace
-)
-from ocrd_webapi_test.constants import (
-    SERVER_PATH,
-    WORKSPACES_DIR,
-    JOB_DIR,
-    WORKSPACE_ZIPNAME,
 )
 
 

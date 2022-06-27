@@ -63,7 +63,7 @@ class ProcessorJob(Job):
                  workspace: Optional[WorkspaceRsrc] = None):
 
         # TODO: Id must be the path to the Processor Job
-        id="dummy-1"
+        id = "dummy-1"
         super().__init__(id=id, description="ProcessorJob")
         self.state = JobState(__root__="RUNNING")
         self.processor = processor

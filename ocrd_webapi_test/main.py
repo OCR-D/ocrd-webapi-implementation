@@ -4,22 +4,13 @@ Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/op
 import datetime
 import os
 from ocrd_utils import initLogging, getLogger
-import subprocess
-import uuid
-import asyncio
-import functools
-from typing import List, Union
+from typing import Union
 from fastapi.responses import FileResponse
 
-from fastapi import FastAPI, UploadFile, File, Path, HTTPException, Request
+from fastapi import FastAPI, UploadFile, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseSettings
 from ocrd_webapi_test.models import (
-    DiscoveryResponse,
     WorkspaceRsrc,
-    Processor,
-    ProcessorJob,
-    ProcessorArgs,
 )
 from ocrd_webapi_test.utils import (
     ResponseException,
@@ -27,12 +18,8 @@ from ocrd_webapi_test.utils import (
 from ocrd_webapi_test.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
-    JOB_DIR,
-    WORKSPACE_ZIPNAME,
 )
-from ocrd_webapi_test.workflow import Workflow
 from ocrd_webapi_test.workspace_manager import WorkspaceManager
-from ocrd_webapi_test.discovery import Discovery
 
 
 app = FastAPI(
@@ -90,29 +77,21 @@ async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     try:
         return await workspace_manager.create_workspace_from_zip(file)
-    except Exception as e:
+    except Exception:
         # TODO: exception mapping to repsonse code:
         #   - return 422 if workspace invalid etc.
         #   - return 500 for unexpected errors
         log.exception("error in post_workspace")
         return None
 
+
 @app.get("/items/{item_id}")
 async def read_item(item_id):
     return {"item_id": item_id}
 
 
-@app.get("/workspace", response_model=None, responses={"200": {"model": [WorkspaceRsrc]}})
-async def get_workspace(workspace_id: str) -> [WorkspaceRsrc]:
-    """
-    Get an existing workspace
-
-    curl http://localhost:8000/workspace/-the-id-of-ws
-    """
-    return workspace_manager.get_workspaces(workspace_id)
-
-
-@app.get("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+@app.get("/workspace/{workspace_id}", response_model=None,
+         responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Get an existing workspace
@@ -124,7 +103,9 @@ async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
         raise ResponseException(404, {})
     return workspace
 
-@app.get("/workspace2/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+
+@app.get("/workspace2/{workspace_id}", response_model=None,
+         responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
     """
     return workspace as bagit
@@ -135,10 +116,13 @@ async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
     if not bag_path:
         raise ResponseException(404)
     # TODO: remove bag after dispatch with workspace_manager.delete_workspace_bag() use
-    #       fast-api-background-tasks for that: https://fastapi.tiangolo.com/tutorial/background-tasks/
+    #       fast-api-background-tasks for that:
+    #       https://fastapi.tiangolo.com/tutorial/background-tasks/
     return FileResponse(bag_path)
 
-@app.delete("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+
+@app.delete("/workspace/{workspace_id}", response_model=None,
+            responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Delete a workspace
@@ -154,7 +138,9 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
         raise ResponseException(404, {})
     return workspace
 
-@app.put("/workspace/{workspace_id}", response_model=None, responses={"200": {"model": WorkspaceRsrc}})
+
+@app.put("/workspace/{workspace_id}", response_model=None,
+         responses={"200": {"model": WorkspaceRsrc}})
 async def put_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Update or create a workspace
