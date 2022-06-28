@@ -3,7 +3,7 @@ Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/op
 """
 import datetime
 import os
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import getLogger, initLogging
 from typing import Union
 from fastapi.responses import FileResponse
 
@@ -40,7 +40,7 @@ app = FastAPI(
 )
 initLogging()
 log = getLogger('ocrd_webapi_test.main')
-workspace_manager = WorkspaceManager()
+workspace_manager = WorkspaceManager(WORKSPACES_DIR)
 
 
 @app.exception_handler(ResponseException)
@@ -68,12 +68,12 @@ async def test():
 
 
 # noinspection PyBroadException TODO: remove
-@app.post("/workspace", response_model=None, responses={"201": {"model": WorkspaceRsrc}})
+@app.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
 async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     Create a new workspace
 
-    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F file=@things/example_ws.ocrd.zip
+    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F file=@things/example_ws.ocrd.zip  # noqa
     """
     try:
         return await workspace_manager.create_workspace_from_zip(file)
@@ -90,8 +90,7 @@ async def read_item(item_id):
     return {"item_id": item_id}
 
 
-@app.get("/workspace/{workspace_id}", response_model=None,
-         responses={"200": {"model": WorkspaceRsrc}})
+@app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Get an existing workspace
@@ -104,8 +103,7 @@ async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
     return workspace
 
 
-@app.get("/workspace2/{workspace_id}", response_model=None,
-         responses={"200": {"model": WorkspaceRsrc}})
+@app.get("/workspace2/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
     """
     return workspace as bagit
@@ -121,8 +119,7 @@ async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
     return FileResponse(bag_path)
 
 
-@app.delete("/workspace/{workspace_id}", response_model=None,
-            responses={"200": {"model": WorkspaceRsrc}})
+@app.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Delete a workspace
@@ -139,13 +136,16 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     return workspace
 
 
-@app.put("/workspace/{workspace_id}", response_model=None,
-         responses={"200": {"model": WorkspaceRsrc}})
-async def put_workspace(workspace_id: str) -> WorkspaceRsrc:
+@app.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
+async def put_workspace(file: UploadFile, workspace_id: str) -> WorkspaceRsrc:
     """
     Update or create a workspace
     """
-    workspace = workspace_manager.put_workspace(workspace_id)
-    if not workspace:
-        raise ResponseException(404, {})
-    return workspace
+    try:
+        return workspace_manager.update_workspace(file, workspace_id)
+    except Exception:
+        # TODO: exception mapping to repsonse code:
+        #   - return 422 if workspace invalid etc.
+        #   - return 500 for unexpected errors
+        log.exception("error in put_workspace")
+        return None

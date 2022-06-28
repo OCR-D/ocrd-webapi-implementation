@@ -1,3 +1,7 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+norecursedirs = "tests/utils"
+
 [flake8]
 max-line-length = 100
 ignore = F405, F403, W402, W503, F722

@@ -4,50 +4,48 @@ module for functionality regarding the workspace section of the api
 import os
 import uuid
 from typing import List, Union
+import shutil
 
 import aiofiles
-from ocrd_webapi_test.models import (
-    WorkspaceRsrc,
-)
+from ocrd_webapi_test.models import WorkspaceRsrc
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd.workspace import Workspace
-
-from ocrd_webapi_test.constants import (
-    SERVER_PATH,
-    WORKSPACES_DIR,
-    WORKSPACE_ZIPNAME,
-)
-from ocrd_validators.ocrd_zip_validator import (
-    OcrdZipValidator
-)
+from ocrd_webapi_test.constants import SERVER_PATH
+from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger
-
-log = getLogger('ocrd_webapi_test.workspace_manager')
 
 
 # noinspection PyMethodMayBeStatic TODO: remove
 # TODO: add types to all method-declarations
 class WorkspaceManager:
+
+    def __init__(self, workspaces_dir):
+        self.log = getLogger('ocrd_webapi_test.workspace_manager')
+        assert os.path.exists(workspaces_dir), "workspaces dir not existing"
+        self.workspaces_dir = workspaces_dir
+        # TODO: WORKSPACES_DIR as instance variable. Then it becomes possible to decide where to
+        #       store workspaces dynamically. Usefull for tests as well. WORKSPACES_DIR should still
+        #       exist but be set into this constructor
+
     def get_workspace(self):
         res: List = [
-            WorkspaceRsrc(id=to_workspace_url(f), description="Workspace")
-            for f in os.listdir(WORKSPACES_DIR)
-            if os.path.isdir(to_workspace_dir(f))
+            WorkspaceRsrc(id=self.to_workspace_url(f), description="Workspace")
+            for f in os.listdir(self.workspaces_dir)
+            if os.path.isdir(self.to_workspace_dir(f))
         ]
         return res
 
     async def create_workspace_from_zip(self, file, uid=None):
         if uid:
-            workspace_dir = to_workspace_dir(uid)
-            if not os.path.exists(workspace_dir):
-                log.warn("can not update: workspace still existing")
+            workspace_dir = self.to_workspace_dir(uid)
+            if os.path.exists(workspace_dir):
+                self.log.warning("can not update: workspace still/already existing. Id: %s" % uid)
                 return None
         else:
             uid = str(uuid.uuid4())
-            workspace_dir = to_workspace_dir(uid)
-        os.mkdir(workspace_dir)
-        zip_dest = os.path.join(workspace_dir, WORKSPACE_ZIPNAME)
+            workspace_dir = self.to_workspace_dir(uid)
+        zip_dest = os.path.join(self.workspaces_dir, uid + ".zip")
 
         async with aiofiles.open(zip_dest, "wb") as fpt:
             content = await file.read(1024)
@@ -56,15 +54,17 @@ class WorkspaceManager:
                 content = await file.read(1024)
 
         resolver = Resolver()
-        valid = OcrdZipValidator(resolver, workspace_dir).validate().is_valid()
-        if not valid:
+        valid_report = OcrdZipValidator(resolver, zip_dest).validate()
+        if not valid_report.is_valid:
             # TODO: raise custom Exception, catch in main and return appropriate error-code
             raise Exception("zip is not valid")
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
+        # TODO: make the following optional?!
+        os.remove(zip_dest)
 
-        return WorkspaceRsrc(id=to_workspace_url(uid), description="Workspace")
+        return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
 
     def get_workspace_rsrc(self, workspace_id):
         """
@@ -72,10 +72,10 @@ class WorkspaceManager:
         Returns:
             `WorkspaceRsrc` if `workspace_id` is available else `None`
         """
-        possible_dir = to_workspace_dir(workspace_id)
+        possible_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(possible_dir):
             return None
-        return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
+        return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
 
     def get_workspace_bag(self, workspace_id: str) -> Union[str, None]:
         """
@@ -89,7 +89,7 @@ class WorkspaceManager:
         Returns:
             path to created bag
         """
-        workspace_dir = to_workspace_dir(workspace_id)
+        workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             return None
         # hier ocr-d verwenden: workspace_bagger.bag()
@@ -108,7 +108,7 @@ class WorkspaceManager:
         # TODO: mets-location can be changed in bag. I think this fails in that case. Write a test
         #       for that and change accordingly if neccessary. a way to get mets_basename has to be
         #       found
-        dest = generate_bag_dest()
+        dest = self.generate_bag_dest()
         mets = "mets.xml"
         # TODO: what happens to the identifier of unpacked bag. I think it is removed. So maybe
         #       it is neccesarry to store bag-info.txt before deleting bag somewehere to keep
@@ -136,48 +136,48 @@ class WorkspaceManager:
         Get a list of all available workspaces
         """
         res = []
-        for f in os.scandir(WORKSPACES_DIR):
+        for f in os.scandir(self.workspaces_dir):
             if f.is_dir():
-                res.append(WorkspaceRsrc(id=to_workspace_url(f.name), description="Workspace"))
-        res
+                res.append(WorkspaceRsrc(id=self.to_workspace_url(f.name), description="Workspace"))
+        return res
 
     def delete_workspace(self, workspace_id):
         """
         Delete a workspace
         """
-        workspace_dir = to_workspace_dir(workspace_id)
+        print("vorhhhhhhhhhhhhHHHHHHHHHHHHHHHHHHHHHHHHhhhhhhhheeeeeeeeeer")
+        workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             return None
-        os.remove(workspace_dir)
-        return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
+        shutil.rmtree(workspace_dir)
+        return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
 
-    async def put_workspace(self, workspace_id):
+    async def update_workspace(self, workspace_id):
         """
         Update a workspace
+
+        Delete the workspace if existing and then delegate to
+        :py:func:`ocrd_webapi_test.workspace_manager.WorkspaceManager.create_workspace_from_zip
         """
-        workspace_dir = to_workspace_dir(workspace_id)
-        if not os.path.isdir(workspace_dir):
-            return None
-        os.remove(workspace_dir)
+        workspace_dir = self.to_workspace_dir(workspace_id)
+        if os.path.isdir(workspace_dir):
+            os.remove(workspace_dir)
         return await self.create_workspace_from_zip(workspace_id)
 
+    def to_workspace_dir(self, workspace_id: str) -> str:
+        """
+        return path to workspace with id `workspace_id`. No check if existing
+        """
+        return os.path.join(self.workspaces_dir, workspace_id)
 
-def to_workspace_url(workspace_id: str) -> str:
-    """
-    create url where workspace is available
-    """
-    return f"{SERVER_PATH}/workspace/{workspace_id}"
+    def generate_bag_dest(self) -> str:
+        """
+        return a unique path to store a bag of a workspace at
+        """
+        return os.path.join(self.workspaces_dir, str(uuid.uuid4()) + ".zip")
 
-
-def to_workspace_dir(workspace_id: str) -> str:
-    """
-    return path to workspace with id `workspace_id`. No check if existing
-    """
-    return os.path.join(WORKSPACES_DIR, workspace_id)
-
-
-def generate_bag_dest() -> str:
-    """
-    return a unique path to store a bag of a workspace at
-    """
-    return os.path.join(WORKSPACES_DIR, str(uuid.uuid4()) + ".zip")
+    def to_workspace_url(self, workspace_id: str) -> str:
+        """
+        create url where workspace is available
+        """
+        return f"{SERVER_PATH}/workspace/{workspace_id}"
