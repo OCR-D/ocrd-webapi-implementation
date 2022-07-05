@@ -24,11 +24,8 @@ class WorkspaceManager:
         self.log = getLogger('ocrd_webapi_test.workspace_manager')
         assert os.path.exists(workspaces_dir), "workspaces dir not existing"
         self.workspaces_dir = workspaces_dir
-        # TODO: WORKSPACES_DIR as instance variable. Then it becomes possible to decide where to
-        #       store workspaces dynamically. Usefull for tests as well. WORKSPACES_DIR should still
-        #       exist but be set into this constructor
 
-    def get_workspace(self):
+    def get_workspaces(self):
         res: List = [
             WorkspaceRsrc(id=self.to_workspace_url(f), description="Workspace")
             for f in os.listdir(self.workspaces_dir)
@@ -36,7 +33,18 @@ class WorkspaceManager:
         ]
         return res
 
-    async def create_workspace_from_zip(self, file, uid=None):
+    async def create_workspace_from_zip(self, file, uid=None) -> Union[WorkspaceRsrc, None]:
+        """
+        create a workspace from a ocrd-zipfile
+
+        Args:
+            file: ocrd-zip of workspace
+            uid (str): the uid is used as workspace-directory. If `None`, an uuid is created for
+                this. If corresponding dir already existing, None is returned
+
+        Returns:
+
+        """
         if uid:
             workspace_dir = self.to_workspace_dir(uid)
             if os.path.exists(workspace_dir):
@@ -61,10 +69,21 @@ class WorkspaceManager:
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
-        # TODO: make the following optional?!
         os.remove(zip_dest)
 
         return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
+
+    async def update_workspace(self, file, workspace_id):
+        """
+        Update a workspace
+
+        Delete the workspace if existing and then delegate to
+        :py:func:`ocrd_webapi_test.workspace_manager.WorkspaceManager.create_workspace_from_zip
+        """
+        workspace_dir = self.to_workspace_dir(workspace_id)
+        if os.path.isdir(workspace_dir):
+            shutil.rmtree(workspace_dir)
+        return await self.create_workspace_from_zip(file, workspace_id)
 
     def get_workspace_rsrc(self, workspace_id):
         """
@@ -145,24 +164,11 @@ class WorkspaceManager:
         """
         Delete a workspace
         """
-        print("vorhhhhhhhhhhhhHHHHHHHHHHHHHHHHHHHHHHHHhhhhhhhheeeeeeeeeer")
         workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             return None
         shutil.rmtree(workspace_dir)
         return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
-
-    async def update_workspace(self, workspace_id):
-        """
-        Update a workspace
-
-        Delete the workspace if existing and then delegate to
-        :py:func:`ocrd_webapi_test.workspace_manager.WorkspaceManager.create_workspace_from_zip
-        """
-        workspace_dir = self.to_workspace_dir(workspace_id)
-        if os.path.isdir(workspace_dir):
-            os.remove(workspace_dir)
-        return await self.create_workspace_from_zip(workspace_id)
 
     def to_workspace_dir(self, workspace_id: str) -> str:
         """

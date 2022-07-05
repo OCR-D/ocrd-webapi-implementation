@@ -10,10 +10,13 @@ from pathlib import Path
 import zipfile
 
 
+WORKSPACE_2_ID = 'example-workspace-2'
+
+
 @pytest.mark.asyncio
 async def test_create_workspace_from_zip(workspace_manager, workspaces_dir, utils):
     # arrange
-    with open("assets/example_ws.ocrd.zip", "rb") as fin:
+    with open(utils.to_asset_path("example_ws.ocrd.zip"), "rb") as fin:
         file = UploadFile("test", file=fin, content_type="application/zip")
         # act
         workspace = await workspace_manager.create_workspace_from_zip(file)
@@ -25,16 +28,24 @@ async def test_create_workspace_from_zip(workspace_manager, workspaces_dir, util
 
 
 @pytest.mark.asyncio
-async def test_update_workspace(workspace_manager, workspaces_dir):
+async def test_update_workspace(dummy_workspace, workspace_manager, workspaces_dir, utils):
     # arrange
-    uid = "test-123"
-    with open("assets/example_ws.ocrd.zip", "rb") as fin:
-        file = UploadFile("test", file=fin, content_type="application/zip")
-        # act
-        await workspace_manager.create_workspace_from_zip(file, uid)
-    # assert
+    uid = utils.get_workspace_rsrc_id(dummy_workspace)
     mets_path = Path(workspaces_dir, uid, "mets.xml")
-    assert mets_path.exists(), "Expected mets-file located here:'%s'" % mets_path
+    with open(mets_path) as fin2:
+        assert WORKSPACE_2_ID not in fin2.read(), (
+            "test arrangement failed. Expect string '%s' not to be in metsfile" % WORKSPACE_2_ID
+        )
+
+    # act
+    with open(utils.to_asset_path("example_ws2.ocrd.zip"), "rb") as fin:
+        file = UploadFile("test", file=fin, content_type="application/zip")
+        updated_workspace = await workspace_manager.update_workspace(file, uid)
+
+    # assert
+    assert updated_workspace and updated_workspace.id, "updating failed/returned None"
+    with open(mets_path) as fin:
+        assert WORKSPACE_2_ID in fin.read(), "expected string '%s' in metsfile" % WORKSPACE_2_ID
 
 
 def test_get_workspace_rsrc(workspace_manager, dummy_workspace, utils):

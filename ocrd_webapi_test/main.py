@@ -4,7 +4,7 @@ Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/op
 import datetime
 import os
 from ocrd_utils import getLogger, initLogging
-from typing import Union
+from typing import Union, List
 from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, UploadFile, Request
@@ -67,6 +67,16 @@ async def test():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
+@app.get("/workspace")
+async def get_workspaces() -> List[WorkspaceRsrc]:
+    """
+    Get a list of existing workspaces
+
+    curl http://localhost:8000/workspace/
+    """
+    return workspace_manager.get_workspaces()
+
+
 # noinspection PyBroadException TODO: remove
 @app.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
 async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
@@ -85,11 +95,6 @@ async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
         return None
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id):
-    return {"item_id": item_id}
-
-
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
@@ -106,6 +111,8 @@ async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
 @app.get("/workspace2/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
     """
+    draft
+
     return workspace as bagit
 
     curl http://localhost:8000/workspace2/the-id-of-ws
@@ -124,7 +131,7 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Delete a workspace
     TODO: curl-command to do it
-    TODO: what about 410 (Gone):
+    TODO: what about 410 (Gone), specified in API:
         - (how to) keep track of deleted workspaces?
             - create a Database with information about workspaces? Could be usefull for other tasks
               too
@@ -142,7 +149,7 @@ async def put_workspace(file: UploadFile, workspace_id: str) -> WorkspaceRsrc:
     Update or create a workspace
     """
     try:
-        return workspace_manager.update_workspace(file, workspace_id)
+        return await workspace_manager.update_workspace(file, workspace_id)
     except Exception:
         # TODO: exception mapping to repsonse code:
         #   - return 422 if workspace invalid etc.

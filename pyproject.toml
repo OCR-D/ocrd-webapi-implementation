@@ -4,7 +4,7 @@ norecursedirs = "tests/utils"
 
 [flake8]
 max-line-length = 100
-ignore = F405, F403, W402, W503, F722
+ignore = ["F405", "F403", "W402", "W503", "F722"]
 
 # https://flake8.pycqa.org/en/2.6.0/warnings.html
 # F405: <name> may be undefined, or defined from star imports: module
