@@ -24,3 +24,14 @@ Get workspace list:
 
 Get single workspace:
 `curl http://localhost:8000/workspace/95b1378b-61a8-49b7-97dc-c030ecfe9094`
+
+Docker:
+-------
+### build:
+`docker build -t ocrd-webapi .`
+
+### run:
+`docker run -p "5000:80" --name ocrd-webapi -d ocrd-webapi`
+
+### connect to container:
+`docker exec -it ocrd-webapi bash`
