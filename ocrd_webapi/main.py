@@ -9,17 +9,17 @@ from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, UploadFile, Request
 from fastapi.responses import JSONResponse
-from ocrd_webapi_test.models import (
+from ocrd_webapi.models import (
     WorkspaceRsrc,
 )
-from ocrd_webapi_test.utils import (
+from ocrd_webapi.utils import (
     ResponseException,
 )
-from ocrd_webapi_test.constants import (
+from ocrd_webapi.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
 )
-from ocrd_webapi_test.workspace_manager import WorkspaceManager
+from ocrd_webapi.workspace_manager import WorkspaceManager
 
 
 app = FastAPI(
@@ -39,7 +39,7 @@ app = FastAPI(
     ],
 )
 initLogging()
-log = getLogger('ocrd_webapi_test.main')
+log = getLogger('ocrd_webapi.main')
 workspace_manager = WorkspaceManager(WORKSPACES_DIR)
 
 

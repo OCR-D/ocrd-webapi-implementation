@@ -7,10 +7,10 @@ from typing import List, Union
 import shutil
 
 import aiofiles
-from ocrd_webapi_test.models import WorkspaceRsrc
+from ocrd_webapi.models import WorkspaceRsrc
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd.workspace import Workspace
-from ocrd_webapi_test.constants import SERVER_PATH
+from ocrd_webapi.constants import SERVER_PATH
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger
@@ -21,7 +21,7 @@ from ocrd_utils import getLogger
 class WorkspaceManager:
 
     def __init__(self, workspaces_dir):
-        self.log = getLogger('ocrd_webapi_test.workspace_manager')
+        self.log = getLogger('ocrd_webapi.workspace_manager')
         assert os.path.exists(workspaces_dir), "workspaces dir not existing"
         self.workspaces_dir = workspaces_dir
 
@@ -78,7 +78,7 @@ class WorkspaceManager:
         Update a workspace
 
         Delete the workspace if existing and then delegate to
-        :py:func:`ocrd_webapi_test.workspace_manager.WorkspaceManager.create_workspace_from_zip
+        :py:func:`ocrd_webapi.workspace_manager.WorkspaceManager.create_workspace_from_zip
         """
         workspace_dir = self.to_workspace_dir(workspace_id)
         if os.path.isdir(workspace_dir):

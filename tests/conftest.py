@@ -1,7 +1,7 @@
 import shutil
 import pytest
 from pathlib import Path
-from ocrd_webapi_test.workspace_manager import WorkspaceManager
+from ocrd_webapi.workspace_manager import WorkspaceManager
 from fastapi import UploadFile
 import os
 

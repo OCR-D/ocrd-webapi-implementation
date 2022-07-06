@@ -3,7 +3,7 @@ module for implementing the discovery section of the api
 """
 import os
 import psutil
-from ocrd_webapi_test.models import (
+from ocrd_webapi.models import (
     DiscoveryResponse,
 )
 
