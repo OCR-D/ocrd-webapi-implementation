@@ -79,14 +79,14 @@ async def get_workspaces() -> List[WorkspaceRsrc]:
 
 # noinspection PyBroadException TODO: remove
 @app.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(file: UploadFile) -> Union[None, WorkspaceRsrc]:
+async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     Create a new workspace
 
     curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F file=@things/example_ws.ocrd.zip  # noqa
     """
     try:
-        return await workspace_manager.create_workspace_from_zip(file)
+        return await workspace_manager.create_workspace_from_zip(workspace)
     except Exception:
         # TODO: exception mapping to repsonse code:
         #   - return 422 if workspace invalid etc.
@@ -144,12 +144,12 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
 
 
 @app.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def put_workspace(file: UploadFile, workspace_id: str) -> WorkspaceRsrc:
+async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRsrc:
     """
     Update or create a workspace
     """
     try:
-        return await workspace_manager.update_workspace(file, workspace_id)
+        return await workspace_manager.update_workspace(workspace, workspace_id)
     except Exception:
         # TODO: exception mapping to repsonse code:
         #   - return 422 if workspace invalid etc.

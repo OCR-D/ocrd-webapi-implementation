@@ -1,37 +1,68 @@
-### What is this repo about?
-This is a first attempt to implement (some of) this api-calls with fastapi:
+OCR-D webAPI implementation
+===========================
+
+Implementation of [OCR-D](https://ocr-d.de/en/) [webAPI](https://github.com/OCR-D/spec/blob/master/openapi.yml)
+
+TODO: ToC
+
+
+Run project
+-----------
+### clone
+`git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
+
+### build
+`cd ocrd-webapi-implementation`
+`docker build -t ocrd-webapi .`
+
+### run
+`docker run -p "8000:80" --name ocrd-webapi -d ocrd-webapi`
+
+
+Test this webAPI implementation
+-------------------------------
+### test if running
+http://localhost:8000/
+
+### postman
+import file `webapi-tests.postman_collection.json` into postman to run example requests on running
+Docker service. Test-Workspace-Zips are in `things/`
+
+### curl
+Get workspace list:
+`curl http://localhost:8000/workspace`
+
+Create new workspace:
+`curl -X POST http://localhost:8000/workspace -F workspace=@tests/assets/example_ws.ocrd.zip`
+
+Create new workspace with id:
+`curl -X PUT 'http://localhost:8000/workspace/test4711' -F 'workspace=@tests/assets/example_ws.ocrd.zip'`
+
+Update existing workspace:
+`curl -X PUT 'http://localhost:8000/workspace/test4711' -F 'workspace=@tests/assets/example_ws2.ocrd.zip'`
+
+Get single workspace:
+`curl http://localhost:8000/workspace/test4711`
+
+
+
+Links
+------
 <https://github.com/OCR-D/spec/blob/master/openapi.yml>
 <https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1>
 
-### Templates for api-calls
-generated with <https://github.com/koxudaxi/fastapi-code-generator>
-`things/webapi_template_main.py` and `things/webapi_template_models.py`
 
-
+Dev-Server:
+-----------
 ### Start Dev-Server
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
 
 ### Example Requests with Curl:
-Post/Upload Workspace:
-`curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F
- file=@things/example_ws.ocrd.zip`
 
-Post/Start Processor:
-`curl -X POST http://localhost:8000/processor/ocrd-tesserocr-segment-region -H 'content-type: application/json' -d '@things/example-processor-request.json'`
 
-Get workspace list:
-`curl http://localhost:8000/workspace | jq`
+Miscellaneous
+----------------
 
-Get single workspace:
-`curl http://localhost:8000/workspace/95b1378b-61a8-49b7-97dc-c030ecfe9094`
-
-Docker:
--------
-### build:
-`docker build -t ocrd-webapi .`
-
-### run:
-`docker run -p "5000:80" --name ocrd-webapi -d ocrd-webapi`
-
-### connect to container:
+### connect to running container:
 `docker exec -it ocrd-webapi bash`
+

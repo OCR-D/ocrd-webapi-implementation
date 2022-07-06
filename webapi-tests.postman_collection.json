@@ -1,0 +1,132 @@
+{
+	"info": {
+		"_postman_id": "d62c88a0-11ef-4ed3-9569-4bb1395df566",
+		"name": "webapi-tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "verify app is running",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list workspaces",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "create new workspace",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "multipart/form-data",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "example_ws.ocrd.zip"
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/workspace",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"workspace"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get workspace",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "create workspace with id",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "workspace",
+							"type": "file",
+							"src": "example_ws.ocrd.zip"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/workspace/test4711",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"workspace",
+						"test4711"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update existing workspace",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "workspace",
+							"type": "file",
+							"src": "example_ws2.ocrd.zip"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/workspace/test4711",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"workspace",
+						"test4711"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
