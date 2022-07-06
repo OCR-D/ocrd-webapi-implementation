@@ -1,6 +1,7 @@
 """
 module for functionality regarding the workspace section of the api
 """
+import logging
 import os
 import uuid
 from typing import List, Union
@@ -14,6 +15,7 @@ from ocrd_webapi.constants import SERVER_PATH
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger
+from pathlib import Path
 
 
 # noinspection PyMethodMayBeStatic TODO: remove
@@ -22,7 +24,11 @@ class WorkspaceManager:
 
     def __init__(self, workspaces_dir):
         self.log = getLogger('ocrd_webapi.workspace_manager')
-        assert os.path.exists(workspaces_dir), "workspaces dir not existing"
+        if not os.path.exists(workspaces_dir):
+            Path(workspaces_dir).mkdir(parents=True, exist_ok=True)
+            self.log.info("createt not existing workspaces-directory: %s" % workspaces_dir)
+        else:
+            self.log.info("workspaces-directory is '%s'" % workspaces_dir)
         self.workspaces_dir = workspaces_dir
 
     def get_workspaces(self):

@@ -1,4 +1,5 @@
 import os
+from ocrd_webapi.config import *
 
 __all__ = [
     'SERVER_PATH',
@@ -6,8 +7,9 @@ __all__ = [
     'JOB_DIR',
 ]
 
-SERVER_PATH: str = "http://localhost:8000"
+config = read_config()
 
-BASE_DIR: str = f"{os.getenv('HOME')}/zeugs-ohne-backup/ocrd_webapi"
+SERVER_PATH: str = config[CONFIG_SERVER_PATH]
+BASE_DIR: str = config[CONFIG_STORAGE_DIR]
 WORKSPACES_DIR: str = os.path.join(BASE_DIR, "workspaces")
 JOB_DIR: str = os.path.join(BASE_DIR, "jobs")
