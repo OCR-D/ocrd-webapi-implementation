@@ -7,7 +7,7 @@ from ocrd_utils import getLogger, initLogging
 from typing import Union, List
 from fastapi.responses import FileResponse
 
-from fastapi import FastAPI, UploadFile, Request
+from fastapi import FastAPI, UploadFile, Request, Header, HTTPException, status
 from fastapi.responses import JSONResponse
 from ocrd_webapi.models import (
     WorkspaceRsrc,
@@ -96,16 +96,29 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
 
 
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def get_workspace(workspace_id: str) -> WorkspaceRsrc:
+async def get_workspace(workspace_id: str, content_type: str = Header(...)) -> WorkspaceRsrc:
     """
     Get an existing workspace
 
-    curl http://localhost:8000/workspace/-the-id-of-ws
+    curl http://localhost:8000/workspace/-the-id-of-ws -H "content-type: application/json"
+    curl http://localhost:8000/workspace/-the-id-of-ws -H "content-type: application/vnd.ocrd+zip"
+        --output test-ocrd-bag.zip
     """
-    workspace = workspace_manager.get_workspace_rsrc(workspace_id)
-    if not workspace:
-        raise ResponseException(404, {})
-    return workspace
+    if content_type == "application/json":
+        workspace = workspace_manager.get_workspace_rsrc(workspace_id)
+        if not workspace:
+            raise ResponseException(404, {})
+        return workspace
+    elif content_type == "application/vnd.ocrd+zip":
+        workspace = workspace_manager.get_workspace_bag(workspace_id)
+        if not workspace:
+            raise ResponseException(404, {})
+        return FileResponse(workspace)
+    else:
+        raise HTTPException(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Unsupported media, expected application/json or application/vnd.ocrd+zip",
+        )
 
 
 @app.get("/workspace2/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})

@@ -84,4 +84,4 @@ def test_get_workspaces_as_bag(workspace_manager, dummy_workspace, utils):
 
     # assert
     assert os.path.exists(bag_path), "expected bag-file not existing"
-    assert zipfile.is_zipfile(bag_path), "created resource is no zipfile"
+    assert zipfile.is_zipfile(bag_path), "created resource is not a zipfile"
