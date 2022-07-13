@@ -12,8 +12,10 @@ Run project
 `git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
 
 ### build
-`cd ocrd-webapi-implementation`
-`docker build -t ocrd-webapi .`
+```
+cd ocrd-webapi-implementation
+docker build -t ocrd-webapi .
+```
 
 ### run
 `docker run -p "8000:80" --name ocrd-webapi -d ocrd-webapi`
