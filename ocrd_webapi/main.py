@@ -121,24 +121,6 @@ async def get_workspace(workspace_id: str, content_type: str = Header(...)) -> W
         )
 
 
-@app.get("/workspace2/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def get_workspace_as_bag(workspace_id: str) -> WorkspaceRsrc:
-    """
-    draft
-
-    return workspace as bagit
-
-    curl http://localhost:8000/workspace2/the-id-of-ws
-    """
-    bag_path = workspace_manager.get_workspace_bag(workspace_id)
-    if not bag_path:
-        raise ResponseException(404)
-    # TODO: remove bag after dispatch with workspace_manager.delete_workspace_bag() use
-    #       fast-api-background-tasks for that:
-    #       https://fastapi.tiangolo.com/tutorial/background-tasks/
-    return FileResponse(bag_path)
-
-
 @app.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
