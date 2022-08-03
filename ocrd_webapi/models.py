@@ -32,6 +32,10 @@ class WorkspaceRsrc(Resource):
     pass
 
 
+class WorkflowRsrc(Resource):
+    pass
+
+
 class ProcessorArgs(BaseModel):
     workspace: Optional[WorkspaceRsrc] = None
     input_file_grps: Optional[str] = None
