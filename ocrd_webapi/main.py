@@ -159,7 +159,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRs
 
 
 @app.get("/workflow")
-async def get_workflows() -> List[WorkflowRsrc]:
+async def list_workflow_scripts() -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow spaces. Each workflow space has a Nextflow script inside.
 
@@ -169,7 +169,7 @@ async def get_workflows() -> List[WorkflowRsrc]:
 
 
 @app.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
-async def post_workflow(nextflow_script: UploadFile) -> Union[None, WorkflowRsrc]:
+async def upload_workflow_script(nextflow_script: UploadFile) -> Union[None, WorkflowRsrc]:
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
@@ -186,7 +186,7 @@ async def post_workflow(nextflow_script: UploadFile) -> Union[None, WorkflowRsrc
 
 
 @app.get("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def get_workflow(workflow_id: str) -> WorkflowRsrc:
+async def get_workflow_script(workflow_id: str) -> WorkflowRsrc:
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
 
@@ -203,17 +203,17 @@ async def get_workflow(workflow_id: str) -> WorkflowRsrc:
 
 
 @app.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def put_workflow(nextflow_script: UploadFile, workflow_id: str) -> WorkflowRsrc:
+async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str) -> Union[None, WorkflowRsrc]:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
     """
     try:
-        return await workspace_manager.update_workspace(workspace, workspace_id)
+        return await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
     except Exception:
         # TODO: exception mapping to repsonse code:
         #   - return 422 if workflow invalid etc.
         #   - return 500 for unexpected errors
-        log.exception("error in put_workspace")
+        log.exception("error in put_workflow")
         return None
 
 """ 
@@ -225,14 +225,25 @@ async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
 """
 
 """
-TODO: 
-1. Implement @app.post("/workflow/{workflow_id}"
-
 Executes the Nextflow script identified with {workflow_id}. 
 The instance is identified by creating a {job_id}
 Input: workspace_id and fileGrp
-Output: overwrites the OCR-D results inside the workspace_id
+Output: overwrites the OCR-D results inside the {workspace_id}
 """
+@app.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
+async def start_workflow(workflow_id:str, workspace_id:str) -> Union[None, WorkflowRsrc]:
+    """
+    Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a 
+    workspace with id {workspace_id}
+    """
+    try:
+        return workflow_manager.start_nf_workflow(workflow_id, workspace_id)
+    except Exception:
+        # TODO: exception mapping to repsonse code:
+        #   - return 422 if workflow invalid etc.
+        #   - return 500 for unexpected errors
+        log.exception("error in start_workflow")
+        return None
 
 """
 TODO
