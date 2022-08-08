@@ -246,8 +246,7 @@ async def start_workflow(workflow_id:str, workspace_id:str) -> Union[None, Workf
         return None
 
 """
-TODO
-2. Implement @app.get("/workflow/{workflow_id}/{job_id}")
+TODO: Implement @app.get("/workflow/{workflow_id}/{job_id}") -> Still unclear how to implement it
 
 Provides the execution status of the Nextflow run identified with {job_id}.
 Input: job_id

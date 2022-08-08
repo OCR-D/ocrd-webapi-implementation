@@ -12,12 +12,14 @@ from re import search as regex_search
 
 import aiofiles
 from ocrd_webapi.models import WorkflowRsrc
-from ocrd_webapi.constants import SERVER_PATH, WORKSPACES_DIR
+from ocrd_webapi.constants import (
+    SERVER_PATH, 
+    WORKSPACES_DIR,
+    DEFAULT_NF_SCRIPT_NAME,
+)
 from ocrd_utils import getLogger
 from pathlib import Path
 
-# TODO: This should be placed properly in the config or constants file
-DEFAULT_NF_SCRIPT_NAME = "nextflow.nf"
 
 class WorkflowManager:
 
@@ -75,7 +77,7 @@ class WorkflowManager:
 
         return WorkflowRsrc(id=self.to_workflow_url(uid), description="Workflow")
 
-    async def update_workflow_space(self, file, workflow_id):
+    async def update_workflow_space(self, file, workflow_id: str):
         """
         Update a workflow space
 
@@ -87,7 +89,7 @@ class WorkflowManager:
             shutil.rmtree(workflow_dir)
         return await self.create_workflow_space(file, workflow_id)
 
-    def get_workflow_script_rsrc(self, workflow_id):
+    def get_workflow_script_rsrc(self, workflow_id: str):
         """
         Get a workflow script available on disk as a Resource via its workflow_id
         Returns:
@@ -119,6 +121,15 @@ class WorkflowManager:
         """
         return f"{SERVER_PATH}/workflow/{workflow_id}"
 
+    def parse_nf_version(self, version_string: str) -> Union[str, None]:
+        regex_pattern = r"nextflow version\s*([\d.]+)"
+        nf_version = regex_search(regex_pattern, version_string).group(1)
+
+        if not nf_version:
+            return None
+
+        return nf_version
+
     def is_nf_available(self) -> Union[str, None]:
         # The path to Nextflow must be in $PATH
         # Otherwise, the full path must be provided
@@ -140,16 +151,33 @@ class WorkflowManager:
                 Nextflow installation not found!")
             return None
 
-        regex_pattern = r"nextflow version\s*([\d.]+)"
-        nf_version = regex_search(regex_pattern, ver_process.stdout).group(1)
-
-        if not nf_version:
-            return None
+        nf_version = self.parse_nf_version(ver_process.stdout)
 
         return nf_version
 
-    # TODO: Split this to more methods
-    # E.g.: The job space creation could be a separate method
+    def create_workflow_execution_space(self) -> [str, str]:
+        job_id = str(uuid.uuid4())
+        workflow_dir = self.to_workflow_dir(workflow_id)
+        job_dir = os.path.join(workflow_dir, job_id)
+        os.mkdir(job_dir)
+
+        return job_id, job_dir
+
+    def build_nf_command(self, nf_script_path: str, ws_dir: str) -> str:
+        nf_command = "nextflow -bg"
+        nf_command += f" run {nf_script_path}"
+        nf_command += f" --workspace {ws_dir}/"
+        nf_command += f" --mets {ws_dir}/mets.xml"
+        nf_command += " -with-report"
+
+        return nf_command
+
+    def get_nf_out_err_paths(self, job_dir: str) -> [str, str]:
+        nf_out = f'{job_dir}/nextflow_out.txt'
+        nf_err = f'{job_dir}/nextflow_err.txt'
+
+        return nf_out, nf_err
+
     def start_nf_workflow(self, workflow_id: str, workspace_id: str) -> Union[WorkflowRsrc, None]:
         # Check if Nextflow is installed
         # If installed, get the version
@@ -160,37 +188,28 @@ class WorkflowManager:
         self.log.info(f"Using Nextflow version: {nf_version}")
 
         # nf_script is the path to the Nextflow script inside workflow_id
-        nf_script = self.to_workflow_script(workflow_id)
+        nf_script_path = self.to_workflow_script(workflow_id)
 
-        # TODO: THIS SHOULD BE HANDLED PROPERLY
-        # ws_path is the path to the ocr-d workspace 
-        ws_path = f"{WORKSPACES_DIR}/{workspace_id}"
+        # TODO: There should be a better way to achieve this
+        # Similar to to_workspace_dir() inside WorkspaceManager
+        workspace_dir = f"{WORKSPACES_DIR}/{workspace_id}"
 
         # TODO: Existence check must be performed here, 
         # both for the script and the ocr-d workspace
 
-        # Create an execution space - workflow_id/{job_id}
-        job_id = str(uuid.uuid4())
-        job_dir = os.path.join(self.to_workflow_dir(workflow_id), job_id)
-        os.mkdir(job_dir)
-
-        # Construct the Nextflow command
-        nf_command = "nextflow -bg"
-        nf_command += f" run {nf_script}"
-        # nf_command += f" --volumedir {ws_path}/"
-        nf_command += f" --workspace {ws_path}/"
-        nf_command += f" --mets {ws_path}/mets.xml"
-        nf_command += " -with-report"
+        job_id, job_dir = self.create_workflow_execution_space()   
+        nf_out, nf_err = self.get_nf_out_err_paths(job_dir)
+        nf_command = self.build_nf_command(nf_script_path, workspace_dir)
         try: 
-            with open(f'{job_dir}/nextflow_out.txt','w+') as nf_out:
-                with open(f'{job_dir}/nextflow_err.txt','w+') as nf_err:
+            with open(nf_out,'w+') as nf_out_file:
+                with open(nf_err,'w+') as nf_err_file:
                     # Raises an exception if the subprocess fails
                     nf_process = subprocess.run(shlex.split(nf_command),
                                                     shell=False,
                                                     check=True,
                                                     cwd=job_dir,
-                                                    stdout=nf_out,
-                                                    stderr=nf_err,
+                                                    stdout=nf_out_file,
+                                                    stderr=nf_err_file,
                                                     universal_newlines=True)
         except Exception:
             self.log.exception("error in start_nf_workflow")
