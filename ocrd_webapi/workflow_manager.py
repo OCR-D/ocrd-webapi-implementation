@@ -155,7 +155,7 @@ class WorkflowManager:
 
         return nf_version
 
-    def create_workflow_execution_space(self) -> [str, str]:
+    def create_workflow_execution_space(self, workflow_id) -> [str, str]:
         job_id = str(uuid.uuid4())
         workflow_dir = self.to_workflow_dir(workflow_id)
         job_dir = os.path.join(workflow_dir, job_id)
@@ -197,7 +197,7 @@ class WorkflowManager:
         # TODO: Existence check must be performed here, 
         # both for the script and the ocr-d workspace
 
-        job_id, job_dir = self.create_workflow_execution_space()   
+        job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         nf_out, nf_err = self.get_nf_out_err_paths(job_dir)
         nf_command = self.build_nf_command(nf_script_path, workspace_dir)
         try: 
