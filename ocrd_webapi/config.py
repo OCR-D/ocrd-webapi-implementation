@@ -18,7 +18,12 @@ def read_config() -> Dict:
     """
     read config from file
     """
-    config_path = Path(__file__).parent.parent / "config.yml"
+    import sys
+    # TODO: I don't know if I like that. I have to either change my mind or change this
+    if 'pytest' in sys.modules:
+        config_path = Path(__file__).parent.parent / "config-test.yml"
+    else:
+        config_path = Path(__file__).parent.parent / "config.yml"
     config = {
         CONFIG_SERVER_PATH: "http://localhost:8000",
         CONFIG_STORAGE_DIR: Path.home() / "ocrd-webapi-data",
