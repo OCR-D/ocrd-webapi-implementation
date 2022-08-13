@@ -15,6 +15,7 @@ from ocrd_webapi.models import (
 )
 from ocrd_webapi.utils import (
     ResponseException,
+    WorkspaceNotValidException,
 )
 from ocrd_webapi.constants import (
     SERVER_PATH,
@@ -88,16 +89,17 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     Create a new workspace
 
-    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F file=@things/example_ws.ocrd.zip  # noqa
+    curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F workspace=@things/example_ws.ocrd.zip  # noqa
     """
     try:
         return await workspace_manager.create_workspace_from_zip(workspace)
+    except WorkspaceNotValidException:
+        # TODO: give hints for cause of validation error to user.
+        # Therefore add attr to WorkspaceNot ValidException and put that into response json
+        raise ResponseException(422, {"error": "workspace not valid"})
     except Exception:
-        # TODO: exception mapping to repsonse code:
-        #   - return 422 if workspace invalid etc.
-        #   - return 500 for unexpected errors
-        log.exception("error in post_workspace")
-        return None
+        log.exception("unexpected error in post_workspace")
+        raise ResponseException(500, {"error": "internal server error"})
 
 
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})

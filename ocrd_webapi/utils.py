@@ -40,3 +40,7 @@ def to_workflow_job_dir(workflow_id) -> str:
     returns path to workflow-job which is saved as json-txt
     """
     return os.path.join(WORKFLOWS_DIR, workflow_id)
+
+
+class WorkspaceNotValidException(Exception):
+    pass

@@ -15,6 +15,7 @@ from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger
 from pathlib import Path
+from ocrd_webapi.utils import WorkspaceNotValidException
 
 
 # noinspection PyMethodMayBeStatic TODO: remove
@@ -58,11 +59,14 @@ class WorkspaceManager:
                 await fpt.write(content)
                 content = await file.read(1024)
 
-        resolver = Resolver()
-        valid_report = OcrdZipValidator(resolver, zip_dest).validate()
-        if not valid_report.is_valid:
+        try:
+            resolver = Resolver()
+            valid_report = OcrdZipValidator(resolver, zip_dest).validate()
+        except Exception as e:
+            raise WorkspaceNotValidException("Error during validation") from e
+        if valid_report is not None and not valid_report.is_valid:
             # TODO: raise custom Exception, catch in main and return appropriate error-code
-            raise Exception("zip is not valid")
+            raise WorkspaceNotValidException("ocrd-zip is not valid")
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
