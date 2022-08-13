@@ -1,10 +1,9 @@
 """
 module for functionality regarding the workspace section of the api
 """
-import logging
 import os
 import uuid
-from typing import List, Union
+from typing import Union
 import shutil
 
 import aiofiles
@@ -30,14 +29,6 @@ class WorkspaceManager:
         else:
             self.log.info("workspaces-directory is '%s'" % workspaces_dir)
         self.workspaces_dir = workspaces_dir
-
-    def get_workspaces(self):
-        res: List = [
-            WorkspaceRsrc(id=self.to_workspace_url(f), description="Workspace")
-            for f in os.listdir(self.workspaces_dir)
-            if os.path.isdir(self.to_workspace_dir(f))
-        ]
-        return res
 
     async def create_workspace_from_zip(self, file, uid=None) -> Union[WorkspaceRsrc, None]:
         """
