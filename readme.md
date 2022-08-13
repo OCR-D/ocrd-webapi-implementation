@@ -56,6 +56,9 @@ Links
 
 Dev-Server:
 -----------
+### start venv:
+`. venv/bin/activate`
+
 ### Start Dev-Server
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
 
