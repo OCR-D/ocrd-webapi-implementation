@@ -101,20 +101,21 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
 
 
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def get_workspace(workspace_id: str, content_type: str = Header(...)) -> WorkspaceRsrc:
+async def get_workspace(workspace_id: str, accept: str = Header(...)) -> WorkspaceRsrc:
     """
     Get an existing workspace
 
-    curl http://localhost:8000/workspace/-the-id-of-ws -H "content-type: application/json"
-    curl http://localhost:8000/workspace/-the-id-of-ws -H "content-type: application/vnd.ocrd+zip"
-        --output test-ocrd-bag.zip
+    can be testet with:
+    `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/json"` and
+    `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/vnd.ocrd+zip"
+        --output test-ocrd-bag.zip`
     """
-    if content_type == "application/json":
+    if accept == "application/json":
         workspace = workspace_manager.get_workspace_rsrc(workspace_id)
         if not workspace:
             raise ResponseException(404, {})
         return workspace
-    elif content_type == "application/vnd.ocrd+zip":
+    elif accept == "application/vnd.ocrd+zip":
         workspace = workspace_manager.get_workspace_bag(workspace_id)
         if not workspace:
             raise ResponseException(404, {})
@@ -122,7 +123,7 @@ async def get_workspace(workspace_id: str, content_type: str = Header(...)) -> W
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            f"Unsupported media, expected application/json or application/vnd.ocrd+zip",
+            "Unsupported media, expected application/json or application/vnd.ocrd+zip",
         )
 
 
@@ -216,7 +217,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str) 
         log.exception("error in put_workflow")
         return None
 
-""" 
+"""
 Not in the Web API Specification. Will be implemented if needed.
 
 @app.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
@@ -225,15 +226,15 @@ async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
 """
 
 """
-Executes the Nextflow script identified with {workflow_id}. 
+Executes the Nextflow script identified with {workflow_id}.
 The instance is identified by creating a {job_id}
 Input: workspace_id and fileGrp
 Output: overwrites the OCR-D results inside the {workspace_id}
 """
 @app.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
-async def start_workflow(workflow_id:str, workspace_id:str) -> Union[None, WorkflowRsrc]:
+async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, WorkflowRsrc]:
     """
-    Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a 
+    Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}
     """
     try:
