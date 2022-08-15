@@ -21,9 +21,11 @@ from ocrd_webapi.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
     WORKFLOWS_DIR,
+    DB_URL,
 )
 from ocrd_webapi.workspace_manager import WorkspaceManager
 from ocrd_webapi.workflow_manager import WorkflowManager
+from ocrd_webapi.database import initiate_database
 
 
 app = FastAPI(
@@ -63,7 +65,7 @@ async def startup_event():
     """
     os.makedirs(WORKSPACES_DIR, exist_ok=True)
     os.makedirs(WORKFLOWS_DIR, exist_ok=True)
-
+    await initiate_database(DB_URL)
 
 @app.get("/")
 async def test():
@@ -95,7 +97,7 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
         return await workspace_manager.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException:
         # TODO: give hints for cause of validation error to user.
-        # Therefore add attr to WorkspaceNot ValidException and put that into response json
+        # Therefore add attr to WorkspaceNot     ValidException and put that into response json
         raise ResponseException(422, {"error": "workspace not valid"})
     except Exception:
         log.exception("unexpected error in post_workspace")

@@ -11,6 +11,7 @@ __all__ = [
     "JobState",
     "to_processor_job_dir",
     "to_workflow_job_dir",
+    "WorkspaceNotValidException",
 ]
 
 

@@ -16,6 +16,7 @@ from ocrd import Resolver
 from ocrd_utils import getLogger
 from pathlib import Path
 from ocrd_webapi.utils import WorkspaceNotValidException
+from ocrd_webapi.models import WorkspaceDb
 
 
 # noinspection PyMethodMayBeStatic TODO: remove
@@ -72,6 +73,9 @@ class WorkspaceManager:
         workspace_bagger.spill(zip_dest, workspace_dir)
         os.remove(zip_dest)
 
+        workspace_db = WorkspaceDb(_id=uid, ocrd_identifier="test-1", bagit_profile_identifier="nein",
+                                   ocrd_base_version_checksum="doch")
+        await workspace_db.save()
         return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
 
     async def update_workspace(self, file, workspace_id):
