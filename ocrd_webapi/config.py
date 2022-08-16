@@ -2,6 +2,7 @@ from typing import Dict
 from pathlib import Path
 import yaml
 import os
+import sys
 
 __all__ = [
     'CONFIG_SERVER_PATH',
@@ -18,7 +19,6 @@ def read_config() -> Dict:
     """
     read config from file
     """
-    import sys
     # TODO: I don't know if I like that. I have to either change my mind or change this
     if 'pytest' in sys.modules:
         config_path = Path(__file__).parent.parent / "config-test.yml"
