@@ -12,12 +12,13 @@ Run project
 ### clone
 `git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
 
-### Create virtual environment and install requirements
+### Create virtual environment
 `make venv`
-`make requirements`
 
-### start venv:
+### start venv and install requirements:
 `. venv/bin/activate`
+
+`make requirements`
 
 ### run
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`

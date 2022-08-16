@@ -185,6 +185,25 @@ class WorkflowManager:
 
         return nf_out, nf_err
 
+    def start_nf_process(self, job_dir, nf_command):
+        nf_out, nf_err = self.get_nf_out_err_paths(job_dir)
+
+        try:
+            with open(nf_out,'w+') as nf_out_file:
+                with open(nf_err,'w+') as nf_err_file:
+                    # Raises an exception if the subprocess fails
+                    nf_process = subprocess.run(shlex.split(nf_command),
+                                                    shell=False,
+                                                    check=True,
+                                                    cwd=job_dir,
+                                                    stdout=nf_out_file,
+                                                    stderr=nf_err_file,
+                                                    universal_newlines=True)
+        # More detailed exception catches needed
+        # E.g., was the exception due to IOError or subprocess.CalledProcessError
+        except Exception as error:
+            self.log.exception(f"Nextflow process failed to start: {error}")
+
     def start_nf_workflow(self, workflow_id: str, workspace_id: str) -> Union[WorkflowRsrc, None]:
         # Check if Nextflow is installed
         # If installed, get the version
@@ -205,21 +224,11 @@ class WorkflowManager:
         # both for the script and the ocr-d workspace
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
-        nf_out, nf_err = self.get_nf_out_err_paths(job_dir)
         nf_command = self.build_nf_command(nf_script_path, workspace_dir)
         try: 
-            with open(nf_out,'w+') as nf_out_file:
-                with open(nf_err,'w+') as nf_err_file:
-                    # Raises an exception if the subprocess fails
-                    nf_process = subprocess.run(shlex.split(nf_command),
-                                                    shell=False,
-                                                    check=True,
-                                                    cwd=job_dir,
-                                                    stdout=nf_out_file,
-                                                    stderr=nf_err_file,
-                                                    universal_newlines=True)
-        except Exception:
-            self.log.exception("error in start_nf_workflow")
+            self.start_nf_process(job_dir, nf_command)
+        except Exception as error:
+            self.log.exception(f"start_nf_workflow: \n{error}")
             # Returning None is really bad for the tests!
             # We must avoid doing that
             # return None

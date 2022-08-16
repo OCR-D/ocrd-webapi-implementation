@@ -17,6 +17,4 @@ venv:
 	$(PYTHON) -m venv venv
 
 requirements:
-	source $(VIRTUAL_ENV)/bin/activate
 	pip install -r requirements.txt
-	deactivate
