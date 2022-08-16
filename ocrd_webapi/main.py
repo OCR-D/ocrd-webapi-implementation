@@ -176,7 +176,7 @@ async def upload_workflow_script(nextflow_script: UploadFile) -> Union[None, Wor
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
-    curl -X POST http://localhost:8000/workflow -H 'content-type: multipart/form-data' -F file=@things/nextflow.nf  # noqa
+    curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
     try:
         return await workflow_manager.create_workflow_space(nextflow_script)
@@ -193,7 +193,7 @@ async def get_workflow_script(workflow_id: str) -> WorkflowRsrc:
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
 
-    curl -X 'GET' 'http://localhost:8000/workflow/{workflow_id}' -H 'accept: application/json' --output ./nextflow.nf
+    curl -X GET http://localhost:8000/workflow/{workflow_id} --output ./nextflow.nf
     """
 
     workflow_script = workflow_manager.get_workflow_script_rsrc(workflow_id)
@@ -209,6 +209,8 @@ async def get_workflow_script(workflow_id: str) -> WorkflowRsrc:
 async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str) -> Union[None, WorkflowRsrc]:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
+
+    curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
     try:
         return await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
@@ -237,7 +239,9 @@ Output: overwrites the OCR-D results inside the {workspace_id}
 async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, WorkflowRsrc]:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
-    workspace with id {workspace_id}
+    workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
+    
+    curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
     try:
         return workflow_manager.start_nf_workflow(workflow_id, workspace_id)

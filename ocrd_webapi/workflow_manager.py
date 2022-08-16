@@ -15,7 +15,6 @@ from ocrd_webapi.models import WorkflowRsrc
 from ocrd_webapi.constants import (
     SERVER_PATH, 
     WORKSPACES_DIR,
-    DEFAULT_NF_SCRIPT_NAME,
 )
 from ocrd_utils import getLogger
 from pathlib import Path
@@ -32,7 +31,7 @@ class WorkflowManager:
             self.log.info("Workflows-directory is '%s'" % workflows_dir)
         self.workflows_dir = workflows_dir
 
-    def get_workflows(self):
+    def get_workflows(self) -> List[WorkflowRsrc]:
         """
         Get a list of all available workflows.
         """
@@ -62,9 +61,9 @@ class WorkflowManager:
         else:
             uid = str(uuid.uuid4())
             workflow_dir = self.to_workflow_dir(uid)
-            os.mkdir(workflow_dir)
-
-        nf_script_path = os.path.join(workflow_dir, DEFAULT_NF_SCRIPT_NAME)
+        
+        os.mkdir(workflow_dir)
+        nf_script_path = os.path.join(workflow_dir, file.filename)
         async with aiofiles.open(nf_script_path, "wb") as fpt:
             content = await file.read(1024)
             while content:
@@ -89,7 +88,7 @@ class WorkflowManager:
             shutil.rmtree(workflow_dir)
         return await self.create_workflow_space(file, workflow_id)
 
-    def get_workflow_script_rsrc(self, workflow_id: str):
+    def get_workflow_script_rsrc(self, workflow_id: str) -> Union[WorkflowRsrc, None]:
         """
         Get a workflow script available on disk as a Resource via its workflow_id
         Returns:
@@ -101,13 +100,21 @@ class WorkflowManager:
         
         return WorkflowRsrc(id=nf_script_path, description="Workflow nextflow script")
 
-    def to_workflow_script(self, workflow_id: str) -> str:
+    def to_workflow_script(self, workflow_id: str) -> Union[str, None]:
         workflow_path = self.to_workflow_dir(workflow_id)
+
+        script_name = None
+        for file in os.listdir(workflow_path):
+            if file.endswith(".nf"):
+                script_name = file
+
+        if not script_name:
+            return None
 
         """
         Return the local path to Nextflow script of `workflow_id`. No check if existing.
         """
-        return os.path.join(workflow_path, DEFAULT_NF_SCRIPT_NAME)
+        return os.path.join(workflow_path, script_name)
 
     def to_workflow_dir(self, workflow_id: str) -> str:
         """
