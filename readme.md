@@ -8,6 +8,21 @@ TODO: ToC
 
 Run project
 -----------
+## Local
+### clone
+`git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
+
+### Create virtual environment and install requirements
+`make venv`
+`make requirements`
+
+### start venv:
+`. venv/bin/activate`
+
+### run
+`uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
+
+## Docker
 ### clone
 `git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
 

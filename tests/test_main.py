@@ -19,12 +19,17 @@ def do_before_all_tests(request):
     rmtree(constants.WORKSPACES_DIR)
     mkdir(constants.WORKSPACES_DIR)
 
+    # clean workflows-directory
+    rmtree(constants.WORKFLOWS_DIR)
+    mkdir(constants.WORKFLOWS_DIR)
+
 def test_post_workspace(utils):
     file = {'workspace': open(utils.to_asset_path("example_ws.ocrd.zip"), 'rb')}
     response = client.post("/workspace", files=file)
     assert_status_code(response.status_code, expected_floor=2)
     workspace_id = get_workspace_id(response)
     assert_workspace_dir(workspace_id)
+    assert_workspaces_len(1)
 
 def test_upload_workflow_script(utils):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow.nf"), 'rb')}
@@ -56,10 +61,20 @@ def test_start_workflow_script(utils):
     assert_status_code(response.status_code, expected_floor=2)
     assert_job_id(response)
 
+
+# NOTE: Duplications for Workspace/Workflow will be removed 
+# when there is a single Resource Manager implemented
+
 # Helper functions
 def assert_status_code(status_code, expected_floor):
     status_floor = status_code // 100
     assert status_floor == expected_floor, f"response should have {expected_floor}xx status code"
+
+def assert_workspaces_len(expected_len):
+    response = client.get("/workspace")
+    assert_status_code(response.status_code, expected_floor=2)
+    response_len = len(response.json())
+    assert expected_len == response_len, "more workspaces than expected existing"
 
 def assert_workflows_len(expected_len):
     response = client.get("/workflow")
@@ -73,7 +88,7 @@ def assert_workspace_dir(workspace_id):
 def assert_workflow_dir(workflow_id):
     assert exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
 
-def asssert_job_id(response):
+def assert_job_id(response):
     # Asserts that the job id is not an empty string
     assert not response.json()['@id'].split("/")[-1] == "", "job id was not assigned" 
 

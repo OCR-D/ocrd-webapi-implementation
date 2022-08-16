@@ -6,6 +6,7 @@ help:
 	@echo "  Targets"
 	@echo ""
 	@echo "    venv           Create virtual-environment for the project"
+	@echo "    requirements   Install requirements of the project"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -14,3 +15,8 @@ help:
 
 venv:
 	$(PYTHON) -m venv venv
+
+requirements:
+	source $(VIRTUAL_ENV)/bin/activate
+	pip install -r requirements.txt
+	deactivate
