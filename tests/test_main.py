@@ -7,35 +7,37 @@ from shutil import rmtree
 from os import mkdir
 from os.path import exists, join
 import pymongo
+from pymongo.errors import ServerSelectionTimeoutError
 
 """
 for the tests the "storing"-directory is set to /tmp/ocrd_webapi_test. See config.py read_config()
 for how that is accomplished currently.
 """
 
-# TODO: think about changing this in the long run!
-mongo_client = pymongo.MongoClient(constants.DB_URL)
-mydb = mongo_client["test_operandi"]
-workspace_col = mydb["workspace"]
-
 
 @pytest.fixture(scope="session", autouse=True)
-def do_before_all_tests(request):
+def do_before_all_tests(request, mongo_client):
     # clean workspaces-directory
     rmtree(constants.WORKSPACES_DIR)
     mkdir(constants.WORKSPACES_DIR)
+    # make sure a mongdb is available for the tests and abort if not
+    try:
+        mongo_client.admin.command("ismaster")
+    except ServerSelectionTimeoutError as e:
+        print(mongo_client.server)
+        raise Exception(f"mongodb not available: {constants.DB_URL}") from e
 
 
 @pytest.fixture(autouse=True)
-def run_around_tests():
+def run_around_tests(mongo_client):
     # Before each test (until yield):
-    workspace_col.drop()
+    mongo_client[constants.MONGO_TESTDB]["workspace"].delete_many({})
     yield
     # After each test:
     # TODO: clean Database
 
 
-def test_post_workspace(utils):
+def test_post_workspace(utils, workspace_col):
     # arrange
     file = {'workspace': open(utils.to_asset_path("example_ws.ocrd.zip"), 'rb')}
 
@@ -44,7 +46,7 @@ def test_post_workspace(utils):
         response = client.post("/workspace", files=file)
 
     # assert
-    assert response.status_code == 200, "responose should have 2xx status code"
+    assert response.status_code == 200, "response should have 2xx status code"
     workspace_id = response.json()['@id'].split("/")[-1]
     assert exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir not existing"
     # TODO: verify mongdb contains correct entries

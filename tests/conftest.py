@@ -4,6 +4,8 @@ from pathlib import Path
 from ocrd_webapi.workspace_manager import WorkspaceManager
 from fastapi import UploadFile
 import os
+from pymongo import MongoClient
+import ocrd_webapi.constants as constants
 
 TEST_WS_DIR = str(Path(Path.home(), "zeugs-ohne-backup/test-wsm/workspaces"))
 
@@ -16,6 +18,22 @@ def _fixture_workspaces_dir():
 @pytest.fixture(name='workspace_manager')
 def _fixture_plain_workspace():
     return WorkspaceManager(TEST_WS_DIR)
+
+
+@pytest.fixture(name='mongo_client', scope="session")
+def _fixture_mongo_client():
+    # TODO: think about changing this in the long run!
+    mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
+    yield mongo_client
+
+
+@pytest.fixture(name='workspace_col', scope="session")
+def _fixture_workspace_col(mongo_client):
+    # TODO: think about changing this in the long run!
+    mydb = mongo_client[constants.MONGO_TESTDB]
+    workspace_col = mydb["workspace"]
+    yield workspace_col
+    workspace_col.drop()
 
 
 @pytest.fixture(name='dummy_workspace')
