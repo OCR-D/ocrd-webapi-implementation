@@ -1,0 +1,10 @@
+services:
+  webapi:
+    build: .
+    ports:
+      - "8000:80"
+  mongo:
+    image: "mongo"
+    ports:
+      - "27017:27017"
+

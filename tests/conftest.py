@@ -4,8 +4,21 @@ from pathlib import Path
 from ocrd_webapi.workspace_manager import WorkspaceManager
 from fastapi import UploadFile
 import os
+from pymongo import MongoClient
+import ocrd_webapi.constants as constants
+from ocrd_webapi.database import initiate_database
+import asyncio
 
 TEST_WS_DIR = str(Path(Path.home(), "zeugs-ohne-backup/test-wsm/workspaces"))
+WORKSPACE_2_ID = 'example-workspace-2'
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """
+    this is a workaround. Template is https://github.com/tortoise/tortoise-orm/issues/638.
+    """
+    return asyncio.get_event_loop()
 
 
 @pytest.fixture(name='workspaces_dir')
@@ -18,11 +31,36 @@ def _fixture_plain_workspace():
     return WorkspaceManager(TEST_WS_DIR)
 
 
+@pytest.fixture(name='mongo_client', scope="session")
+def _fixture_mongo_client():
+    # TODO: think about changing this in the long run!
+    mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
+    yield mongo_client
+
+
+@pytest.fixture(name='workspace_mongo_coll', scope="session")
+def _fixture_workspace_mongo_coll(mongo_client):
+    # TODO: think about changing this in the long run!
+    mydb = mongo_client[constants.MONGO_TESTDB]
+    workspace_coll = mydb["workspace"]
+    yield workspace_coll
+    workspace_coll.drop()
+
+
 @pytest.fixture(name='dummy_workspace')
 async def _fixture_dummy_workspace(workspace_manager, utils):
     with open(utils.to_asset_path("example_ws.ocrd.zip"), "rb") as fin:
         file = UploadFile("test", file=fin, content_type="application/zip")
         return await workspace_manager.create_workspace_from_zip(file)
+
+
+@pytest.fixture(name='init_db', scope="session")
+async def _fixture_init_db():
+    """
+    purpose of this fixture is only to init the database. This should only be used when
+    `TestClient(app)` is used, because it has to be done in the FastAPI-Object
+    """
+    await initiate_database(constants.DB_URL)
 
 
 def pytest_sessionstart(session):

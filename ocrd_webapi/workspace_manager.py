@@ -15,7 +15,14 @@ from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger
 from pathlib import Path
-from ocrd_webapi.utils import WorkspaceNotValidException
+from ocrd_webapi.utils import (
+    WorkspaceNotValidException,
+    WorkspaceException,
+    read_baginfos_from_zip,
+    WorkspaceGoneException,
+)
+from ocrd_webapi.models import WorkspaceDb
+from ocrd_webapi.database import save_workspace, mark_deleted_workspace
 
 
 # noinspection PyMethodMayBeStatic TODO: remove
@@ -31,9 +38,9 @@ class WorkspaceManager:
             self.log.info("workspaces-directory is '%s'" % workspaces_dir)
         self.workspaces_dir = workspaces_dir
 
-    async def create_workspace_from_zip(self, file, uid=None) -> Union[WorkspaceRsrc, None]:
+    async def create_workspace_from_zip(self, file, uid=None) -> Union[WorkspaceRsrc]:
         """
-        create a workspace from a ocrd-zipfile
+        create a workspace from an ocrd-zipfile
 
         Args:
             file: ocrd-zip of workspace
@@ -41,13 +48,13 @@ class WorkspaceManager:
                 this. If corresponding dir already existing, None is returned
 
         Returns:
-
+            'WorkspaceRsrc' or None
         """
         if uid:
             workspace_dir = self.to_workspace_dir(uid)
             if os.path.exists(workspace_dir):
-                self.log.warning("can not update: workspace still/already existing. Id: %s" % uid)
-                return None
+                self.log.warning("can not update: workspace still/already exists. Id: %s" % uid)
+                raise WorkspaceException(f"workspace with id: '{uid}' already exists")
         else:
             uid = str(uuid.uuid4())
             workspace_dir = self.to_workspace_dir(uid)
@@ -63,13 +70,18 @@ class WorkspaceManager:
             resolver = Resolver()
             valid_report = OcrdZipValidator(resolver, zip_dest).validate()
         except Exception as e:
-            raise WorkspaceNotValidException("Error during validation") from e
+            raise WorkspaceNotValidException("Error during workspace validation") from e
         if valid_report is not None and not valid_report.is_valid:
-            # TODO: raise custom Exception, catch in main and return appropriate error-code
+            # TODO: store causes in Exception and include in response
             raise WorkspaceNotValidException("ocrd-zip is not valid")
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
+
+        # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
+        # maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
+        bag_infos = read_baginfos_from_zip(zip_dest)
+        await save_workspace(uid, bag_infos)
         os.remove(zip_dest)
 
         return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
@@ -147,7 +159,8 @@ class WorkspaceManager:
 
     def delete_workspace_bag(self, workspace_bag_path):
         """
-        Delete a workspace bag after dispatch
+        Delete a workspace bag after dispatch. TODO: Think about why I might have added this method
+        and eitheir implement and use or delete
         """
         pass
 
@@ -161,14 +174,20 @@ class WorkspaceManager:
                 res.append(WorkspaceRsrc(id=self.to_workspace_url(f.name), description="Workspace"))
         return res
 
-    def delete_workspace(self, workspace_id):
+    async def delete_workspace(self, workspace_id):
         """
         Delete a workspace
         """
         workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
-            return None
+            raise WorkspaceException(f"workspace with id {workspace_id} not existing")
+        else:
+            ws = await WorkspaceDb.get(workspace_id)
+            if ws.deleted:
+                raise WorkspaceGoneException("workspace already deleted")
         shutil.rmtree(workspace_dir)
+        await mark_deleted_workspace(workspace_id)
+
         return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
 
     def to_workspace_dir(self, workspace_id: str) -> str:

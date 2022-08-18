@@ -7,12 +7,14 @@ import sys
 __all__ = [
     'CONFIG_SERVER_PATH',
     'CONFIG_STORAGE_DIR',
-    'read_config'
+    'CONFIG_DB_URL',
+    'read_config',
 ]
 
 
 CONFIG_SERVER_PATH = "server_path"
 CONFIG_STORAGE_DIR = "data_path"
+CONFIG_DB_URL = "db_url"
 
 
 def read_config() -> Dict:
@@ -27,6 +29,7 @@ def read_config() -> Dict:
     config = {
         CONFIG_SERVER_PATH: "http://localhost:8000",
         CONFIG_STORAGE_DIR: Path.home() / "ocrd-webapi-data",
+        CONFIG_DB_URL: "mongodb://localhost:27017",
     }
     if os.path.exists(config_path):
         with open(config_path) as fin:

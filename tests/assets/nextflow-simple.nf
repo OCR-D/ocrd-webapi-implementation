@@ -1,1 +1,1 @@
-/home/mm/Desktop/ocrd-webapi-implementation/things/nextflow-simple.nf
+../../things/nextflow-simple.nf

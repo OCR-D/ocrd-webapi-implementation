@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
+from beanie import Document
+from uuid import UUID, uuid4
 
 
 class DiscoveryResponse(BaseModel):
@@ -75,3 +77,30 @@ class ProcessorJob(Job):
 
     class Config:
         allow_population_by_field_name = True
+
+
+class WorkspaceDb(Document):
+    """
+    Model to store a workspace in the mongo-database.
+
+    Information to handle workspaces and from bag-info.txt are stored here.
+
+    Attributes:
+        ocrd_identifier             Ocrd-Identifier (mandatory)
+        bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
+        ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
+        ocrd_mets                   Ocrd-Mets (optional)
+        bag_info_adds               bag-info.txt can also (optionally) contain aditional
+                                    key-value-pairs which are saved here
+    """
+    # TODO: no id is currently generated, but this might not work if the latter is changed
+    id: str = Field(default_factory=uuid4)
+    ocrd_identifier: str
+    bagit_profile_identifier: str
+    ocrd_base_version_checksum: Optional[str]
+    ocrd_mets: Optional[str]
+    bag_info_adds: Optional[dict]
+    deleted: bool = False
+
+    class Settings:
+        name = "workspace"

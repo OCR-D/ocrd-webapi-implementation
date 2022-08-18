@@ -11,7 +11,15 @@ __all__ = [
     "JobState",
     "to_processor_job_dir",
     "to_workflow_job_dir",
+    "WorkspaceException",
+    "WorkspaceNotValidException",
+    "WorkspaceGoneException",
+    "read_baginfos_from_zip",
+
 ]
+import zipfile
+import bagit
+import tempfile
 
 
 class ResponseException(Exception):
@@ -42,5 +50,33 @@ def to_workflow_job_dir(workflow_id) -> str:
     return os.path.join(WORKFLOWS_DIR, workflow_id)
 
 
-class WorkspaceNotValidException(Exception):
+class WorkspaceException(Exception):
+    """
+    Exception to indicate something is wrong with the workspace
+    """
     pass
+
+
+class WorkspaceNotValidException(WorkspaceException):
+    pass
+
+
+class WorkspaceGoneException(WorkspaceException):
+    pass
+
+def read_baginfos_from_zip(path_to_zip) -> dict:
+    """
+    Extracts bag-info.txt from bagit-file and turns it into a dict
+
+    Args:
+        path_to_zip: path to bagit-file
+
+    Returns:
+        bag-info.txt from bagit as a dict
+    """
+    with zipfile.ZipFile(path_to_zip, 'r') as z:
+        bag_info_bytes = z.read("bag-info.txt")
+        with tempfile.NamedTemporaryFile() as tmp:
+            with open(tmp.name, 'wb') as f:
+                f.write(bag_info_bytes)
+            return bagit._load_tag_file(tmp.name)
