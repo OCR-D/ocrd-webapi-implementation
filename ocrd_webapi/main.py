@@ -3,12 +3,20 @@ Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/op
 """
 import datetime
 import os
-from ocrd_utils import getLogger, initLogging
 from typing import Union, List
-from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, UploadFile, Request, Header, HTTPException, status
+from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
+from ocrd_utils import getLogger, initLogging
+
+from ocrd_webapi.constants import (
+    SERVER_PATH,
+    WORKSPACES_DIR,
+    WORKFLOWS_DIR,
+    DB_URL,
+)
+from ocrd_webapi.database import initiate_database
 from ocrd_webapi.models import (
     WorkspaceRsrc,
     WorkflowRsrc,
@@ -17,16 +25,8 @@ from ocrd_webapi.utils import (
     ResponseException,
     WorkspaceNotValidException,
 )
-from ocrd_webapi.constants import (
-    SERVER_PATH,
-    WORKSPACES_DIR,
-    WORKFLOWS_DIR,
-    DB_URL,
-)
-from ocrd_webapi.workspace_manager import WorkspaceManager
 from ocrd_webapi.workflow_manager import WorkflowManager
-from ocrd_webapi.database import initiate_database
-
+from ocrd_webapi.workspace_manager import WorkspaceManager
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -143,7 +143,7 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
               too
             - keep empty Directories of deleted workspaces for a while?
     """
-    workspace = workspace_manager.delete_workspace(workspace_id)
+    workspace = await workspace_manager.delete_workspace(workspace_id)
     if not workspace:
         raise ResponseException(404, {})
     return workspace

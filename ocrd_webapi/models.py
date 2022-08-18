@@ -93,7 +93,8 @@ class WorkspaceDb(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain aditional
                                     key-value-pairs which are saved here
     """
-    id: UUID = Field(default_factory=uuid4)
+    # TODO: no id is currently generated, but this might not work if the latter is changed
+    id: str = Field(default_factory=uuid4)
     ocrd_identifier: str
     bagit_profile_identifier: str
     ocrd_base_version_checksum: Optional[str]

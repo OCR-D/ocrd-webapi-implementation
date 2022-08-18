@@ -8,13 +8,13 @@ import pytest
 from fastapi import UploadFile
 from pathlib import Path
 import zipfile
-
-
-WORKSPACE_2_ID = 'example-workspace-2'
+from .conftest import WORKSPACE_2_ID
+from ocrd_webapi.database import initiate_database
+from ocrd_webapi.constants import DB_URL
 
 
 @pytest.mark.asyncio
-async def test_create_workspace_from_zip(workspace_manager, workspaces_dir, utils):
+async def test_create_workspace_from_zip(workspace_manager, workspaces_dir, utils, init_db):
     # arrange
     with open(utils.to_asset_path("example_ws.ocrd.zip"), "rb") as fin:
         file = UploadFile("test", file=fin, content_type="application/zip")
@@ -28,7 +28,7 @@ async def test_create_workspace_from_zip(workspace_manager, workspaces_dir, util
 
 
 @pytest.mark.asyncio
-async def test_update_workspace(dummy_workspace, workspace_manager, workspaces_dir, utils):
+async def test_update_workspace(dummy_workspace, workspace_manager, workspaces_dir, utils, init_db):
     # arrange
     uid = utils.get_workspace_rsrc_id(dummy_workspace)
     mets_path = Path(workspaces_dir, uid, "mets.xml")
@@ -48,7 +48,7 @@ async def test_update_workspace(dummy_workspace, workspace_manager, workspaces_d
         assert WORKSPACE_2_ID in fin.read(), "expected string '%s' in metsfile" % WORKSPACE_2_ID
 
 
-def test_get_workspace_rsrc(workspace_manager, dummy_workspace, utils):
+def test_get_workspace_rsrc(workspace_manager, dummy_workspace, utils, init_db):
     # arrange
     uid = utils.get_workspace_rsrc_id(dummy_workspace)
     # act
@@ -57,7 +57,7 @@ def test_get_workspace_rsrc(workspace_manager, dummy_workspace, utils):
     assert workspace and workspace.id, "Workspace: %s" % workspace
 
 
-def test_get_workspaces(workspace_manager, dummy_workspace):
+def test_get_workspaces(workspace_manager, dummy_workspace, init_db):
     # act
     workspaces = workspace_manager.get_workspaces()
     # assert
@@ -66,7 +66,7 @@ def test_get_workspaces(workspace_manager, dummy_workspace):
     assert workspaces[0].id, "expected workspace_rsrc"
 
 
-def test_delete_workspaces(workspace_manager, dummy_workspace, utils):
+def test_delete_workspaces(workspace_manager, dummy_workspace, utils, init_db):
     # act
     uid = utils.get_workspace_rsrc_id(dummy_workspace)
     workspace_manager.delete_workspace(uid)
@@ -75,7 +75,7 @@ def test_delete_workspaces(workspace_manager, dummy_workspace, utils):
     assert not deleted_ws, "workspace should have been deleted"
 
 
-def test_get_workspaces_as_bag(workspace_manager, dummy_workspace, utils):
+def test_get_workspaces_as_bag(workspace_manager, dummy_workspace, utils, init_db):
     # arrange
     uid = utils.get_workspace_rsrc_id(dummy_workspace)
 

@@ -159,7 +159,8 @@ class WorkspaceManager:
 
     def delete_workspace_bag(self, workspace_bag_path):
         """
-        Delete a workspace bag after dispatch
+        Delete a workspace bag after dispatch. TODO: Think about why I might have added this method
+        and eitheir implement and use or delete
         """
         pass
 
@@ -185,7 +186,7 @@ class WorkspaceManager:
             if ws.deleted:
                 raise WorkspaceGoneException("workspace already deleted")
         shutil.rmtree(workspace_dir)
-        mark_deleted_workspace(workspace_id)
+        await mark_deleted_workspace(workspace_id)
 
         return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
 
