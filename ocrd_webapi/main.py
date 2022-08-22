@@ -5,10 +5,10 @@ import datetime
 import os
 from typing import Union, List
 
-from fastapi import FastAPI, UploadFile, Request, Header, HTTPException, status
+from fastapi import FastAPI, UploadFile, Request, Header, HTTPException, status, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
-from ocrd_utils import getLogger, initLogging
+from ocrd_utils import getLogger
 
 from ocrd_webapi.constants import (
     SERVER_PATH,
@@ -24,9 +24,12 @@ from ocrd_webapi.models import (
 from ocrd_webapi.utils import (
     ResponseException,
     WorkspaceNotValidException,
+    safe_init_logging,
 )
 from ocrd_webapi.workflow_manager import WorkflowManager
 from ocrd_webapi.workspace_manager import WorkspaceManager
+from ocrd_webapi import database
+from ocrd_webapi.utils import WorkspaceException
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -44,7 +47,7 @@ app = FastAPI(
         }
     ],
 )
-initLogging()
+safe_init_logging()
 log = getLogger('ocrd_webapi.main')
 workspace_manager = WorkspaceManager(WORKSPACES_DIR)
 workflow_manager = WorkflowManager(WORKFLOWS_DIR)
@@ -86,7 +89,6 @@ async def get_workspaces() -> List[WorkspaceRsrc]:
     return workspace_manager.get_workspaces()
 
 
-# noinspection PyBroadException TODO: remove
 @app.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
 async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
@@ -96,24 +98,21 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
     """
     try:
         return await workspace_manager.create_workspace_from_zip(workspace)
-    except WorkspaceNotValidException:
-        # TODO: give hints for cause of validation error to user.
-        # Therefore add attr to WorkspaceNotValidException and put that into response json
-        raise ResponseException(422, {"error": "workspace not valid"})
+    except WorkspaceNotValidException as e:
+        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception:
         log.exception("unexpected error in post_workspace")
         raise ResponseException(500, {"error": "internal server error"})
 
 
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def get_workspace(workspace_id: str, accept: str = Header(...)) -> WorkspaceRsrc:
+async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)) -> WorkspaceRsrc:
     """
     Get an existing workspace
 
     can be testet with:
     `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/json"` and
-    `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/vnd.ocrd+zip"
-        --output test-ocrd-bag.zip`
+    `curl http://localhost:8000/workspace/{ws-id} -H "Accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     if accept == "application/json":
         workspace = workspace_manager.get_workspace_rsrc(workspace_id)
@@ -121,10 +120,11 @@ async def get_workspace(workspace_id: str, accept: str = Header(...)) -> Workspa
             raise ResponseException(404, {})
         return workspace
     elif accept == "application/vnd.ocrd+zip":
-        workspace = workspace_manager.get_workspace_bag(workspace_id)
-        if not workspace:
+        bag_path = workspace_manager.get_workspace_bag(workspace_id)
+        if not bag_path:
             raise ResponseException(404, {})
-        return FileResponse(workspace)
+        background_tasks.add_task(os.unlink, bag_path)
+        return FileResponse(bag_path)
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -136,17 +136,15 @@ async def get_workspace(workspace_id: str, accept: str = Header(...)) -> Workspa
 async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Delete a workspace
-    TODO: curl-command to do it
-    TODO: what about 410 (Gone), specified in API:
-        - (how to) keep track of deleted workspaces?
-            - create a Database with information about workspaces? Could be usefull for other tasks
-              too
-            - keep empty Directories of deleted workspaces for a while?
+    curl -v -X DELETE 'http://localhost:8000/workspace/put-workspace-id-here'
     """
-    workspace = await workspace_manager.delete_workspace(workspace_id)
-    if not workspace:
-        raise ResponseException(404, {})
-    return workspace
+    try:
+        workspace = await workspace_manager.delete_workspace(workspace_id)
+    except WorkspaceException:
+        if await database.get_workspace(workspace_id):
+            raise ResponseException(410, {})
+        else:
+            raise ResponseException(404, {})
 
 
 @app.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
@@ -156,12 +154,11 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRs
     """
     try:
         return await workspace_manager.update_workspace(workspace, workspace_id)
+    except WorkspaceNotValidException as e:
+        raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception:
-        # TODO: exception mapping to repsonse code:
-        #   - return 422 if workspace invalid etc.
-        #   - return 500 for unexpected errors
-        log.exception("error in put_workspace")
-        return None
+        log.exception("unexpected error in put_workspace")
+        raise ResponseException(500, {"error": "internal server error"})
 
 
 @app.get("/workflow")
@@ -184,11 +181,8 @@ async def upload_workflow_script(nextflow_script: UploadFile) -> Union[None, Wor
     try:
         return await workflow_manager.create_workflow_space(nextflow_script)
     except Exception:
-        # TODO: exception mapping to repsonse code:
-        #   - return 422 if workflow invalid etc.
-        #   - return 500 for unexpected errors
-        log.exception("error in post_workflow")
-        return None
+        log.exception("error in upload_workflow_script")
+        raise ResponseException(500, {"error": "internal server error"})
 
 
 @app.get("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
@@ -218,11 +212,9 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str) 
     try:
         return await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
     except Exception:
-        # TODO: exception mapping to repsonse code:
-        #   - return 422 if workflow invalid etc.
-        #   - return 500 for unexpected errors
-        log.exception("error in put_workflow")
-        return None
+        log.exception("error in update_workflow_script")
+        raise ResponseException(500, {"error": "internal server error"})
+
 
 """
 Not in the Web API Specification. Will be implemented if needed.
@@ -231,6 +223,7 @@ Not in the Web API Specification. Will be implemented if needed.
 async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
     pass
 """
+
 
 """
 Executes the Nextflow script identified with {workflow_id}.
@@ -249,11 +242,9 @@ async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, Wor
     try:
         return workflow_manager.start_nf_workflow(workflow_id, workspace_id)
     except Exception:
-        # TODO: exception mapping to repsonse code:
-        #   - return 422 if workflow invalid etc.
-        #   - return 500 for unexpected errors
         log.exception("error in start_workflow")
-        return None
+        raise ResponseException(500, {"error": "internal server error"})
+
 
 """
 TODO: Implement @app.get("/workflow/{workflow_id}/{job_id}") -> Still unclear how to implement it

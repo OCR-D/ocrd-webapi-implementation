@@ -1,8 +1,12 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+from ocrd_webapi.utils import safe_init_logging
 from ocrd_utils import getLogger
 
 from ocrd_webapi.models import WorkspaceDb
+
+
+safe_init_logging()
 
 
 async def initiate_database(db_url: str):
@@ -50,5 +54,8 @@ async def mark_deleted_workspace(uid: str):
         ws.deleted = True
         await ws.save()
     else:
-        # TODO: turn into logging (find out how to properly get and init logger)
-        raise Exception(f"requested deletion of unknown workspace with id: {uid}")
+        getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
+
+
+async def get_workspace(uid: str):
+    return await WorkspaceDb.get(uid)

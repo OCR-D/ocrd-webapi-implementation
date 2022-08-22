@@ -25,11 +25,14 @@ from ocrd_webapi.models import WorkspaceDb
 from ocrd_webapi.database import save_workspace, mark_deleted_workspace
 
 
-# noinspection PyMethodMayBeStatic TODO: remove
-# TODO: add types to all method-declarations
 class WorkspaceManager:
+    """Class to handle workspace related tasks"""
 
-    def __init__(self, workspaces_dir):
+    def __init__(self, workspaces_dir: str):
+        """
+        Args:
+            workspaces_dir: path to directory where the workspace-files should be stored
+        """
         self.log = getLogger('ocrd_webapi.workspace_manager')
         if not os.path.exists(workspaces_dir):
             Path(workspaces_dir).mkdir(parents=True, exist_ok=True)
@@ -38,7 +41,7 @@ class WorkspaceManager:
             self.log.info("workspaces-directory is '%s'" % workspaces_dir)
         self.workspaces_dir = workspaces_dir
 
-    async def create_workspace_from_zip(self, file, uid=None) -> Union[WorkspaceRsrc]:
+    async def create_workspace_from_zip(self, file: str, uid: Union[str, None] = None) -> Union[WorkspaceRsrc]:
         """
         create a workspace from an ocrd-zipfile
 
@@ -70,10 +73,9 @@ class WorkspaceManager:
             resolver = Resolver()
             valid_report = OcrdZipValidator(resolver, zip_dest).validate()
         except Exception as e:
-            raise WorkspaceNotValidException("Error during workspace validation") from e
+            raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
         if valid_report is not None and not valid_report.is_valid:
-            # TODO: store causes in Exception and include in response
-            raise WorkspaceNotValidException("ocrd-zip is not valid")
+            raise WorkspaceNotValidException(valid_report.to_xml())
 
         workspace_bagger = WorkspaceBagger(resolver)
         workspace_bagger.spill(zip_dest, workspace_dir)
@@ -86,7 +88,7 @@ class WorkspaceManager:
 
         return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
 
-    async def update_workspace(self, file, workspace_id):
+    async def update_workspace(self, file: str, workspace_id: str):
         """
         Update a workspace
 
@@ -98,7 +100,7 @@ class WorkspaceManager:
             shutil.rmtree(workspace_dir)
         return await self.create_workspace_from_zip(file, workspace_id)
 
-    def get_workspace_rsrc(self, workspace_id):
+    def get_workspace_rsrc(self, workspace_id: str):
         """
         Get workspace available on disk as Resource via it's id
         Returns:
@@ -113,33 +115,23 @@ class WorkspaceManager:
         """
         Create workspace bag.
 
-        Workspace could have been changed so recreation of bag-files is necessary. Simply zipping
-        is not sufficient
+        The resulting zip is stored in the workspaces_dir (`self.workspaces_dir`). The Workspace
+        could have been changed so recreation of bag-files is necessary. Simply zipping
+        is not sufficient.
 
         Args:
              workspace_id (str): id of workspace to bag
         Returns:
             path to created bag
         """
+        # TODO: workspace-bagging must be revised:
+        #     - ocrd_identifier is stored in mongodb. use that for bagging. Write method in
+        #       database.py to read it from mongdb
+        #     - write tests for this cases
         workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             return None
-        # hier ocr-d verwenden: workspace_bagger.bag()
-        # beispielaufruf ist in cli/zip.py zu finden
-        # uuid holen
-        # zippen und unter der uuid speichern
-        # pfad zu uuid zurückgeben
-        # wie kann ich das testen:
-        #   TODO: write test for this method:
-        #         - create workspace from bag
-        #         - call dummy-processor on workspace
-        #         - create bag
-        #         - verify new outpu-file grp existing and files are in bag-info.txt (don't remember
-        #           the bag-file-name wher checksums are stored, maybe has other name)
 
-        # TODO: mets-location can be changed in bag. I think this fails in that case. Write a test
-        #       for that and change accordingly if neccessary. a way to get mets_basename has to be
-        #       found
         dest = self.generate_bag_dest()
         mets = "mets.xml"
         # TODO: what happens to the identifier of unpacked bag. I think it is removed. So maybe
@@ -157,13 +149,6 @@ class WorkspaceManager:
         )
         return dest
 
-    def delete_workspace_bag(self, workspace_bag_path):
-        """
-        Delete a workspace bag after dispatch. TODO: Think about why I might have added this method
-        and eitheir implement and use or delete
-        """
-        pass
-
     def get_workspaces(self):
         """
         Get a list of all available workspaces
@@ -174,17 +159,17 @@ class WorkspaceManager:
                 res.append(WorkspaceRsrc(id=self.to_workspace_url(f.name), description="Workspace"))
         return res
 
-    async def delete_workspace(self, workspace_id):
+    async def delete_workspace(self, workspace_id: str) -> WorkspaceRsrc:
         """
         Delete a workspace
         """
         workspace_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
-            raise WorkspaceException(f"workspace with id {workspace_id} not existing")
-        else:
             ws = await WorkspaceDb.get(workspace_id)
-            if ws.deleted:
+            if ws and ws.deleted:
                 raise WorkspaceGoneException("workspace already deleted")
+            raise WorkspaceException(f"workspace with id {workspace_id} not existing")
+
         shutil.rmtree(workspace_dir)
         await mark_deleted_workspace(workspace_id)
 

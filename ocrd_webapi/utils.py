@@ -20,6 +20,7 @@ __all__ = [
 import zipfile
 import bagit
 import tempfile
+from ocrd_utils import initLogging
 
 
 class ResponseException(Exception):
@@ -48,6 +49,20 @@ def to_workflow_job_dir(workflow_id) -> str:
     returns path to workflow-job which is saved as json-txt
     """
     return os.path.join(WORKFLOWS_DIR, workflow_id)
+
+
+logging_initialized = False
+
+
+def safe_init_logging() -> None:
+    """
+    wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called
+    once. This function may be called mutliple times
+    """
+    global logging_initialized
+    if not logging_initialized:
+        logging_initialized = True
+        initLogging()
 
 
 class WorkspaceException(Exception):
