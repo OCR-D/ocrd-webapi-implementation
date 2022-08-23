@@ -106,7 +106,7 @@ async def post_workspace(workspace: UploadFile) -> Union[None, WorkspaceRsrc]:
 
 
 @app.get("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)) -> WorkspaceRsrc:
+async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace
 
@@ -186,20 +186,25 @@ async def upload_workflow_script(nextflow_script: UploadFile) -> Union[None, Wor
 
 
 @app.get("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def get_workflow_script(workflow_id: str) -> WorkflowRsrc:
+async def get_workflow_script(workflow_id: str, accept: str = Header(...)) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
 
-    curl -X GET http://localhost:8000/workflow/{workflow_id} --output ./nextflow.nf
+    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "Accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     """
-
-    workflow_script = workflow_manager.get_workflow_script_rsrc(workflow_id)
-
-    if not workflow_script:
-        raise ResponseException(404, {})
-    return FileResponse(path=workflow_script.id,
-                        media_type="application/json",
-                        filename=workflow_script.id)
+    if accept in ["application/json", "text/vnd.ocrd.workflow"]:
+        workflow_script = workflow_manager.get_workflow_script_rsrc(workflow_id)
+        if not workflow_script:
+            raise ResponseException(404, {})
+        if accept == "application/json":
+            return workflow_script
+        else:
+            return FileResponse(path=workflow_script.id, filename=workflow_script.id)
+    else:
+        raise HTTPException(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "Unsupported media, expected application/json or text/vnd.ocrd.workflow",
+        )
 
 
 @app.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
@@ -236,7 +241,7 @@ async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, Wor
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
-    
+
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
     try:
