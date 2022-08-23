@@ -13,7 +13,7 @@ from re import search as regex_search
 import aiofiles
 from ocrd_webapi.models import WorkflowRsrc
 from ocrd_webapi.constants import (
-    SERVER_PATH, 
+    SERVER_PATH,
     WORKSPACES_DIR,
 )
 from ocrd_utils import getLogger
@@ -47,7 +47,7 @@ class WorkflowManager:
 
         Args:
             file: A Nextflow script
-            uid (str): The uid is used as workflow_space-directory. If `None`, an uuid is created. 
+            uid (str): The uid is used as workflow_space-directory. If `None`, an uuid is created.
             If the corresponding dir is already existing, `None` is returned,
 
         Returns:
@@ -61,7 +61,7 @@ class WorkflowManager:
         else:
             uid = str(uuid.uuid4())
             workflow_dir = self.to_workflow_dir(uid)
-        
+
         os.mkdir(workflow_dir)
         nf_script_path = os.path.join(workflow_dir, file.filename)
         async with aiofiles.open(nf_script_path, "wb") as fpt:
@@ -70,7 +70,7 @@ class WorkflowManager:
                 await fpt.write(content)
                 content = await file.read(1024)
 
-        # TODO: 
+        # TODO:
         # 1. Check if the uploaded file is in fact a Nextflow script
         # 2. Validate the Nextflow script
 
@@ -97,7 +97,7 @@ class WorkflowManager:
         nf_script_path = self.to_workflow_script(workflow_id)
         if not os.path.isfile(nf_script_path):
             return None
-        
+
         return WorkflowRsrc(id=nf_script_path, description="Workflow nextflow script")
 
     def to_workflow_script(self, workflow_id: str) -> Union[str, None]:
@@ -141,12 +141,12 @@ class WorkflowManager:
         # The path to Nextflow must be in $PATH
         # Otherwise, the full path must be provided
 
-        # TODO: May be a good idea to define 
-        # the path to Nextflow somewhere else 
+        # TODO: May be a good idea to define
+        # the path to Nextflow somewhere else
         # (as a config or const parameter)
         ver_cmd = "nextflow -v"
 
-        try: 
+        try:
             # Raises an exception if the subprocess fails
             ver_process = subprocess.run(shlex.split(ver_cmd),
                                         shell=False,
@@ -220,12 +220,12 @@ class WorkflowManager:
         # Similar to to_workspace_dir() inside WorkspaceManager
         workspace_dir = f"{WORKSPACES_DIR}/{workspace_id}"
 
-        # TODO: Existence check must be performed here, 
+        # TODO: Existence check must be performed here,
         # both for the script and the ocr-d workspace
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         nf_command = self.build_nf_command(nf_script_path, workspace_dir)
-        try: 
+        try:
             self.start_nf_process(job_dir, nf_command)
         except Exception as error:
             self.log.exception(f"start_nf_workflow: \n{error}")
@@ -234,6 +234,6 @@ class WorkflowManager:
             # return None
 
             # Instead return an empty id, and a description based on the exception
-            return WorkflowRsrc(id="", description=f"Error in Nextflow instance of {workflow_id}")         
+            return WorkflowRsrc(id="", description=f"Error in Nextflow instance of {workflow_id}")
 
         return WorkflowRsrc(id=job_id, description=f"Nextflow instance of {workflow_id}")

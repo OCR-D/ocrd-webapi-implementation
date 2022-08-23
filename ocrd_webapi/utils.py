@@ -44,6 +44,7 @@ def to_processor_job_dir(job_id) -> str:
     """
     return os.path.join(WORKSPACES_DIR, job_id)
 
+
 def to_workflow_job_dir(workflow_id) -> str:
     """
     returns path to workflow-job which is saved as json-txt
@@ -78,6 +79,7 @@ class WorkspaceNotValidException(WorkspaceException):
 
 class WorkspaceGoneException(WorkspaceException):
     pass
+
 
 def read_baginfos_from_zip(path_to_zip) -> dict:
     """
