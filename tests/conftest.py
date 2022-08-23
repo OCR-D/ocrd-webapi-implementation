@@ -8,6 +8,8 @@ from pymongo import MongoClient
 import ocrd_webapi.constants as constants
 from ocrd_webapi.database import initiate_database
 import asyncio
+import requests
+
 
 TEST_WS_DIR = str(Path(Path.home(), "zeugs-ohne-backup/test-wsm/workspaces"))
 WORKSPACE_2_ID = 'example-workspace-2'
@@ -83,6 +85,28 @@ class Utils:
         return os.path.join(os.path.abspath(path_to_module), "assets", name)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def utils():
     return Utils()
+
+
+def is_responsive(url, retries: int = 0):
+    while True:
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return True
+        except Exception:
+            if retries <= 0:
+                return False
+            retries -= 1
+
+
+@pytest.fixture(scope="session")
+def mongo_docker(docker_ip, docker_services):
+    port = docker_services.port_for("mongo", 27017)
+    url = f"http://{docker_ip}:{port}"
+    docker_services.wait_until_responsive(
+        timeout=10.0, pause=0.1, check=lambda: is_responsive(url)
+    )
+    return url

@@ -5,7 +5,6 @@
   on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
   session-state mabye), but didn't try it yet
 """
-import os
 from fastapi.testclient import TestClient
 import ocrd_webapi.constants as constants
 from ocrd_webapi.main import app
@@ -23,7 +22,7 @@ client = TestClient(app)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def do_before_all_tests(request, mongo_client):
+def do_before_all_tests(request, mongo_docker, mongo_client, utils):
     """
     - clean workspace- and workflow-directories
     - make sure mongodb is available
@@ -59,11 +58,13 @@ def test_upload_workflow_script(utils):
 
 
 def test_get_workflow_script(utils):
+    nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow.nf"), 'rb')}
+    client.post("/workflow", files=nextflow_script)
     existing_workflow_id = find_workflow_id()
-    response = client.get(f"/workflow/{existing_workflow_id}")
+    response = client.get(f"/workflow/{existing_workflow_id}",
+                          headers={"accept": "text/vnd.ocrd.workflow"})
     assert_status_code(response.status_code, expected_floor=2)
     assert_workflow_dir(existing_workflow_id)
-    assert_workflows_len(1)
 
 
 def test_update_workflow_script(utils):
@@ -72,10 +73,9 @@ def test_update_workflow_script(utils):
     response = client.put(f"/workflow/{existing_workflow_id}", files=nextflow_script)
     assert_status_code(response.status_code, expected_floor=2)
     assert_workflow_dir(existing_workflow_id)
-    assert_workflows_len(1)
 
 
-def test_start_workflow_script(utils):
+def test_start_workflow_script():
     existing_workspace_id = find_workspace_id()
     existing_workflow_id = find_workflow_id()
     response = client.post(f"/workflow/{existing_workflow_id}?workspace_id={existing_workspace_id}")
