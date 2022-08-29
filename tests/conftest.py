@@ -1,17 +1,16 @@
+import os
 import shutil
 import pytest
 from pathlib import Path
-from ocrd_webapi.workspace_manager import WorkspaceManager
 from fastapi import UploadFile
-import os
 from pymongo import MongoClient
-import ocrd_webapi.constants as constants
-from ocrd_webapi.database import initiate_database
 import asyncio
 import requests
+from ocrd_webapi.workspace_manager import WorkspaceManager
+import ocrd_webapi.constants as constants
+from ocrd_webapi.database import initiate_database
 
-
-TEST_WS_DIR = str(Path(Path.home(), "zeugs-ohne-backup/test-wsm/workspaces"))
+TEST_WS_DIR = str("/tmp/test-wsm/workspaces")
 WORKSPACE_2_ID = 'example-workspace-2'
 
 

@@ -21,6 +21,7 @@ from ocrd_webapi.utils import (
     read_baginfos_from_zip,
     WorkspaceGoneException,
     to_workspace_url,
+    to_workspace_dir,
 )
 from ocrd_webapi.models import WorkspaceDb
 from ocrd_webapi.database import save_workspace, mark_deleted_workspace
@@ -55,13 +56,13 @@ class WorkspaceManager:
             'WorkspaceRsrc' or None
         """
         if uid:
-            workspace_dir = self.to_workspace_dir(uid)
+            workspace_dir = to_workspace_dir(uid)
             if os.path.exists(workspace_dir):
                 self.log.warning("can not update: workspace still/already exists. Id: %s" % uid)
                 raise WorkspaceException(f"workspace with id: '{uid}' already exists")
         else:
             uid = str(uuid.uuid4())
-            workspace_dir = self.to_workspace_dir(uid)
+            workspace_dir = to_workspace_dir(uid)
         zip_dest = os.path.join(self.workspaces_dir, uid + ".zip")
 
         async with aiofiles.open(zip_dest, "wb") as fpt:
@@ -96,7 +97,7 @@ class WorkspaceManager:
         Delete the workspace if existing and then delegate to
         :py:func:`ocrd_webapi.workspace_manager.WorkspaceManager.create_workspace_from_zip
         """
-        workspace_dir = self.to_workspace_dir(workspace_id)
+        workspace_dir = to_workspace_dir(workspace_id)
         if os.path.isdir(workspace_dir):
             shutil.rmtree(workspace_dir)
         return await self.create_workspace_from_zip(file, workspace_id)
@@ -107,7 +108,7 @@ class WorkspaceManager:
         Returns:
             `WorkspaceRsrc` if `workspace_id` is available else `None`
         """
-        possible_dir = self.to_workspace_dir(workspace_id)
+        possible_dir = to_workspace_dir(workspace_id)
         if not os.path.isdir(possible_dir):
             return None
         return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
@@ -129,7 +130,7 @@ class WorkspaceManager:
         #     - ocrd_identifier is stored in mongodb. use that for bagging. Write method in
         #       database.py to read it from mongdb
         #     - write tests for this cases
-        workspace_dir = self.to_workspace_dir(workspace_id)
+        workspace_dir = to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             return None
 
@@ -164,7 +165,7 @@ class WorkspaceManager:
         """
         Delete a workspace
         """
-        workspace_dir = self.to_workspace_dir(workspace_id)
+        workspace_dir = to_workspace_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
             ws = await WorkspaceDb.get(workspace_id)
             if ws and ws.deleted:
@@ -175,12 +176,6 @@ class WorkspaceManager:
         await mark_deleted_workspace(workspace_id)
 
         return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
-
-    def to_workspace_dir(self, workspace_id: str) -> str:
-        """
-        return path to workspace with id `workspace_id`. No check if existing
-        """
-        return os.path.join(self.workspaces_dir, workspace_id)
 
     def generate_bag_dest(self) -> str:
         """

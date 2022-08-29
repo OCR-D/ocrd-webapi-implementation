@@ -75,10 +75,11 @@ def test_update_workflow_script(utils):
     assert_workflow_dir(existing_workflow_id)
 
 
-def test_start_workflow_script():
+def test_start_workflow_script(dummy_workspace):
     existing_workspace_id = find_workspace_id()
     existing_workflow_id = find_workflow_id()
     response = client.post(f"/workflow/{existing_workflow_id}?workspace_id={existing_workspace_id}")
+    print(f"WORKSPACE {existing_workspace_id} WORKFLOW {existing_workflow_id} RESPONSE {response.status_code}")
     assert_status_code(response.status_code, expected_floor=2)
     assert_job_id(response)
 
@@ -225,7 +226,7 @@ def test_delete_workspaces(utils, workspace_mongo_coll):
     workspace_mongo_coll.find_one()
     assert not exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir still existing"
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, "workspace-entry not existing but should still exist"
+    assert workspace_from_db, f"workspace-entry not existing but should still exist."
     assert workspace_from_db["deleted"], "deleted-flag of workspace should be set to true"
 
 

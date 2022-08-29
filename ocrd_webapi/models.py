@@ -3,10 +3,10 @@ from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
 from beanie import (
     Document,
-    Link,
 )
-from uuid import UUID, uuid4
+from uuid import uuid4
 from ocrd_webapi import utils
+import re
 
 
 class DiscoveryResponse(BaseModel):
@@ -45,6 +45,12 @@ class WorkflowRsrc(Resource):
     @staticmethod
     def from_id(uid) -> WorkflowRsrc:
         return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
+
+    def get_workflow_id(self) -> str:
+        """
+        get uid from a WorkflowRsrc's workflow-url
+        """
+        return re.search(r".*/([^/]+)/?$", self.id).group(1)
 
 
 class ProcessorArgs(BaseModel):
@@ -86,7 +92,7 @@ class WorkflowJobRsrc(Job):
 
     @staticmethod
     def create(uid, workflow=WorkflowRsrc, workspace=WorkspaceRsrc, state: JobState = None) -> WorkflowJobRsrc:
-        workflow_id = utils.get_workflow_id(workflow)
+        workflow_id = workflow.get_workflow_id()
         job_url = utils.to_workflow_job_url(workflow_id, uid)
         return WorkflowJobRsrc(id=job_url, workflow=workflow, workspace=workspace, state=state,
                                description="Workflow-Job")

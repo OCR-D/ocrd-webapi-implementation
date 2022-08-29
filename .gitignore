@@ -2,4 +2,4 @@ __pycache__/
 .idea/
 venv/
 
-config.yml
+.env

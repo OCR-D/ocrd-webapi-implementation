@@ -22,7 +22,7 @@ from ocrd_webapi.constants import (
     WORKSPACES_DIR,
 )
 from ocrd_webapi.utils import (
-    to_workspace_url,
+    to_workspace_dir,
     WorkflowJobException,
 )
 from ocrd_utils import getLogger
@@ -227,11 +227,11 @@ class WorkflowManager:
         nf_script_path = self.to_workflow_script(workflow_id)
 
         workspace_id = workflow_args.workspace_id
-        workspace_dir = to_workspace_url(workspace_id)
+        workspace_dir = to_workspace_dir(workspace_id)
 
         if not os.path.exists(workspace_dir):
             raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
-        if not os.path.exits(nf_script_path):
+        if not os.path.exists(nf_script_path):
             raise WorkflowJobException(f"Workflow not existing. Id: {workflow_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
