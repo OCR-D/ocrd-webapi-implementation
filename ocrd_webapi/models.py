@@ -1,7 +1,12 @@
+from __future__ import annotations
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
-from beanie import Document
+from beanie import (
+    Document,
+    Link,
+)
 from uuid import UUID, uuid4
+from ocrd_webapi import utils
 
 
 class DiscoveryResponse(BaseModel):
@@ -31,11 +36,15 @@ class Resource(BaseModel):
 
 
 class WorkspaceRsrc(Resource):
-    pass
+    @staticmethod
+    def from_id(uid) -> WorkspaceRsrc:
+        return WorkspaceRsrc(id=utils.to_workspace_url(uid), description="Workspace")
 
 
 class WorkflowRsrc(Resource):
-    pass
+    @staticmethod
+    def from_id(uid) -> WorkflowRsrc:
+        return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
 
 
 class ProcessorArgs(BaseModel):
@@ -65,18 +74,22 @@ class ProcessorJob(Job):
     processor: Optional[Processor] = None
     workspace: Optional[WorkspaceRsrc] = None
 
-    def __init__(self, processor: Optional[Processor] = None,
-                 workspace: Optional[WorkspaceRsrc] = None):
 
-        # TODO: Id must be the path to the Processor Job
-        id = "dummy-1"
-        super().__init__(id=id, description="ProcessorJob")
-        self.state = JobState(__root__="RUNNING")
-        self.processor = processor
-        self.workspace = workspace
+class WorkflowArgs(BaseModel):
+    workspace_id: str = None
+    workflow_parameters: Optional[Dict[str, Any]] = {}
 
-    class Config:
-        allow_population_by_field_name = True
+
+class WorkflowJobRsrc(Job):
+    workflow: Optional[WorkflowRsrc]
+    workspace: Optional[WorkspaceRsrc]
+
+    @staticmethod
+    def create(uid, workflow=WorkflowRsrc, workspace=WorkspaceRsrc, state: JobState = None) -> WorkflowJobRsrc:
+        workflow_id = utils.get_workflow_id(workflow)
+        job_url = utils.to_workflow_job_url(workflow_id, uid)
+        return WorkflowJobRsrc(id=job_url, workflow=workflow, workspace=workspace, state=state,
+                               description="Workflow-Job")
 
 
 class WorkspaceDb(Document):
@@ -93,7 +106,7 @@ class WorkspaceDb(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain aditional
                                     key-value-pairs which are saved here
     """
-    # TODO: no id is currently generated, but this might not work if the latter is changed
+    # TODO: no id is currently generated anywhere, but this might not work if the latter is changed
     id: str = Field(default_factory=uuid4)
     ocrd_identifier: str
     bagit_profile_identifier: str
@@ -104,3 +117,28 @@ class WorkspaceDb(Document):
 
     class Settings:
         name = "workspace"
+
+
+class WorkflowJobDb(Document):
+    """
+    Model to store a Workflow-Job in the mongo-database.
+
+    Attributes:
+        id            the job's id
+        workspace_id  id of the workspace on which this job is running
+        workflow_id   id of the workflow the job is executing
+        state         current state of the job
+    """
+    id: str = Field(default_factory=uuid4)
+    workspace_id: str
+    workflow_id: str
+    state: str
+
+    class Settings:
+        name = "workflow_job"
+
+    def to_rsrc(self) -> WorkflowJobDb:
+        return WorkflowJobRsrc(id=utils.to_workflow_job_url(self.workflow_id, self.id),
+                               workflow=WorkflowRsrc.from_id(self.workflow_id),
+                               workspace=WorkspaceRsrc.from_id(self.workspace_id),
+                               state=self.state, description="Workflow-Job")

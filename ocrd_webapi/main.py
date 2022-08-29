@@ -16,10 +16,15 @@ from ocrd_webapi.constants import (
     WORKFLOWS_DIR,
     DB_URL,
 )
-from ocrd_webapi.database import initiate_database
+from ocrd_webapi.database import (
+    initiate_database,
+    get_workflow_job,
+)
 from ocrd_webapi.models import (
     WorkspaceRsrc,
     WorkflowRsrc,
+    WorkflowArgs,
+    WorkflowJobRsrc,
 )
 from ocrd_webapi.utils import (
     ResponseException,
@@ -236,8 +241,8 @@ The instance is identified by creating a {job_id}
 Input: workspace_id and fileGrp
 Output: overwrites the OCR-D results inside the {workspace_id}
 """
-@app.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
-async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, WorkflowRsrc]:
+@app.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
+async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs) -> Union[None, WorkflowJobRsrc]:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
@@ -245,16 +250,23 @@ async def start_workflow(workflow_id: str, workspace_id: str) -> Union[None, Wor
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
     try:
-        return workflow_manager.start_nf_workflow(workflow_id, workspace_id)
-    except Exception:
+        return await workflow_manager.start_nf_workflow(workflow_id, workflow_args)
+    except Exception as e:
         log.exception("error in start_workflow")
-        raise ResponseException(500, {"error": "internal server error"})
+        raise ResponseException(500, {"error": "internal server error", "message": str(e)})
 
 
-"""
-TODO: Implement @app.get("/workflow/{workflow_id}/{job_id}") -> Still unclear how to implement it
+@app.get("/workflow/{workflow_id}/{job_id}", responses={"201": {"model": WorkflowJobRsrc}})
+async def get_workflowjob(workflow_id: str, job_id: str) -> WorkflowJobRsrc:
+    """
+    Query a job from the database. Used to query if a job is finished or still running
 
-Provides the execution status of the Nextflow run identified with {job_id}.
-Input: job_id
-Output: Execution status, zip with Nextflow run related files (logs, errs, reports, etc.)
-"""
+    workflow_id is not needed in this implementation, but it is used in the specification. In this
+    implementation each job-id is unique so workflow_id is not necessary. But it could be necessary
+    in other implementations for example if a job_id is only unique in conjunction with a
+    workflow_id.
+    """
+    job = await get_workflow_job(job_id)
+    if not job:
+        raise ResponseException(404, {})
+    return job.to_rsrc()

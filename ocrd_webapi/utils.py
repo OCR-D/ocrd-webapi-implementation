@@ -2,6 +2,7 @@ import os
 from .constants import (
     WORKSPACES_DIR,
     WORKFLOWS_DIR,
+    SERVER_PATH,
 )
 from enum import Enum
 from typing import Union
@@ -11,16 +12,20 @@ __all__ = [
     "JobState",
     "to_processor_job_dir",
     "to_workflow_job_dir",
+    "to_workspace_url",
+    "to_workflow_url",
     "WorkspaceException",
     "WorkspaceNotValidException",
     "WorkspaceGoneException",
     "read_baginfos_from_zip",
-
+    "safe_init_logging",
 ]
 import zipfile
 import bagit
 import tempfile
 from ocrd_utils import initLogging
+from ocrd_webapi.models import WorkflowRsrc
+import re
 
 
 class ResponseException(Exception):
@@ -52,6 +57,35 @@ def to_workflow_job_dir(workflow_id) -> str:
     return os.path.join(WORKFLOWS_DIR, workflow_id)
 
 
+def to_workspace_url(workspace_id: str) -> str:
+    """
+    create the url where workspace is available e.g. http://localhost:8000/workspace/{workspace_id}
+
+    does not verify that the workspace_id exists
+    """
+    return f"{SERVER_PATH}/workspace/{workspace_id}"
+
+
+def to_workflow_url(workflow_id: str) -> str:
+    """
+    create the url where a workflow is available e.g. http://localhost:8000/workflow/{workflow_id}
+
+    does not verify that the workflow_id exists
+    """
+    return f"{SERVER_PATH}/workflow/{workflow_id}"
+
+
+def get_workflow_id(workflow_rsrc: WorkflowRsrc) -> str:
+    """
+    get uid from a WorkflowRsrc's workflow-url
+    """
+    return re.search(r".*/([^/]+)/?$", workflow_rsrc.id).group(1)
+
+
+def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
+    return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
+
+
 logging_initialized = False
 
 
@@ -80,6 +114,12 @@ class WorkspaceNotValidException(WorkspaceException):
 class WorkspaceGoneException(WorkspaceException):
     pass
 
+
+class WorkflowJobException(Exception):
+    """
+    Exception to indicate something is wrong with a workflow-job
+    """
+    pass
 
 def read_baginfos_from_zip(path_to_zip) -> dict:
     """

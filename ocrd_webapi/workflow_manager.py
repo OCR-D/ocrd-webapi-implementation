@@ -11,13 +11,23 @@ import shlex
 from re import search as regex_search
 
 import aiofiles
-from ocrd_webapi.models import WorkflowRsrc
+from ocrd_webapi.models import (
+    WorkflowRsrc,
+    WorkflowArgs,
+    WorkflowJobRsrc,
+    WorkspaceRsrc,
+)
 from ocrd_webapi.constants import (
     SERVER_PATH,
     WORKSPACES_DIR,
 )
+from ocrd_webapi.utils import (
+    to_workspace_url,
+    WorkflowJobException,
+)
 from ocrd_utils import getLogger
 from pathlib import Path
+from ocrd_webapi.database import save_workflow_job
 
 
 class WorkflowManager:
@@ -204,36 +214,40 @@ class WorkflowManager:
         except Exception as error:
             self.log.exception(f"Nextflow process failed to start: {error}")
 
-    def start_nf_workflow(self, workflow_id: str, workspace_id: str) -> Union[WorkflowRsrc, None]:
+    async def start_nf_workflow(self, workflow_id: str, workflow_args: WorkflowArgs) -> Union[WorkflowJobRsrc, None]:
         # Check if Nextflow is installed
         # If installed, get the version
         nf_version = self.is_nf_available()
         if not nf_version:
-            return None
+            raise WorkflowJobException("Nextflow not available")
 
         self.log.info(f"Using Nextflow version: {nf_version}")
 
         # nf_script is the path to the Nextflow script inside workflow_id
         nf_script_path = self.to_workflow_script(workflow_id)
 
-        # TODO: There should be a better way to achieve this
-        # Similar to to_workspace_dir() inside WorkspaceManager
-        workspace_dir = f"{WORKSPACES_DIR}/{workspace_id}"
+        workspace_id = workflow_args.workspace_id
+        workspace_dir = to_workspace_url(workspace_id)
 
-        # TODO: Existence check must be performed here,
-        # both for the script and the ocr-d workspace
+        if not os.path.exists(workspace_dir):
+            raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
+        if not os.path.exits(nf_script_path):
+            raise WorkflowJobException(f"Workflow not existing. Id: {workflow_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         nf_command = self.build_nf_command(nf_script_path, workspace_dir)
         try:
             self.start_nf_process(job_dir, nf_command)
+            # TODO: after the process has finished the state has to be set to STOPPED. Therefore
+            #       it may be better to start a background-job and set the state in the end.
+            #       Another possibility would be to have a regularly running job which queries all
+            #       not stopped jobs in the db and requests its state and changes the state in the
+            #       db accordingly:
+            #       https://fastapi-utils.davidmontague.xyz/user-guide/repeated-tasks/
         except Exception as error:
             self.log.exception(f"start_nf_workflow: \n{error}")
-            # Returning None is really bad for the tests!
-            # We must avoid doing that
-            # return None
-
-            # Instead return an empty id, and a description based on the exception
-            return WorkflowRsrc(id="", description=f"Error in Nextflow instance of {workflow_id}")
-
-        return WorkflowRsrc(id=job_id, description=f"Nextflow instance of {workflow_id}")
+            raise error
+        await save_workflow_job(job_id, workflow_id, workflow_args.workspace_id, 'RUNNING')
+        return WorkflowJobRsrc.create(job_id, state='RUNNING',
+                                      workflow=WorkflowRsrc.from_id(workflow_id),
+                                      workspace=WorkspaceRsrc.from_id(workflow_args.workspace_id))

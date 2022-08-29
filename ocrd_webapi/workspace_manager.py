@@ -20,6 +20,7 @@ from ocrd_webapi.utils import (
     WorkspaceException,
     read_baginfos_from_zip,
     WorkspaceGoneException,
+    to_workspace_url,
 )
 from ocrd_webapi.models import WorkspaceDb
 from ocrd_webapi.database import save_workspace, mark_deleted_workspace
@@ -86,7 +87,7 @@ class WorkspaceManager:
         await save_workspace(uid, bag_infos)
         os.remove(zip_dest)
 
-        return WorkspaceRsrc(id=self.to_workspace_url(uid), description="Workspace")
+        return WorkspaceRsrc.from_id(uid)
 
     async def update_workspace(self, file: str, workspace_id: str):
         """
@@ -109,7 +110,7 @@ class WorkspaceManager:
         possible_dir = self.to_workspace_dir(workspace_id)
         if not os.path.isdir(possible_dir):
             return None
-        return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
+        return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
 
     def get_workspace_bag(self, workspace_id: str) -> Union[str, None]:
         """
@@ -156,7 +157,7 @@ class WorkspaceManager:
         res = []
         for f in os.scandir(self.workspaces_dir):
             if f.is_dir():
-                res.append(WorkspaceRsrc(id=self.to_workspace_url(f.name), description="Workspace"))
+                res.append(WorkspaceRsrc(id=to_workspace_url(f.name), description="Workspace"))
         return res
 
     async def delete_workspace(self, workspace_id: str) -> WorkspaceRsrc:
@@ -173,7 +174,7 @@ class WorkspaceManager:
         shutil.rmtree(workspace_dir)
         await mark_deleted_workspace(workspace_id)
 
-        return WorkspaceRsrc(id=self.to_workspace_url(workspace_id), description="Workspace")
+        return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
 
     def to_workspace_dir(self, workspace_id: str) -> str:
         """
@@ -186,9 +187,3 @@ class WorkspaceManager:
         return a unique path to store a bag of a workspace at
         """
         return os.path.join(self.workspaces_dir, str(uuid.uuid4()) + ".zip")
-
-    def to_workspace_url(self, workspace_id: str) -> str:
-        """
-        create url where workspace is available
-        """
-        return f"{SERVER_PATH}/workspace/{workspace_id}"

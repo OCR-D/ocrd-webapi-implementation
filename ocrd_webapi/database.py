@@ -1,9 +1,15 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-from ocrd_webapi.utils import safe_init_logging
+from ocrd_webapi.utils import (
+    safe_init_logging,
+    WorkflowJobException,
+)
 from ocrd_utils import getLogger
 
-from ocrd_webapi.models import WorkspaceDb
+from ocrd_webapi.models import (
+    WorkspaceDb,
+    WorkflowJobDb,
+)
 
 
 safe_init_logging()
@@ -13,7 +19,7 @@ async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
         database=client.get_default_database(default='operandi'),
-        document_models=[WorkspaceDb]
+        document_models=[WorkspaceDb, WorkflowJobDb]
     )
 
 
@@ -59,3 +65,26 @@ async def mark_deleted_workspace(uid: str):
 
 async def get_workspace(uid: str):
     return await WorkspaceDb.get(uid)
+
+
+async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
+    """
+    save a workflow_job to the database
+
+    Arguments:
+        uid: id of the job
+        workflow_id: id of the workflow the job is/was executing
+        workspace_id: id of the workspace the job runs on
+        state: current state of the job
+    """
+    job = WorkflowJobDb(
+        _id=uid,
+        workflow_id=workflow_id,
+        workspace_id=workspace_id,
+        state=state
+    )
+    await job.save()
+
+
+async def get_workflow_job(uid: str):
+    return await WorkflowJobDb.get(uid)
