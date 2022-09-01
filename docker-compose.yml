@@ -12,4 +12,6 @@ services:
     image: "mongo"
     ports:
       - "27017:27017"
+    volume:
+      - "~/mongo_data/ocrd_webapi:/data/db"
 

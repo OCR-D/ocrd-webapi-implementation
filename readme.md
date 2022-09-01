@@ -87,3 +87,5 @@ Miscellaneous
 ### connect to running container:
 `docker exec -it ocrd-webapi bash`
 
+### start mongodb for local testing
+docker run -d -p 27017:27017 --name mongo-4-ocrd --mount type=bind,source="$HOME/zeugs-ohne-backup/ocrd_webapi/mongo-data",target=/data/db  mongo:latest
