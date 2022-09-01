@@ -1,2 +1,0 @@
-data_path: /tmp/ocrd_webapi_test
-db_url: mongodb://localhost:6701/test_operandi

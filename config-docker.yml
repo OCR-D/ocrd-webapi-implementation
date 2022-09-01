@@ -1,2 +1,0 @@
-data_path: /ocrd_webapi_data
-db_url: mongodb://mongo:27017/operandi
