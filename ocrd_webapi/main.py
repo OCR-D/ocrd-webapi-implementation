@@ -19,6 +19,7 @@ from ocrd_webapi.constants import (
 from ocrd_webapi.database import (
     initiate_database,
     get_workflow_job,
+    set_workflow_job_finished,
 )
 from ocrd_webapi.models import (
     WorkspaceRsrc,
@@ -54,7 +55,7 @@ app = FastAPI(
 )
 safe_init_logging()
 log = getLogger('ocrd_webapi.main')
-workspace_manager = WorkspaceManager(WORKSPACES_DIR)
+workspace_manager = WorkspaceManager()
 workflow_manager = WorkflowManager(WORKFLOWS_DIR)
 
 
@@ -266,7 +267,10 @@ async def get_workflowjob(workflow_id: str, job_id: str) -> WorkflowJobRsrc:
     in other implementations for example if a job_id is only unique in conjunction with a
     workflow_id.
     """
+    if workflow_manager.is_job_finished(workflow_id, job_id):
+        await set_workflow_job_finished(job_id)
     job = await get_workflow_job(job_id)
+
     if not job:
         raise ResponseException(404, {})
     return job.to_rsrc()

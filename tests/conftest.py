@@ -7,8 +7,12 @@ from pymongo import MongoClient
 import asyncio
 import requests
 from ocrd_webapi.workspace_manager import WorkspaceManager
+from ocrd_webapi.workflow_manager import WorkflowManager
 import ocrd_webapi.constants as constants
 from ocrd_webapi.database import initiate_database
+from fastapi.testclient import TestClient
+from ocrd_webapi.main import app
+from ocrd_webapi.constants import WORKFLOWS_DIR
 
 TEST_WS_DIR = str("/tmp/test-wsm/workspaces")
 WORKSPACE_2_ID = 'example-workspace-2'
@@ -22,14 +26,9 @@ def event_loop():
     return asyncio.get_event_loop()
 
 
-@pytest.fixture(name='workspaces_dir')
-def _fixture_workspaces_dir():
-    return TEST_WS_DIR
-
-
 @pytest.fixture(name='workspace_manager')
-def _fixture_plain_workspace():
-    return WorkspaceManager(TEST_WS_DIR)
+def _fixture_workspace_manager():
+    return WorkspaceManager()
 
 
 @pytest.fixture(name='mongo_client', scope="session")
@@ -49,19 +48,24 @@ def _fixture_workspace_mongo_coll(mongo_client):
 
 
 @pytest.fixture(name='dummy_workspace')
-async def _fixture_dummy_workspace(workspace_manager, utils):
-    with open(utils.to_asset_path("example_ws.ocrd.zip"), "rb") as fin:
-        file = UploadFile("test", file=fin, content_type="application/zip")
-        return await workspace_manager.create_workspace_from_zip(file)
+async def _fixture_dummy_workspace(utils, client):
+    file = {'workspace': open(utils.to_asset_path("example_ws.ocrd.zip"), 'rb')}
+    response = client.post("/workspace", files=file)
+    yield response.json()['@id'].split("/")[-1]
 
 
-@pytest.fixture(name='init_db', scope="session")
-async def _fixture_init_db():
-    """
-    purpose of this fixture is only to init the database. This should only be used when
-    `TestClient(app)` is used, because it has to be done in the FastAPI-Object
-    """
-    await initiate_database(constants.DB_URL)
+@pytest.fixture(name='dummy_workflow')
+async def _fixture_dummy_workflow(utils, client):
+    nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow-simple.nf"), 'rb')}
+    response = client.post("/workflow", files=nextflow_script)
+    yield response.json()['@id'].split("/")[-1]
+
+
+@pytest.fixture(scope='session')
+def client():
+    with TestClient(app) as c:
+        yield c
+
 
 
 def pytest_sessionstart(session):

@@ -44,18 +44,11 @@ class JobState(Enum):
     STOPPED = 3
 
 
-def to_processor_job_dir(job_id) -> str:
+def to_workflow_job_dir(workflow_id, job_id) -> str:
     """
-    returns path to processor-job which is saved as json-txt
+    returns path to workflow-job directory
     """
-    return os.path.join(WORKSPACES_DIR, job_id)
-
-
-def to_workflow_job_dir(workflow_id) -> str:
-    """
-    returns path to workflow-job which is saved as json-txt
-    """
-    return os.path.join(WORKFLOWS_DIR, workflow_id)
+    return os.path.join(WORKFLOWS_DIR, workflow_id, job_id)
 
 
 def to_workspace_url(workspace_id: str) -> str:
@@ -121,6 +114,7 @@ class WorkflowJobException(Exception):
     Exception to indicate something is wrong with a workflow-job
     """
     pass
+
 
 def read_baginfos_from_zip(path_to_zip) -> dict:
     """

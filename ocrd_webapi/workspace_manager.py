@@ -25,23 +25,19 @@ from ocrd_webapi.utils import (
 )
 from ocrd_webapi.models import WorkspaceDb
 from ocrd_webapi.database import save_workspace, mark_deleted_workspace
+from ocrd_webapi.constants import WORKSPACES_DIR
 
 
 class WorkspaceManager:
     """Class to handle workspace related tasks"""
 
-    def __init__(self, workspaces_dir: str):
-        """
-        Args:
-            workspaces_dir: path to directory where the workspace-files should be stored
-        """
+    def __init__(self):
         self.log = getLogger('ocrd_webapi.workspace_manager')
-        if not os.path.exists(workspaces_dir):
-            Path(workspaces_dir).mkdir(parents=True, exist_ok=True)
-            self.log.info("createt not existing workspaces-directory: %s" % workspaces_dir)
+        if not os.path.exists(WORKSPACES_DIR):
+            Path(WORKSPACES_DIR).mkdir(parents=True, exist_ok=True)
+            self.log.info("createt not existing workspaces-directory: %s" % WORKSPACES_DIR)
         else:
-            self.log.info("workspaces-directory is '%s'" % workspaces_dir)
-        self.workspaces_dir = workspaces_dir
+            self.log.info("workspaces-directory is '%s'" % WORKSPACES_DIR)
 
     async def create_workspace_from_zip(self, file: str, uid: Union[str, None] = None) -> Union[WorkspaceRsrc]:
         """
@@ -63,7 +59,7 @@ class WorkspaceManager:
         else:
             uid = str(uuid.uuid4())
             workspace_dir = to_workspace_dir(uid)
-        zip_dest = os.path.join(self.workspaces_dir, uid + ".zip")
+        zip_dest = os.path.join(WORKSPACES_DIR, uid + ".zip")
 
         async with aiofiles.open(zip_dest, "wb") as fpt:
             content = await file.read(1024)
@@ -117,7 +113,7 @@ class WorkspaceManager:
         """
         Create workspace bag.
 
-        The resulting zip is stored in the workspaces_dir (`self.workspaces_dir`). The Workspace
+        The resulting zip is stored in the workspaces_dir (`WORKSPACES_DIR`). The Workspace
         could have been changed so recreation of bag-files is necessary. Simply zipping
         is not sufficient.
 
@@ -156,7 +152,7 @@ class WorkspaceManager:
         Get a list of all available workspaces
         """
         res = []
-        for f in os.scandir(self.workspaces_dir):
+        for f in os.scandir(WORKSPACES_DIR):
             if f.is_dir():
                 res.append(WorkspaceRsrc(id=to_workspace_url(f.name), description="Workspace"))
         return res
@@ -181,4 +177,4 @@ class WorkspaceManager:
         """
         return a unique path to store a bag of a workspace at
         """
-        return os.path.join(self.workspaces_dir, str(uuid.uuid4()) + ".zip")
+        return os.path.join(WORKSPACES_DIR, str(uuid.uuid4()) + ".zip")

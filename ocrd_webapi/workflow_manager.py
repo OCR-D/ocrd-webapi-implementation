@@ -24,6 +24,7 @@ from ocrd_webapi.constants import (
 from ocrd_webapi.utils import (
     to_workspace_dir,
     WorkflowJobException,
+    to_workflow_job_dir,
 )
 from ocrd_utils import getLogger
 from pathlib import Path
@@ -251,3 +252,19 @@ class WorkflowManager:
         return WorkflowJobRsrc.create(job_id, state='RUNNING',
                                       workflow=WorkflowRsrc.from_id(workflow_id),
                                       workspace=WorkspaceRsrc.from_id(workflow_args.workspace_id))
+
+    def is_job_finished(self, workflow_id, job_id) -> Union[bool, None]:
+        """
+        Tests if the file `WORKFLOW_DIR/{workflow_id}/{job_id}/report.html` exists.
+
+        I assume that the report will be created after the job has finished.
+
+        returns:
+            true: file exists
+            false: file doesn't exist
+            None: workflow_id or job_id (path to file) don't exist
+        """
+        job_dir = to_workflow_job_dir(workflow_id, job_id)
+        if not os.path.exists(job_dir):
+            return None
+        return os.path.exists(os.path.join(job_dir, "report.html"))

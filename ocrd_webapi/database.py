@@ -88,3 +88,13 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
 
 async def get_workflow_job(uid: str):
     return await WorkflowJobDb.get(uid)
+
+
+async def set_workflow_job_finished(uid: str):
+    """
+    set state of job to 'STOPPED'
+    """
+    job = await WorkflowJobDb.get(uid)
+    if job:
+        job.state = 'STOPPED'
+    await job.save()
