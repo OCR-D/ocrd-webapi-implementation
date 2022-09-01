@@ -10,7 +10,6 @@ import aiofiles
 from ocrd_webapi.models import WorkspaceRsrc
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd.workspace import Workspace
-from ocrd_webapi.constants import SERVER_PATH
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd import Resolver
 from ocrd_utils import getLogger

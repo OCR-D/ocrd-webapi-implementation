@@ -39,8 +39,8 @@ def test_get_workspace(utils, client):
 
     # assert
     assert response.status_code // 100 == 2, f"expected statuscode 2xx, got {response.status_code}"
-    assert (response.headers.get('content-type').find("zip") > -1,
-            "content-type should be something with 'zip'")
+    assert response.headers.get('content-type').find("zip") > -1, \
+        "content-type should be something with 'zip'"
 
 
 def test_run_workflow(utils, client, dummy_workflow):
@@ -57,4 +57,3 @@ def test_run_workflow(utils, client, dummy_workflow):
     # TODO: assert the workflow finished successfully. Currently mets.xml is not dynamic, so first
     #       the possibility to provide a different-mets-name to run the workflow has to be
     #       implemented
-    

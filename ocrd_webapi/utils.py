@@ -10,7 +10,6 @@ from typing import Union
 __all__ = [
     "ResponseException",
     "JobState",
-    "to_processor_job_dir",
     "to_workflow_job_dir",
     "to_workspace_url",
     "to_workspace_dir",
@@ -22,6 +21,7 @@ __all__ = [
     "safe_init_logging",
     "to_workflow_job_url",
     "to_workflow_url",
+    "WorkflowJobException",
 ]
 import zipfile
 import bagit

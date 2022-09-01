@@ -145,7 +145,7 @@ async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     curl -v -X DELETE 'http://localhost:8000/workspace/put-workspace-id-here'
     """
     try:
-        workspace = await workspace_manager.delete_workspace(workspace_id)
+        return await workspace_manager.delete_workspace(workspace_id)
     except WorkspaceException:
         if await database.get_workspace(workspace_id):
             raise ResponseException(410, {})

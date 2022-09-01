@@ -2,17 +2,13 @@ import os
 import shutil
 import pytest
 from pathlib import Path
-from fastapi import UploadFile
 from pymongo import MongoClient
 import asyncio
 import requests
 from ocrd_webapi.workspace_manager import WorkspaceManager
-from ocrd_webapi.workflow_manager import WorkflowManager
 import ocrd_webapi.constants as constants
-from ocrd_webapi.database import initiate_database
 from fastapi.testclient import TestClient
 from ocrd_webapi.main import app
-from ocrd_webapi.constants import WORKFLOWS_DIR
 from shutil import rmtree
 from os import mkdir
 from pymongo.errors import ServerSelectionTimeoutError

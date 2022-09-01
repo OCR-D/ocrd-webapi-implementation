@@ -1,7 +1,6 @@
 """
 module for implementing the workflow section of the api
 """
-import logging
 import os
 import uuid
 from typing import List, Union
@@ -19,7 +18,6 @@ from ocrd_webapi.models import (
 )
 from ocrd_webapi.constants import (
     SERVER_PATH,
-    WORKSPACES_DIR,
 )
 from ocrd_webapi.utils import (
     to_workspace_dir,

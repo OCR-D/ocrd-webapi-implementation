@@ -192,7 +192,7 @@ def test_delete_workspaces(utils, workspace_mongo_coll, client):
     workspace_mongo_coll.find_one()
     assert not exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir still existing"
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, f"workspace-entry not existing but should still exist."
+    assert workspace_from_db, "workspace-entry not existing but should still exist."
     assert workspace_from_db["deleted"], "deleted-flag of workspace should be set to true"
 
 
