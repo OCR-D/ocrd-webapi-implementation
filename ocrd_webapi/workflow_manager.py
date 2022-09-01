@@ -216,6 +216,10 @@ class WorkflowManager:
             self.log.exception(f"Nextflow process failed to start: {error}")
 
     async def start_nf_workflow(self, workflow_id: str, workflow_args: WorkflowArgs) -> Union[WorkflowJobRsrc, None]:
+        # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongdb
+        #       (ocrd_webapi.models.WorkspaceDb.ocrd_mets). Try to make it possible to tell nextflow the
+        #       name of the mets if it is not mets.xml.
+
         # Check if Nextflow is installed
         # If installed, get the version
         nf_version = self.is_nf_available()
@@ -239,12 +243,6 @@ class WorkflowManager:
         nf_command = self.build_nf_command(nf_script_path, workspace_dir)
         try:
             self.start_nf_process(job_dir, nf_command)
-            # TODO: after the process has finished the state has to be set to STOPPED. Therefore
-            #       it may be better to start a background-job and set the state in the end.
-            #       Another possibility would be to have a regularly running job which queries all
-            #       not stopped jobs in the db and requests its state and changes the state in the
-            #       db accordingly:
-            #       https://fastapi-utils.davidmontague.xyz/user-guide/repeated-tasks/
         except Exception as error:
             self.log.exception(f"start_nf_workflow: \n{error}")
             raise error

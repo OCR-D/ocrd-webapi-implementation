@@ -13,9 +13,31 @@ from ocrd_webapi.database import initiate_database
 from fastapi.testclient import TestClient
 from ocrd_webapi.main import app
 from ocrd_webapi.constants import WORKFLOWS_DIR
+from shutil import rmtree
+from os import mkdir
+from pymongo.errors import ServerSelectionTimeoutError
+
 
 TEST_WS_DIR = str("/tmp/test-wsm/workspaces")
 WORKSPACE_2_ID = 'example-workspace-2'
+
+
+@pytest.fixture(scope="session", autouse=True)
+def do_before_all_tests(request, mongo_docker, mongo_client, utils):
+    """
+    - clean workspace- and workflow-directories
+    - make sure mongodb is available
+    """
+    rmtree(constants.WORKSPACES_DIR)
+    mkdir(constants.WORKSPACES_DIR)
+    rmtree(constants.WORKFLOWS_DIR)
+    mkdir(constants.WORKFLOWS_DIR)
+
+    try:
+        mongo_client.admin.command("ismaster")
+    except ServerSelectionTimeoutError as e:
+        raise Exception(f"mongodb not available: {constants.DB_URL}. start e.g. with docker: "
+                        "`docker run -d -p 27017:27017 mongo:latest`") from e
 
 
 @pytest.fixture(scope="session")

@@ -7,30 +7,9 @@
 """
 import ocrd_webapi.constants as constants
 import pytest
-from shutil import rmtree
-from os import mkdir
 from os.path import exists, join
-from pymongo.errors import ServerSelectionTimeoutError
 from .conftest import WORKSPACE_2_ID
 from time import sleep
-
-
-@pytest.fixture(scope="session", autouse=True)
-def do_before_all_tests(request, mongo_docker, mongo_client, utils):
-    """
-    - clean workspace- and workflow-directories
-    - make sure mongodb is available
-    """
-    rmtree(constants.WORKSPACES_DIR)
-    mkdir(constants.WORKSPACES_DIR)
-    rmtree(constants.WORKFLOWS_DIR)
-    mkdir(constants.WORKFLOWS_DIR)
-
-    try:
-        mongo_client.admin.command("ismaster")
-    except ServerSelectionTimeoutError as e:
-        raise Exception(f"mongodb not available: {constants.DB_URL}. start e.g. with docker: "
-                        "`docker run -d -p 27017:27017 mongo:latest`") from e
 
 
 @pytest.fixture(autouse=True)

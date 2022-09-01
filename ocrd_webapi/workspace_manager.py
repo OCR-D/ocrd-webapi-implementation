@@ -24,7 +24,11 @@ from ocrd_webapi.utils import (
     to_workspace_dir,
 )
 from ocrd_webapi.models import WorkspaceDb
-from ocrd_webapi.database import save_workspace, mark_deleted_workspace
+from ocrd_webapi.database import (
+    save_workspace,
+    mark_deleted_workspace,
+    get_workspace,
+)
 from ocrd_webapi.constants import WORKSPACES_DIR
 
 
@@ -109,7 +113,7 @@ class WorkspaceManager:
             return None
         return WorkspaceRsrc(id=to_workspace_url(workspace_id), description="Workspace")
 
-    def get_workspace_bag(self, workspace_id: str) -> Union[str, None]:
+    async def get_workspace_bag(self, workspace_id: str) -> Union[str, None]:
         """
         Create workspace bag.
 
@@ -131,16 +135,12 @@ class WorkspaceManager:
             return None
 
         dest = self.generate_bag_dest()
-        mets = "mets.xml"
-        # TODO: what happens to the identifier of unpacked bag. I think it is removed. So maybe
-        #       it is neccesarry to store bag-info.txt before deleting bag somewehere to keep
-        #       important information
-        identifier = "TODO-identifier"
+        workspace_db = await get_workspace(workspace_id)
+        mets = workspace_db.ocrd_mets or "mets.xml"
+        identifier = workspace_db.ocrd_identifier
         resolver = Resolver()
-        workspace = Workspace(resolver, directory=workspace_dir, mets_basename=mets)
-        workspace_bagger = WorkspaceBagger(resolver)
-        workspace_bagger.bag(
-            workspace,
+        WorkspaceBagger(resolver).bag(
+            Workspace(resolver, directory=workspace_dir, mets_basename=mets),
             dest=dest,
             ocrd_identifier=identifier,
             ocrd_mets=mets,

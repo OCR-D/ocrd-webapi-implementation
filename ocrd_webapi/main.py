@@ -126,7 +126,7 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
             raise ResponseException(404, {})
         return workspace
     elif accept == "application/vnd.ocrd+zip":
-        bag_path = workspace_manager.get_workspace_bag(workspace_id)
+        bag_path = await workspace_manager.get_workspace_bag(workspace_id)
         if not bag_path:
             raise ResponseException(404, {})
         background_tasks.add_task(os.unlink, bag_path)
