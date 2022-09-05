@@ -2,11 +2,11 @@ services:
   webapi:
     build: .
     ports:
-      - "8000:80"
-    environment:
-      - 'OCRD_WEBAPI_SERVER_PATH=http://141.5.99.53:5050'
-      - 'OCRD_WEBAPI_STORAGE_DIR=/ocrd_webapi_data'
-      - 'OCRD_WEBAPI_DB_URL=mongodb://mongo:27017/operandi'
+      - "8000:${OCRD_WEBAPI_PORT}"
+#    environment:
+#      - 'OCRD_WEBAPI_SERVER_PATH=http://localhost:8000'
+#      - 'OCRD_WEBAPI_STORAGE_DIR=/ocrd_webapi_data'
+#      - 'OCRD_WEBAPI_DB_URL=mongodb://mongo:27017/operandi'
 
   mongo:
     image: "mongo"
