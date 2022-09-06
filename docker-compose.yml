@@ -3,16 +3,18 @@ version: "3"
 services:
   webapi:
     build: .
+    container_name: ocrd-webapi
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
     env_file: .env
-    container_name: ocrd-webapi
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data:${OCRD_WEBAPI_STORAGE_DIR}"
 
   mongo:
     image: "mongo"
+    container_name: ocrd-mongodb
     ports:
       - "${OCRD_WEBAPI_MONGO_PORT}:27017"
     volumes:
-      - "${OCRD_WEBAPI_STORAGE_DIR}/mongo_data:/data/db"
-    container_name: ocrd-mongodb
+      - "${OCRD_WEBAPI_DATADIR_HOST}/mongo-data:/data/db"
 
