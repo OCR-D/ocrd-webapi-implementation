@@ -5,10 +5,7 @@ services:
     build: .
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
-#    environment:
-#      - 'OCRD_WEBAPI_SERVER_PATH=http://localhost:8000'
-#      - 'OCRD_WEBAPI_STORAGE_DIR=/ocrd_webapi_data'
-#      - 'OCRD_WEBAPI_DB_URL=mongodb://mongo:27017/operandi'
+    env_file: .env
 
   mongo:
     image: "mongo"
