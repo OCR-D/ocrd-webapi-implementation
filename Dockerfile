@@ -3,7 +3,6 @@ FROM python:3.7
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt
-COPY ./config-docker.yml /code/config.yml
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
