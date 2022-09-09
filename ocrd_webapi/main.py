@@ -35,7 +35,10 @@ from ocrd_webapi.utils import (
 from ocrd_webapi.workflow_manager import WorkflowManager
 from ocrd_webapi.workspace_manager import WorkspaceManager
 from ocrd_webapi import database
-from ocrd_webapi.utils import WorkspaceException
+from ocrd_webapi.utils import (
+    WorkspaceException,
+    to_workspace_dir
+)
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -250,6 +253,12 @@ async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs) -> Union
 
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
+    if not os.path.exists(workflow_manager.to_workflow_dir(workflow_id)):
+        raise ResponseException(500, {"error": f"Workflow not existing. Id: {workflow_id}"})
+    if not os.path.exists(to_workspace_dir(workflow_args.workspace_id)):
+        raise ResponseException(500, {"error": "Workspace not existing. Id:"
+                                               f" {workflow_args.workspace_id}"})
+
     try:
         return await workflow_manager.start_nf_workflow(workflow_id, workflow_args)
     except Exception as e:
