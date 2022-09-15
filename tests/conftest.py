@@ -3,7 +3,6 @@ import shutil
 import pytest
 from pathlib import Path
 from pymongo import MongoClient
-import asyncio
 import requests
 from ocrd_webapi.workspace_manager import WorkspaceManager
 import ocrd_webapi.constants as constants
@@ -11,7 +10,6 @@ from fastapi.testclient import TestClient
 from ocrd_webapi.main import app
 from shutil import rmtree
 from os import mkdir
-from pymongo.errors import ServerSelectionTimeoutError
 
 
 TEST_WS_DIR = str("/tmp/test-wsm/workspaces")
@@ -28,20 +26,6 @@ def do_before_all_tests(request, mongo_docker, mongo_client, utils):
     mkdir(constants.WORKSPACES_DIR)
     rmtree(constants.WORKFLOWS_DIR)
     mkdir(constants.WORKFLOWS_DIR)
-
-    try:
-        mongo_client.admin.command("ismaster")
-    except ServerSelectionTimeoutError as e:
-        raise Exception(f"mongodb not available: {constants.DB_URL}. start e.g. with docker: "
-                        "`docker run -d -p 27017:27017 mongo:latest`") from e
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """
-    this is a workaround. Template is https://github.com/tortoise/tortoise-orm/issues/638.
-    """
-    return asyncio.get_event_loop()
 
 
 @pytest.fixture(name='workspace_manager')
@@ -66,14 +50,14 @@ def _fixture_workspace_mongo_coll(mongo_client):
 
 
 @pytest.fixture(name='dummy_workspace')
-async def _fixture_dummy_workspace(utils, client):
+def _fixture_dummy_workspace(utils, client):
     file = {'workspace': open(utils.to_asset_path("example_ws.ocrd.zip"), 'rb')}
     response = client.post("/workspace", files=file)
     yield response.json()['@id'].split("/")[-1]
 
 
 @pytest.fixture(name='dummy_workflow')
-async def _fixture_dummy_workflow(utils, client):
+def _fixture_dummy_workflow(utils, client):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow-simple.nf"), 'rb')}
     response = client.post("/workflow", files=nextflow_script)
     yield response.json()['@id'].split("/")[-1]

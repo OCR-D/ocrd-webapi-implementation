@@ -1,4 +1,3 @@
-from __future__ import annotations
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
 from beanie import (
@@ -37,13 +36,13 @@ class Resource(BaseModel):
 
 class WorkspaceRsrc(Resource):
     @staticmethod
-    def from_id(uid) -> WorkspaceRsrc:
+    def from_id(uid) -> 'WorkspaceRsrc':
         return WorkspaceRsrc(id=utils.to_workspace_url(uid), description="Workspace")
 
 
 class WorkflowRsrc(Resource):
     @staticmethod
-    def from_id(uid) -> WorkflowRsrc:
+    def from_id(uid) -> 'WorkflowRsrc':
         return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
 
     def get_workflow_id(self) -> str:
@@ -91,7 +90,7 @@ class WorkflowJobRsrc(Job):
     workspace: Optional[WorkspaceRsrc]
 
     @staticmethod
-    def create(uid, workflow=WorkflowRsrc, workspace=WorkspaceRsrc, state: JobState = None) -> WorkflowJobRsrc:
+    def create(uid, workflow=WorkflowRsrc, workspace=WorkspaceRsrc, state: JobState = None) -> 'WorkflowJobRsrc':
         workflow_id = workflow.get_workflow_id()
         job_url = utils.to_workflow_job_url(workflow_id, uid)
         return WorkflowJobRsrc(id=job_url, workflow=workflow, workspace=workspace, state=state,
@@ -121,7 +120,7 @@ class WorkspaceDb(Document):
     bag_info_adds: Optional[dict]
     deleted: bool = False
 
-    class Settings:
+    class Collection:
         name = "workspace"
 
 
@@ -143,7 +142,7 @@ class WorkflowJobDb(Document):
     class Settings:
         name = "workflow_job"
 
-    def to_rsrc(self) -> WorkflowJobDb:
+    def to_rsrc(self) -> 'WorkflowJobDb':
         return WorkflowJobRsrc(id=utils.to_workflow_job_url(self.workflow_id, self.id),
                                workflow=WorkflowRsrc.from_id(self.workflow_id),
                                workspace=WorkspaceRsrc.from_id(self.workspace_id),

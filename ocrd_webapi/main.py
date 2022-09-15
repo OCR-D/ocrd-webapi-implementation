@@ -60,6 +60,7 @@ safe_init_logging()
 log = getLogger('ocrd_webapi.main')
 workspace_manager = WorkspaceManager()
 workflow_manager = WorkflowManager(WORKFLOWS_DIR)
+log.info(f"DB_URL: {DB_URL}")
 
 
 @app.exception_handler(ResponseException)
