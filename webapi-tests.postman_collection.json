@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "d62c88a0-11ef-4ed3-9569-4bb1395df566",
+		"_postman_id": "c3368544-2438-4e88-8266-208e7863af0f",
 		"name": "webapi-tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11,12 +11,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000",
+					"raw": "http://{{hostname}}",
 					"protocol": "http",
 					"host": [
-						"localhost"
-					],
-					"port": "5000"
+						"{{hostname}}"
+					]
 				}
 			},
 			"response": []
@@ -25,34 +24,13 @@
 			"name": "list workspaces",
 			"request": {
 				"method": "GET",
-				"header": []
-			},
-			"response": []
-		},
-		{
-			"name": "create new workspace",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "content-type",
-						"value": "multipart/form-data",
-						"type": "default"
-					}
-				],
-				"body": {
-					"mode": "file",
-					"file": {
-						"src": "example_ws.ocrd.zip"
-					}
-				},
+				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/workspace",
+					"raw": "http://{{hostname}}/workspace",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{hostname}}"
 					],
-					"port": "5000",
 					"path": [
 						"workspace"
 					]
@@ -61,15 +39,76 @@
 			"response": []
 		},
 		{
-			"name": "get workspace",
+			"name": "list workflows",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": "http://{{hostname}}/workflow",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"workflow"
+					]
+				}
 			},
 			"response": []
 		},
 		{
-			"name": "create workspace with id",
+			"name": "create new workspace",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var ws_id = jsonData[\"@id\"].split(\"/\").pop()",
+							"pm.collectionVariables.set(\"tmp_workspace_id\", ws_id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "content-type",
+						"value": "multipart/form-data",
+						"type": "default",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "workspace",
+							"type": "file",
+							"src": "example_ws.ocrd.zip"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://{{hostname}}/workspace",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"workspace"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update workspace",
 			"request": {
 				"method": "PUT",
 				"header": [],
@@ -84,49 +123,237 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:8000/workspace/test4711",
+					"raw": "http://{{hostname}}/workspace/{{example_workspace_id}}",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{hostname}}"
 					],
-					"port": "8000",
 					"path": [
 						"workspace",
-						"test4711"
+						"{{example_workspace_id}}"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "update existing workspace",
+			"name": "update workflow",
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "PUT",
 				"header": [],
 				"body": {
 					"mode": "formdata",
 					"formdata": [
 						{
-							"key": "workspace",
+							"key": "nextflow_script",
 							"type": "file",
-							"src": "example_ws2.ocrd.zip"
+							"src": "nextflow-wo-venv.nf"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:8000/workspace/test4711",
+					"raw": "http://{{hostname}}/workflow/{{example_workflow_id}}",
 					"protocol": "http",
 					"host": [
-						"localhost"
+						"{{hostname}}"
 					],
-					"port": "8000",
 					"path": [
-						"workspace",
-						"test4711"
+						"workflow",
+						"{{example_workflow_id}}"
 					]
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "run workflow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var job_id = jsonData[\"@id\"].split(\"/\").pop()",
+							"pm.collectionVariables.set(\"tmp_job_id\", job_id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept-encoding": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{example_workspace_id}}\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/workflow/{{example_workflow_id}}",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"workflow",
+						"{{example_workflow_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "request job status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.ocrd+zip",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "http://{{hostname}}/workflow/{{example_workflow_id}}/{{tmp_job_id}}",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"workflow",
+						"{{example_workflow_id}}",
+						"{{tmp_job_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "download example workspace zip",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.ocrd+zip",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "http://{{hostname}}/workspace/{{example_workspace_id}}",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"workspace",
+						"{{example_workspace_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "hostname",
+			"value": "localhost:8000",
+			"type": "default"
+		},
+		{
+			"key": "example_workspace_id",
+			"value": "postman-test-ws",
+			"type": "default"
+		},
+		{
+			"key": "example_workflow_id",
+			"value": "postman-test-wf",
+			"type": "default"
+		},
+		{
+			"key": "tmp_workspace_id",
+			"value": "x"
+		},
+		{
+			"key": "tmp_job_id",
+			"value": "x"
 		}
 	]
 }
