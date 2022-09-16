@@ -36,7 +36,6 @@ docker build -t ocrd-webapi .
 ### run
 `docker run -p "8000:80" --name ocrd-webapi -d ocrd-webapi`
 
-
 Test this webAPI implementation
 -------------------------------
 ### test if running
@@ -63,7 +62,7 @@ Get single workspace:
 `curl http://localhost:8000/workspace/test4711`
 
 Upload workflow:
-`curl -X POST http://localhost:8000/workflow -F --user {user}:{pw} nextflow_script=@things/nextflow.nf`
+`curl -X POST http://localhost:8000/workflow --user {user}:{pw} -F nextflow_script=@things/nextflow.nf`
 
 Run Workflow:
 `curl -X POST http://localhost:8000/workflow/{workflow-id} -H 'Content-Type: application/json' -d '{"workspace_id":"{workspace-id}", "workflow_parameters": {}}'`
