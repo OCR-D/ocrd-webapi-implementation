@@ -13,3 +13,7 @@ OCRD_WEBAPI_DB_URL=mongodb://mongo:27017/operandi
 
 # dir on the host where the volumes are mounted where the webapi stores data
 OCRD_WEBAPI_DATADIR_HOST=/home/someuser/ocrd-webapi-data
+
+# uploading workflows is restricted. Leave empty to disable uploading workflows
+OCRD_WEBAPI_USERNAME=
+OCRD_WEBAPI_PASSWORD=

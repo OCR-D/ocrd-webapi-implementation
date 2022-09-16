@@ -62,7 +62,17 @@ Update existing workspace:
 Get single workspace:
 `curl http://localhost:8000/workspace/test4711`
 
+Upload workflow:
+`curl -X POST http://localhost:8000/workflow -F --user {user}:{pw} nextflow_script=@things/nextflow.nf`
 
+Run Workflow:
+`curl -X POST http://localhost:8000/workflow/{workflow-id} -H 'Content-Type: application/json' -d '{"workspace_id":"{workspace-id}", "workflow_parameters": {}}'`
+
+Request job status:
+`curl http://localhost:8000/workflow/{workflow-id}/{job-id}`
+
+Download Workspace ocrd.zip:
+`curl http://localhost:8000/workspace/{workspace-id} -H "accept: application/vnd.ocrd+zip" --output foo.zip`
 
 Links
 ------
@@ -78,7 +88,14 @@ Dev-Server:
 ### Start Dev-Server
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
 
-### Example Requests with Curl:
+
+Run Server using docker-compose:
+--------------------------------
+`cp things/env-template .env`
+# modiyfiy .env
+`docker-compose build --no-cache`
+`docker-compose up -d`
+
 
 
 Miscellaneous
