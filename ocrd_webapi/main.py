@@ -3,9 +3,19 @@ Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/op
 """
 import datetime
 import os
+import secrets
 from typing import Union, List
 
-from fastapi import FastAPI, UploadFile, Request, Header, HTTPException, status, BackgroundTasks
+from fastapi import (
+    FastAPI,
+    UploadFile,
+    Request,
+    Header,
+    HTTPException,
+    status,
+    BackgroundTasks,
+    Depends
+)
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 from ocrd_utils import getLogger
@@ -39,6 +49,8 @@ from ocrd_webapi.utils import (
     WorkspaceException,
     to_workspace_dir
 )
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -56,6 +68,7 @@ app = FastAPI(
         }
     ],
 )
+security = HTTPBasic()
 safe_init_logging()
 log = getLogger('ocrd_webapi.main')
 workspace_manager = WorkspaceManager()
@@ -181,13 +194,31 @@ async def list_workflow_scripts() -> List[WorkflowRsrc]:
     return workflow_manager.get_workflows()
 
 
+def __dummy_security_check(auth):
+    """
+    currently it would be possible to upload any nextflow script and execute anything on the server
+    this way. The purpose of this security is just for temporarily disable that possibility kind of
+    TODO: delete this
+    """
+    user = auth.username.encode("utf8")
+    pw = auth.password.encode("utf8")
+    expected_user = os.getenv("OCRD_WEBAPI_USERNAME", "").encode("utf8")
+    expected_pw = os.getenv("OCRD_WEBAPI_PASSWORD", "").encode("utf8")
+    if not user or not pw or not secrets.compare_digest(pw, expected_pw) or \
+            not secrets.compare_digest(user, expected_user):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            headers={"WWW-Authenticate": "Basic"})
+
+
 @app.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
-async def upload_workflow_script(nextflow_script: UploadFile) -> Union[None, WorkflowRsrc]:
+async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(
+                                 security)) -> Union[None, WorkflowRsrc]:
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
     curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
+    __dummy_security_check(auth)
     try:
         return await workflow_manager.create_workflow_space(nextflow_script)
     except Exception:
@@ -218,12 +249,15 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)) -> Un
 
 
 @app.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str) -> Union[None, WorkflowRsrc]:
+async def update_workflow_script(
+    nextflow_script: UploadFile, workflow_id: str,
+    auth: HTTPBasicCredentials = Depends(security)) -> Union[None, WorkflowRsrc]:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 
     curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
+    __dummy_security_check(auth)
     try:
         return await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
     except Exception:

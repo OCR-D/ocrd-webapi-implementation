@@ -57,10 +57,18 @@ def _fixture_dummy_workspace(utils, client):
 
 
 @pytest.fixture(name='dummy_workflow')
-def _fixture_dummy_workflow(utils, client):
+def _fixture_dummy_workflow(utils, client, auth):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow-simple.nf"), 'rb')}
-    response = client.post("/workflow", files=nextflow_script)
+    response = client.post("/workflow", files=nextflow_script, auth=auth)
+    assert 2 <= response.status_code // 100 < 3, f"fixture: dummy-workflow failed: {response}"
     yield response.json()['@id'].split("/")[-1]
+
+
+@pytest.fixture(name='auth')
+def _fixture_auth():
+    user = os.getenv("OCRD_WEBAPI_USERNAME")
+    pw = os.getenv("OCRD_WEBAPI_PASSWORD")
+    yield user, pw
 
 
 @pytest.fixture(scope='session')

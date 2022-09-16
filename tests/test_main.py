@@ -20,17 +20,17 @@ def run_around_tests(mongo_client):
     # After each test:
 
 
-def test_upload_workflow_script(utils, client):
+def test_upload_workflow_script(utils, client, auth):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow.nf"), 'rb')}
-    response = client.post("/workflow", files=nextflow_script)
+    response = client.post("/workflow", files=nextflow_script, auth=auth)
     workflow_id = get_workflow_id(response)
     assert_status_code(response.status_code, expected_floor=2)
     assert_workflow_dir(workflow_id)
 
 
-def test_get_workflow_script(utils, client):
+def test_get_workflow_script(utils, client, auth):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow.nf"), 'rb')}
-    client.post("/workflow", files=nextflow_script)
+    client.post("/workflow", files=nextflow_script, auth=auth)
     existing_workflow_id = find_workflow_id(client)
     response = client.get(f"/workflow/{existing_workflow_id}",
                           headers={"accept": "text/vnd.ocrd.workflow"})
@@ -38,16 +38,16 @@ def test_get_workflow_script(utils, client):
     assert_workflow_dir(existing_workflow_id)
 
 
-def test_update_workflow_script(utils, client):
+def test_update_workflow_script(utils, client, auth):
     nextflow_script = {'nextflow_script': open(utils.to_asset_path("nextflow-simple.nf"), 'rb')}
     existing_workflow_id = find_workflow_id(client)
-    response = client.put(f"/workflow/{existing_workflow_id}", files=nextflow_script)
+    response = client.put(f"/workflow/{existing_workflow_id}", files=nextflow_script, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     assert_workflow_dir(existing_workflow_id)
 
 
-def test_start_workflow_script(client, dummy_workspace, dummy_workflow):
-    response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace})
+def test_start_workflow_script(client, dummy_workspace, dummy_workflow, auth):
+    response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace}, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     assert_job_id(response)
 
