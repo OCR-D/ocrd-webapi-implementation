@@ -142,7 +142,7 @@ class WorkflowJobDb(Document):
     class Settings:
         name = "workflow_job"
 
-    def to_rsrc(self) -> 'WorkflowJobDb':
+    def to_rsrc(self) -> 'WorkflowJobRsrc':
         return WorkflowJobRsrc(id=utils.to_workflow_job_url(self.workflow_id, self.id),
                                workflow=WorkflowRsrc.from_id(self.workflow_id),
                                workspace=WorkspaceRsrc.from_id(self.workspace_id),
