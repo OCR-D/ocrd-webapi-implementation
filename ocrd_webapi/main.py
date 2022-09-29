@@ -5,6 +5,7 @@ import datetime
 import os
 import secrets
 from typing import Union, List
+from .routers import processor
 
 from fastapi import (
     FastAPI,
@@ -68,6 +69,7 @@ app = FastAPI(
         }
     ],
 )
+app.include_router(processor.router)
 security = HTTPBasic()
 safe_init_logging()
 log = getLogger('ocrd_webapi.main')

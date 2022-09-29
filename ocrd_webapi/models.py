@@ -53,10 +53,10 @@ class WorkflowRsrc(Resource):
 
 
 class ProcessorArgs(BaseModel):
-    workspace: Optional[WorkspaceRsrc] = None
-    input_file_grps: Optional[str] = None
-    output_file_grps: Optional[str] = None
-    page_id: Optional[str] = None
+    workspace_id: str = None
+    input_file_grps: str = None
+    output_file_grps: str = None
+    page_id: str = None
     parameters: Optional[Dict[str, Any]] = {}
 
 
