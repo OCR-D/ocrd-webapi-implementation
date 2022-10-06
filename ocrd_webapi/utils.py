@@ -80,6 +80,15 @@ def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
     return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
 
 
+def to_processor_job_url(processor_name: str, job_id: str) -> str:
+    """
+    create the url where the processor job is available e.g. http://localhost:8000/processor/ocrd-dummy/{job_id}
+
+    does not verify that the proessor or/and the processor-job exists
+    """
+    return f"{SERVER_PATH}/processor/{processor_name}/{job_id}"
+
+
 logging_initialized = False
 
 

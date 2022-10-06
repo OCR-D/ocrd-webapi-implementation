@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c3368544-2438-4e88-8266-208e7863af0f",
+		"_postman_id": "9919ae19-ddb3-4b4b-b61e-e120b3f1240c",
 		"name": "webapi-tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -228,7 +228,7 @@
 			"response": []
 		},
 		{
-			"name": "request job status",
+			"name": "request wf-job status",
 			"event": [
 				{
 					"listen": "test",
@@ -305,6 +305,42 @@
 					"path": [
 						"workspace",
 						"{{example_workspace_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "run dummy processor",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{tmp_workspace_id}}\",\n    \"input_file_grps\": \"OCR-D-IMG\",\n    \"output_file_grps\": \"OCR-D-DUMMY\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/processor/ocrd-dummy",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"processor",
+						"ocrd-dummy"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
 					]
 				}
 			},
