@@ -61,7 +61,7 @@ class ProcessorArgs(BaseModel):
 
 
 class JobState(BaseModel):
-    __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED)')
+    __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')
 
 
 class Job(Resource):
