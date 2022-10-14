@@ -38,6 +38,9 @@ log = getLogger('ocrd_webapi.processor')
 
 @router.post("/processor/{processor}")
 async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, ProcessorJobRsrc]:
+    """
+    run a processor. Delegate call to fitting processing server
+    """
     if processor not in processor_config:
         raise ResponseException(404, {"error": "Processor not available"})
     workspace_id = p_args.workspace_id
@@ -74,6 +77,9 @@ async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, Pr
 
 @router.get("/processor/{processor}")
 async def get_processor(processor: str) -> Union[None, Dict]:
+    """
+    return processors ocrd-tool.json. Delegates to respective processing server
+    """
     if processor not in processor_config:
         raise ResponseException(404, {"error": "Processor not available"})
 
@@ -86,6 +92,10 @@ async def get_processor(processor: str) -> Union[None, Dict]:
 
 @router.get("/processor/")
 async def list_processors() -> List:
+    """
+    list all available processors. Delegates to all available processing servers and returs a
+    summary of their ocrd-tool.json
+    """
     # TODO: maybe use caching unless this should be used to test if processors available
     res = []
     for processor in processor_config:
