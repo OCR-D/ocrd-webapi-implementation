@@ -26,6 +26,7 @@ from ocrd_webapi.models import (
     ProcessorJobRsrc,
 )
 from ocrd_utils import getLogger
+import re
 
 router = APIRouter(
     tags=["processor"],
@@ -108,3 +109,29 @@ async def list_processors() -> List:
                 log.warn(f"Error while listing processors: '{processor}' - '{url}' not responding")
 
     return JSONResponse(content=res)
+
+
+@router.get("/processor/{processor}/{job_id}", responses={"201": {"model": ProcessorJobRsrc}})
+async def get_processor_job(processor: str, job_id: str) -> ProcessorJobRsrc:
+    """
+    deliver infos about a procossor job to client. Delegates to Processong-Server exstracts
+    job-state and workspace and returns results
+    """
+    # TODO: when Pull-Request is merged to core: fetch Job from mongodb via beanie and Job-Model
+    #       from ocr-d core
+    if processor not in processor_config:
+        raise ResponseException(404, {"error": "Processor not available"})
+    if not job_id:
+        raise ResponseException(422, {"error": "job_id missing"})
+
+    url = processor_config[processor]
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{url}/{job_id}", headers={"Content-Type": "application/json"})
+
+    if not r.is_success:
+        raise ResponseException(422, {"error": f"no job found for job_id: '{job_id}"})
+
+    job_infos = r.json()
+    job_state = job_infos['state']
+    workspace_id = re.match(r".*[/]([^/]+)/[^/]+$",job_infos['path']).group(1)
+    return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
