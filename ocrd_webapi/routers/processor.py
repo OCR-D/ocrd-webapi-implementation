@@ -2,7 +2,15 @@ from fastapi import APIRouter
 import yaml
 import os
 import httpx
-from typing import Union
+from fastapi.responses import (
+    JSONResponse,
+)
+
+from typing import (
+    Union,
+    Dict,
+    List,
+)
 
 from ocrd_webapi.constants import (
     PROCESSOR_CONFIG_PATH,
@@ -62,3 +70,31 @@ async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, Pr
     job_id, job_state = x["_id"], x["state"]
 
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
+
+
+@router.get("/processor/{processor}")
+async def get_processor(processor: str) -> Union[None, Dict]:
+    if processor not in processor_config:
+        raise ResponseException(404, {"error": "Processor not available"})
+
+    url = processor_config[processor]
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers={"Content-Type": "application/json"})
+
+    return JSONResponse(content=r.json())
+
+
+@router.get("/processor/")
+async def list_processors() -> List:
+    # TODO: maybe use caching unless this should be used to test if processors available
+    res = []
+    for processor in processor_config:
+        url = processor_config[processor]
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.get(url, headers={"Content-Type": "application/json"})
+                res.append(r.json())
+            except httpx.ConnectError:
+                log.warn(f"Error while listing processors: '{processor}' - '{url}' not responding")
+
+    return JSONResponse(content=res)
