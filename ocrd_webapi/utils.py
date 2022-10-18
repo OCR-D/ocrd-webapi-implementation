@@ -27,6 +27,7 @@ import zipfile
 import bagit
 import tempfile
 from ocrd_utils import initLogging
+from pathlib import Path
 
 
 class ResponseException(Exception):
@@ -141,3 +142,16 @@ def read_baginfos_from_zip(path_to_zip) -> dict:
             with open(tmp.name, 'wb') as f:
                 f.write(bag_info_bytes)
             return bagit._load_tag_file(tmp.name)
+
+
+def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
+    """
+    search in current directory and all directories above for 'filename'
+    """
+    if cwd is None:
+        cwd = Path.cwd()
+    if cwd == Path(cwd.root) or cwd == cwd.parent:
+        return None
+
+    fullpath = cwd / filename
+    return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)

@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import APIRouter
 import yaml
 import os
@@ -27,12 +29,19 @@ from ocrd_webapi.models import (
 )
 from ocrd_utils import getLogger
 import re
+from ocrd_webapi import utils
 
 router = APIRouter(
     tags=["processor"],
 )
-with open(PROCESSOR_CONFIG_PATH) as fin:
-    processor_config = yaml.safe_load(fin)
+
+try:
+    with open(utils.find_upwards(PROCESSOR_CONFIG_PATH)) as fin:
+        processor_config = yaml.safe_load(fin)
+except TypeError:
+    print(f"Processor config file not found: {PROCESSOR_CONFIG_PATH}", file=sys.stderr)
+    exit(1)
+
 safe_init_logging()
 log = getLogger('ocrd_webapi.processor')
 
@@ -65,7 +74,11 @@ async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, Pr
     if p_args.parameters:
         data["parameters"] = p_args.parameters.copy()
     async with httpx.AsyncClient() as client:
-        r = await client.post(url, headers={"Content-Type": "application/json"}, json=data)
+        try:
+            r = await client.post(url, headers={"Content-Type": "application/json"}, json=data)
+        except (httpx.ConnectError, httpx.ReadError):
+            log.error(f"Error while listing processors: '{processor}' - '{url}' not responding")
+            return ResponseException(500, {"error": f"Processing-Server not available: {processor}"})
 
     if not r.is_success:
         log.error(f"error delegating processor-request. Response({r.status_code}): {r.text}")
@@ -133,5 +146,5 @@ async def get_processor_job(processor: str, job_id: str) -> ProcessorJobRsrc:
 
     job_infos = r.json()
     job_state = job_infos['state']
-    workspace_id = re.match(r".*[/]([^/]+)/[^/]+$",job_infos['path']).group(1)
+    workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_infos['path']).group(1)
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
