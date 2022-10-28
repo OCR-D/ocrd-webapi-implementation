@@ -6,7 +6,7 @@ help:
 	@echo "  Targets"
 	@echo ""
 	@echo "    venv           Create virtual-environment for the project"
-	@echo "    requirements   Install requirements of the project"
+	@echo "    start-mongo    start mongodb for local dev environment"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -18,8 +18,5 @@ venv:
 	$(PYTHON) -m venv venv
 	venv/bin/pip install -r $(REQUIREMENTSTXT)
 
-start-mongo: .env
-	docker-compose up -d mongo
-
-.env:
-	cp things/env-template .env
+start-mongo:
+	docker-compose --env-file things/env-template-localdev up -d mongo

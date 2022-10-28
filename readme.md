@@ -46,7 +46,7 @@ docker-compose up -d
   3.7 on any linux distro?
 
 ### start mongodb
-- `make start-mongo locally`
+- `make start-mongo`
 
 ### run
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
