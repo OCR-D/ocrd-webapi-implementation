@@ -1,14 +1,31 @@
-OCR-D webAPI implementation
-===========================
+# OCR-D webAPI implementation
 
 Implementation of [OCR-D](https://ocr-d.de/en/) [webAPI](https://github.com/OCR-D/spec/blob/master/openapi.yml)
 
-TODO: ToC
+[rem]: BEGIN-MARKDOWN-TOC
+* [Run in Docker](#run-in-docker)
+	* [clone](#clone)
+	* [install nextflow](#install-nextflow)
+	* [start docker](#start-docker)
+	* [test if running:](#test-if-running)
+* [Run locally for development:](#run-locally-for-development)
+	* [clone](#clone-1)
+	* [Create virtual environment and start it](#create-virtual-environment-and-start-it)
+	* [start mongodb](#start-mongodb)
+	* [run](#run)
+* [Test this webAPI implementation](#test-this-webapi-implementation)
+	* [test if running](#test-if-running-1)
+	* [postman](#postman)
+	* [curl](#curl)
+* [Links](#links)
+* [Miscellaneous](#miscellaneous)
+	* [connect to running container:](#connect-to-running-container)
+	* [start mongodb for local testing](#start-mongodb-for-local-testing)
+* [Explanation env-variables:](#explanation-env-variables)
 
+[rem]: END-MARKDOWN-TOC
 
-Run project
------------
-## Docker
+## Run in Docker
 ### clone
 `git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
 `cd ocrd-webapi-implementation`
@@ -24,11 +41,12 @@ Run project
 docker-compose --env-file things/env-template-docker up -d
 ```
 
-### test if running:
+### test if running
 - `curl localhost:5050`
 - `curl localhost:5050/workspaces`
 
-## Locally for development
+
+## Run locally for development
 ### clone
 `git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
 `cd ocrd-webapi-implementation`
@@ -46,9 +64,7 @@ docker-compose --env-file things/env-template-docker up -d
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
 
 
-
-Test this webAPI implementation
--------------------------------
+## Test this webAPI implementation
 ### test if running
 http://localhost:8000/
 
@@ -84,32 +100,12 @@ Request job status:
 Download Workspace ocrd.zip:
 `curl http://localhost:8000/workspace/{workspace-id} -H "accept: application/vnd.ocrd+zip" --output foo.zip`
 
-Links
-------
+## Links
 <https://github.com/OCR-D/spec/blob/master/openapi.yml>
 <https://app.swaggerhub.com/apis/kba/ocr-d_web_api/0.0.1>
 
 
-Dev-Server:
------------
-### start venv:
-`. venv/bin/activate`
-
-### Start Dev-Server
-`uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
-
-
-Run Server using docker-compose:
---------------------------------
-`cp things/env-template .env`
-# modiyfiy .env
-`docker-compose build --no-cache`
-`docker-compose up -d`
-
-
-
-Miscellaneous
-----------------
+## Miscellaneous
 
 ### connect to running container:
 `docker exec -it ocrd-webapi bash`
@@ -118,28 +114,28 @@ Miscellaneous
 docker run -d -p 27017:27017 --name mongo-4-ocrd --mount type=bind,source="$HOME/zeugs-ohne-backup/ocrd_webapi/mongo-data",target=/data/db  mongo:latest
 
 
-Explanation env-variables:
---------------------------
-### OCRD_WEBAPI_SERVER_PATH
+## Explanation env-variables
+
+OCRD_WEBAPI_SERVER_PATH:
 When users query a workspace, they get a url where to retreive it. Only therefore this variable is
 needed. It does not cause errors, if wrong "just" users cannot retreive their data and have to
 modify themselfs
 
-### OCRD_WEBAPI_PORT
+OCRD_WEBAPI_PORT:
 Only docker. This is the port where the webapi will be available on localhost
 
-### OCRD_WEBAPI_MONGO_PORT
+OCRD_WEBAPI_MONGO_PORT:
 Only docker. This is the port where the mongodb will be available on localhost. When developing
 locally or running tests, this must fit to OCRD_WEBAPI_DB_URL
 
-### OCRD_WEBAPI_DATADIR_HOST
+OCRD_WEBAPI_DATADIR_HOST:
 Only docker. This is the host-part of two volume-mounts. Here the data from mongdb and the data
 from the webapi are mounted. If running in development mode here the mongdb-stuff is accessible.
 
-### OCRD_WEBAPI_DB_URL
+OCRD_WEBAPI_DB_URL:
 Important: This is the url where the webapi expects the mongdb to run
 
-### OCRD_WEBAPI_STORAGE_DIR
+OCRD_WEBAPI_STORAGE_DIR:
 Important: Here the webapi stores its workspaces etc. Additionally this is used in docker-compose.
 This is the container-part of a volume mount so that from the host-machine it is possible to access
 the data stored with the webapi
