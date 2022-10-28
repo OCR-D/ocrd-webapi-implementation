@@ -29,7 +29,6 @@ docker-compose --env-file things/env-template-docker up -d
 - `curl localhost:5050/workspaces`
 
 ## Locally for development
-- TODO: this is not working. Especially setting the environment variables must be thougth about
 ### clone
 `git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
 `cd ocrd-webapi-implementation`
