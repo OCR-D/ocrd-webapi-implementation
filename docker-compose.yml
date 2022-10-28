@@ -4,6 +4,12 @@ services:
   webapi:
     build: .
     container_name: ocrd-webapi
+    environment:
+      - 'OCRD_WEBAPI_SERVER_PATH=${OCRD_WEBAPI_SERVER_PATH}'
+      - 'OCRD_WEBAPI_STORAGE_DIR=${OCRD_WEBAPI_STORAGE_DIR}'
+      - 'OCRD_WEBAPI_DB_URL=${OCRD_WEBAPI_DB_URL}'
+      - 'OCRD_WEBAPI_USERNAME=${OCRD_WEBAPI_USERNAME}'
+      - 'OCRD_WEBAPI_PASSWORD=${OCRD_WEBAPI_PASSWORD}'
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
     volumes:
