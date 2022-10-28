@@ -6,7 +6,6 @@ services:
     container_name: ocrd-webapi
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
-    env_file: .env
     volumes:
       - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data:${OCRD_WEBAPI_STORAGE_DIR}"
 
