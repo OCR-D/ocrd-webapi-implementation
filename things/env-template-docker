@@ -5,14 +5,14 @@ OCRD_WEBAPI_SERVER_PATH=http://localhost:5050
 OCRD_WEBAPI_PORT=5050
 OCRD_WEBAPI_MONGO_PORT=27018
 
-# Docker-Internal directory. Fastapi stores data there
+# Docker-Internal directory. Fastapi stores data there. If run locally here the workspaces etc. are stored
 OCRD_WEBAPI_STORAGE_DIR=/ocrd_webapi_data
 
 # used by fastapi to connect to mongodb
 OCRD_WEBAPI_DB_URL=mongodb://mongo:27017/operandi
 
 # dir on the host where the volumes are mounted where the webapi stores data
-OCRD_WEBAPI_DATADIR_HOST=/home/someuser/ocrd-webapi-data
+OCRD_WEBAPI_DATADIR_HOST=/tmp/ocrd-webapi-data
 
 # uploading workflows is restricted. Leave empty to disable uploading workflows
 OCRD_WEBAPI_USERNAME=

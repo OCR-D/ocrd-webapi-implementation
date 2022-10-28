@@ -8,33 +8,50 @@ TODO: ToC
 
 Run project
 -----------
-## Local
+## Docker
 ### clone
-`git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
+`git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
+`cd ocrd-webapi-implementation`
 
-### Create virtual environment
+### create the config
+`cp things/env-template-docker .env`
+- env-template should be suffictient to get started and can later be modified
+- carefully though: default storage is in /tmp. Ensure to not use this when deploying to server
+
+### install nextflow
+- necessarry if workflows should be run
+- https://www.nextflow.io/docs/latest/getstarted.html
+
+### start docker
+- carefully: downloads ocrd-all:maximum which is huge (17 GB currently)
+- TODO: maybe switch image to minimum or medium and just offer contained processors
+```
+docker-compose up -d
+```
+
+### test if running:
+- `curl localhost:5050`
+- `curl localhost:5050/workspaces`
+
+## Locally for development
+- TODO: this is not working. Especially setting the environment variables must be thougth about
+### clone
+`git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
+`cd ocrd-webapi-implementation`
+
+### Create virtual environment and start it
 `make venv`
-
-### start venv and install requirements:
 `. venv/bin/activate`
+- TODO: this does not work if python3.7 is not present as on my own machine. How to get a python
+  3.7 on any linux distro?
 
-`make requirements`
+### start mongodb
+- `make start-mongo locally`
 
 ### run
 `uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload`
 
-## Docker
-### clone
-`git clone https://github.com/joschrew/ocrd-webapi-implementation.git`
 
-### build
-```
-cd ocrd-webapi-implementation
-docker build -t ocrd-webapi .
-```
-
-### run
-`docker run -p "8000:80" --name ocrd-webapi -d ocrd-webapi`
 
 Test this webAPI implementation
 -------------------------------
@@ -105,3 +122,30 @@ Miscellaneous
 
 ### start mongodb for local testing
 docker run -d -p 27017:27017 --name mongo-4-ocrd --mount type=bind,source="$HOME/zeugs-ohne-backup/ocrd_webapi/mongo-data",target=/data/db  mongo:latest
+
+
+Explanation env-variables:
+--------------------------
+### OCRD_WEBAPI_SERVER_PATH
+When users query a workspace, they get a url where to retreive it. Only therefore this variable is
+needed. It does not cause errors, if wrong "just" users cannot retreive their data and have to
+modify themselfs
+
+### OCRD_WEBAPI_PORT
+Only docker. This is the port where the webapi will be available on localhost
+
+### OCRD_WEBAPI_MONGO_PORT
+Only docker. This is the port where the mongodb will be available on localhost. When developing
+locally or running tests, this must fit to OCRD_WEBAPI_DB_URL
+
+### OCRD_WEBAPI_DATADIR_HOST
+Only docker. This is the host-part of two volume-mounts. Here the data from mongdb and the data
+from the webapi are mounted. If running in development mode here the mongdb-stuff is accessible.
+
+### OCRD_WEBAPI_DB_URL
+Important: This is the url where the webapi expects the mongdb to run
+
+### OCRD_WEBAPI_STORAGE_DIR
+Important: Here the webapi stores its workspaces etc. Additionally this is used in docker-compose.
+This is the container-part of a volume mount so that from the host-machine it is possible to access
+the data stored with the webapi

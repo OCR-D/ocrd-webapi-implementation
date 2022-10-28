@@ -1,5 +1,5 @@
-VIRTUAL_ENV ?= $(CURDIR)/venv
 PYTHON ?= python3.7
+REQUIREMENTSTXT ?= requirements_3.7.txt
 
 help:
 	@echo ""
@@ -11,10 +11,15 @@ help:
 	@echo "  Variables"
 	@echo ""
 	@echo "    PYTHON         Default '$(PYTHON)'."
+	@echo "    REQS           Default '$(REQUIREMENTSTXT)'."
 
 
 venv:
 	$(PYTHON) -m venv venv
+	venv/bin/pip install -r $(REQUIREMENTSTXT)
 
-requirements:
-	pip install -r requirements.txt
+start-mongo: .env
+	docker-compose up -d mongo
+
+.env:
+	cp things/env-template .env
