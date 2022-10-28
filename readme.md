@@ -13,11 +13,6 @@ Run project
 `git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
 `cd ocrd-webapi-implementation`
 
-### create the config
-`cp things/env-template-docker .env`
-- env-template should be suffictient to get started and can later be modified
-- carefully though: default storage is in /tmp. Ensure to not use this when deploying to server
-
 ### install nextflow
 - necessarry if workflows should be run
 - https://www.nextflow.io/docs/latest/getstarted.html
@@ -26,7 +21,7 @@ Run project
 - carefully: downloads ocrd-all:maximum which is huge (17 GB currently)
 - TODO: maybe switch image to minimum or medium and just offer contained processors
 ```
-docker-compose up -d
+docker-compose --env-file things/env-template-docker up -d
 ```
 
 ### test if running:
