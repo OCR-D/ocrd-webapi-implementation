@@ -1,6 +1,7 @@
 aiofiles==0.8.0
 anyio==3.6.1
 asgiref==3.4.1
+async-generator==1.10
 atomicwrites==1.4.1
 attrs==22.1.0
 bagit==1.8.1
@@ -15,7 +16,9 @@ dataclasses==0.8
 Deprecated==1.2.0
 fastapi==0.83.0
 Flask==2.0.3
-h11==0.13.0
+h11==0.12.0
+httpcore==0.14.7
+httpx==0.22.0
 idna==3.4
 immutables==0.19
 importlib-metadata==4.8.3
@@ -50,6 +53,7 @@ python-dotenv==0.20.0
 python-multipart==0.0.5
 PyYAML==6.0
 requests==2.27.1
+rfc3986==1.5.0
 Shapely==1.8.4
 six==1.16.0
 sniffio==1.2.0

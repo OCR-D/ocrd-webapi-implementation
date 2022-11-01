@@ -27,6 +27,7 @@ import zipfile
 import bagit
 import tempfile
 from ocrd_utils import initLogging
+from pathlib import Path
 
 
 class ResponseException(Exception):
@@ -78,6 +79,15 @@ def to_workflow_url(workflow_id: str) -> str:
 
 def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
     return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
+
+
+def to_processor_job_url(processor_name: str, job_id: str) -> str:
+    """
+    create the url where the processor job is available e.g. http://localhost:8000/processor/ocrd-dummy/{job_id}
+
+    does not verify that the proessor or/and the processor-job exists
+    """
+    return f"{SERVER_PATH}/processor/{processor_name}/{job_id}"
 
 
 logging_initialized = False
@@ -132,3 +142,16 @@ def read_baginfos_from_zip(path_to_zip) -> dict:
             with open(tmp.name, 'wb') as f:
                 f.write(bag_info_bytes)
             return bagit._load_tag_file(tmp.name)
+
+
+def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
+    """
+    search in current directory and all directories above for 'filename'
+    """
+    if cwd is None:
+        cwd = Path.cwd()
+    if cwd == Path(cwd.root) or cwd == cwd.parent:
+        return None
+
+    fullpath = cwd / filename
+    return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)

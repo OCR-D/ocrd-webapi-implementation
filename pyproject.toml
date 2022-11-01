@@ -7,6 +7,7 @@ env = [
 	"OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test_operandi",
 	"OCRD_WEBAPI_USERNAME = a",
 	"OCRD_WEBAPI_PASSWORD = b",
+	"OCRD_PROCESSOR_CONFIG = tests/processor_config_test.yml",
 ]
 
 [flake8]

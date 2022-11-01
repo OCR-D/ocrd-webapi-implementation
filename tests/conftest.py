@@ -17,7 +17,7 @@ WORKSPACE_2_ID = 'example-workspace-2'
 
 
 @pytest.fixture(scope="session", autouse=True)
-def do_before_all_tests(request, mongo_docker, mongo_client, utils):
+def do_before_all_tests():
     """
     - clean workspace- and workflow-directories
     - make sure mongodb is available
@@ -34,7 +34,7 @@ def _fixture_workspace_manager():
 
 
 @pytest.fixture(name='mongo_client', scope="session")
-def _fixture_mongo_client():
+def _fixture_mongo_client(start_docker):
     # TODO: think about changing this in the long run!
     mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
@@ -72,10 +72,9 @@ def _fixture_auth():
 
 
 @pytest.fixture(scope='session')
-def client():
+def client(start_docker):
     with TestClient(app) as c:
         yield c
-
 
 
 def pytest_sessionstart(session):
@@ -116,10 +115,9 @@ def is_responsive(url, retries: int = 0):
 
 
 @pytest.fixture(scope="session")
-def mongo_docker(docker_ip, docker_services):
+def start_docker(do_before_all_tests, docker_ip, docker_services):
     port = docker_services.port_for("mongo", 27017)
     url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
         timeout=10.0, pause=0.1, check=lambda: is_responsive(url)
     )
-    return url

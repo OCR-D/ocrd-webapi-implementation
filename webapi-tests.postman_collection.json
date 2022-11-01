@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c3368544-2438-4e88-8266-208e7863af0f",
+		"_postman_id": "7b715c8e-5ec4-4efe-83dd-408b04390369",
 		"name": "webapi-tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -228,7 +228,7 @@
 			"response": []
 		},
 		{
-			"name": "request job status",
+			"name": "request wf-job status",
 			"event": [
 				{
 					"listen": "test",
@@ -309,6 +309,172 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "run dummy processor",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var job_id = jsonData[\"@id\"].split(\"/\").pop()",
+							"pm.collectionVariables.set(\"tmp_processor_job_id\", job_id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{tmp_workspace_id}}\",\n    \"input_file_grps\": \"OCR-D-IMG\",\n    \"output_file_grps\": \"OCR-D-DUMMY\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/processor/ocrd-dummy",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"processor",
+						"ocrd-dummy"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get dummy processor info",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{tmp_workspace_id}}\",\n    \"input_file_grps\": \"OCR-D-IMG\",\n    \"output_file_grps\": \"OCR-D-DUMMY\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/processor/ocrd-dummy",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"processor",
+						"ocrd-dummy"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get processor job",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{tmp_workspace_id}}\",\n    \"input_file_grps\": \"OCR-D-IMG\",\n    \"output_file_grps\": \"OCR-D-DUMMY\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/processor/ocrd-dummy/{{tmp_processor_job_id}}",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"processor",
+						"ocrd-dummy",
+						"{{tmp_processor_job_id}}"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list processors",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"workspace_id\": \"{{tmp_workspace_id}}\",\n    \"input_file_grps\": \"OCR-D-IMG\",\n    \"output_file_grps\": \"OCR-D-DUMMY\"\n}"
+				},
+				"url": {
+					"raw": "http://{{hostname}}/processor",
+					"protocol": "http",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"processor"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -354,6 +520,11 @@
 		{
 			"key": "tmp_job_id",
 			"value": "x"
+		},
+		{
+			"key": "tmp_processor_job_id",
+			"value": "",
+			"type": "default"
 		}
 	]
 }

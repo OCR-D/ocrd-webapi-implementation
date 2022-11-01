@@ -53,15 +53,15 @@ class WorkflowRsrc(Resource):
 
 
 class ProcessorArgs(BaseModel):
-    workspace: Optional[WorkspaceRsrc] = None
-    input_file_grps: Optional[str] = None
-    output_file_grps: Optional[str] = None
-    page_id: Optional[str] = None
+    workspace_id: str = None
+    input_file_grps: str = None
+    output_file_grps: str = None
+    page_id: str = None
     parameters: Optional[Dict[str, Any]] = {}
 
 
 class JobState(BaseModel):
-    __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED)')
+    __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')
 
 
 class Job(Resource):
@@ -71,13 +71,34 @@ class Job(Resource):
         allow_population_by_field_name = True
 
 
-class Processor(BaseModel):
-    __root__: Any = Field(..., description='The ocrd-tool.json for a specific tool')
+class ProcessorRsrc(BaseModel):
+    description: Union[str, None] = Field(None, description='Description of the thing')
+    ref: str = Field(..., description='link to ocrd-tool.json')
+
+    @staticmethod
+    def from_name(processor_name):
+        # TODO: howto to get a link to the ocrd-tool.json for a processor. Maybe this is not what
+        #       is intendet, so ask someone who could know
+        return ProcessorRsrc(
+            ref=f"TODO: find a way to get a link to {processor_name}'s ocrd-tool.json",
+            description="Processor")
+
+    class Config:
+        allow_population_by_field_name = True
 
 
-class ProcessorJob(Job):
-    processor: Optional[Processor] = None
+class ProcessorJobRsrc(Job):
+    processor: Optional[ProcessorRsrc] = None
     workspace: Optional[WorkspaceRsrc] = None
+
+    @staticmethod
+    def create(job_id, processor_name, workspace_id, state: JobState = None) -> 'ProcessorJobRsrc':
+        processor = ProcessorRsrc.from_name(processor_name)
+        workspace = WorkspaceRsrc.from_id(workspace_id)
+        return ProcessorJobRsrc(
+            id=utils.to_processor_job_url(processor_name, job_id), processor=processor,
+            workspace=workspace, state=state, description="Processor-Job"
+        )
 
 
 class WorkflowArgs(BaseModel):

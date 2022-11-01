@@ -3,3 +3,11 @@ services:
     image: "mongo"
     ports:
       - "6701:27017"
+
+  ocrd-dummy:
+    image: "ocrd/pr-ps"
+    volumes:
+      - /tmp/ocrd_webapi_test/workspaces:/workspaces
+    command: ocrd-dummy --address "0.0.0.0:5050:mongodb://172.17.0.1:6701/operandi"
+    ports:
+      - "5051:5050"
