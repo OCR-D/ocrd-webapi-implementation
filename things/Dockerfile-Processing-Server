@@ -1,0 +1,12 @@
+FROM ocrd/all:minimum
+
+RUN git clone --depth=100 https://github.com/OCR-D/core.git /code/pr-processing-server && \
+	cd /code/pr-processing-server/ && \
+	git fetch origin pull/884/head:pr-884 && \
+	git checkout pr-884 && \
+	git config --global user.email "niemand@example.com" && \
+    git config --global user.name niemand && \
+	git merge -X theirs master --no-commit && \
+	make uninstall && \
+	make install
+	

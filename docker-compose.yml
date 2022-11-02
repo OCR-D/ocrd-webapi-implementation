@@ -10,10 +10,12 @@ services:
       - 'OCRD_WEBAPI_DB_URL=${OCRD_WEBAPI_DB_URL}'
       - 'OCRD_WEBAPI_USERNAME=${OCRD_WEBAPI_USERNAME}'
       - 'OCRD_WEBAPI_PASSWORD=${OCRD_WEBAPI_PASSWORD}'
+      - 'OCRD_PROCESSOR_CONFIG_PATH=${OCRD_PROCESSOR_CONFIG_PATH}'
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
     volumes:
       - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data:${OCRD_WEBAPI_STORAGE_DIR}"
+      - ./things/processor_config_docker.yml:/processor_config.yml
 
   mongo:
     image: "mongo"
@@ -22,4 +24,18 @@ services:
       - "${OCRD_WEBAPI_MONGO_PORT}:27017"
     volumes:
       - "${OCRD_WEBAPI_DATADIR_HOST}/mongo-data:/data/db"
+
+  ocrd-dummy:
+    container_name:
+      ocrd-dummy-ps
+    build:
+      dockerfile: things/Dockerfile-Processing-Server
+    ports:
+      - 5051:5050
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data/workspaces:/workspaces"
+    command:
+      - "ocrd-dummy"
+      - "--address"
+      - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
 
