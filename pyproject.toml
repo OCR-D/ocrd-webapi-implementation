@@ -16,6 +16,9 @@ readme = "readme.md"
 [project.urls]
 "Homepage" = "https://github.com/OCR-D/ocrd-webapi-implementation"
 
+[tool.setuptools]
+packages = ["ocrd_webapi"]
+
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
