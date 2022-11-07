@@ -29,6 +29,7 @@ services:
     container_name:
       ocrd-dummy-ps
     build:
+      context: .
       dockerfile: things/Dockerfile-Processing-Server
     ports:
       - 5051:5050
