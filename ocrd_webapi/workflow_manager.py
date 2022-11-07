@@ -24,8 +24,10 @@ from ocrd_webapi.utils import (
 from ocrd_utils import getLogger
 from pathlib import Path
 from ocrd_webapi.database import save_workflow_job
-from ocrd_webapi.constants import WORKFLOWS_DIR
-
+from ocrd_webapi.constants import (
+    SERVER_PATH,
+    WORKFLOWS_DIR,
+)
 
 class WorkflowManager:
 

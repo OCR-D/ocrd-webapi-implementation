@@ -1,3 +1,5 @@
+import os
+
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -12,6 +14,7 @@ from fastapi.responses import FileResponse
 from ocrd_utils import getLogger
 
 # OCR-D WebAPI related imports
+from ocrd_webapi import database
 from ocrd_webapi.models import (
     WorkspaceRsrc,
 )

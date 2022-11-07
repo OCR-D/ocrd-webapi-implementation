@@ -36,6 +36,7 @@ from ocrd_webapi.models import (
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
+    to_workspace_dir,
 )
 from ocrd_webapi.workflow_manager import WorkflowManager
 
