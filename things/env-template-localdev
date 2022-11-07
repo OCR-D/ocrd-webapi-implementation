@@ -11,7 +11,7 @@ OCRD_WEBAPI_STORAGE_DIR=/tmp/ocrd-webapi-data
 
 # used by the webapi to connect to mongodb. Must fit to OCRD_WEBAPI_MONGO_PORT when the mongodb is
 # used in local development environment
-OCRD_WEBAPI_DB_URL=mongodb://localhost:27018/operandi
+OCRD_WEBAPI_DB_URL=mongodb://localhost:27018/ocrd-webapi
 
 # dir on the host where the volumes are mounted where the webapi stores data
 OCRD_WEBAPI_DATADIR_HOST=/tmp/ocrd-webapi-docker-volume

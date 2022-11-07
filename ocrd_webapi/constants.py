@@ -25,4 +25,4 @@ WORKSPACES_DIR: str = os.path.join(BASE_DIR, "workspaces")
 JOB_DIR: str = os.path.join(BASE_DIR, "jobs")
 WORKFLOWS_DIR: str = os.path.join(BASE_DIR, "workflows")
 DEFAULT_NF_SCRIPT_NAME: str = "nextflow.nf"
-MONGO_TESTDB = "test_operandi"
+MONGO_TESTDB = "test-ocrd-webapi"
