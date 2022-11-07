@@ -17,9 +17,13 @@ from ocrd_webapi.models import (
     WorkspaceRsrc,
 )
 from ocrd_webapi.utils import (
+    to_workflow_job_dir,
+    to_workflow_job_url,
+    to_workflow_script,
+    to_workflow_dir,
+    to_workflow_url,
     to_workspace_dir,
     WorkflowJobException,
-    to_workflow_job_dir,
 )
 from ocrd_utils import getLogger
 from pathlib import Path
@@ -46,7 +50,7 @@ class WorkflowManager:
         res = []
         for f in os.scandir(WORKFLOWS_DIR):
             if f.is_dir():
-                res.append(WorkflowRsrc(id=self.to_workflow_url(f.name), description="Workflow"))
+                res.append(WorkflowRsrc(id=to_workflow_url(f.name), description="Workflow"))
         return res
 
     async def create_workflow_space(self, file, uid=None) -> Union[WorkflowRsrc, None]:
@@ -62,13 +66,13 @@ class WorkflowManager:
 
         """
         if uid:
-            workflow_dir = self.to_workflow_dir(uid)
+            workflow_dir = to_workflow_dir(uid)
             if os.path.exists(workflow_dir):
                 self.log.warning("cannot create: workflow already existing. Id: %s" % uid)
                 return None
         else:
             uid = str(uuid.uuid4())
-            workflow_dir = self.to_workflow_dir(uid)
+            workflow_dir = to_workflow_dir(uid)
 
         os.mkdir(workflow_dir)
         nf_script_path = os.path.join(workflow_dir, file.filename)
@@ -82,7 +86,7 @@ class WorkflowManager:
         # 1. Check if the uploaded file is in fact a Nextflow script
         # 2. Validate the Nextflow script
 
-        return WorkflowRsrc(id=self.to_workflow_url(uid), description="Workflow")
+        return WorkflowRsrc(id=to_workflow_url(uid), description="Workflow")
 
     async def update_workflow_space(self, file, workflow_id: str):
         """
@@ -91,7 +95,7 @@ class WorkflowManager:
         Delete the workflow space if existing and then delegate to
         :py:func:`ocrd_webapi.workflow_manager.WorkflowManager.create_workflow_space
         """
-        workflow_dir = self.to_workflow_dir(workflow_id)
+        workflow_dir = to_workflow_dir(workflow_id)
         if os.path.isdir(workflow_dir):
             shutil.rmtree(workflow_dir)
         return await self.create_workflow_space(file, workflow_id)
@@ -102,39 +106,11 @@ class WorkflowManager:
         Returns:
             `WorkflowRsrc` if `workflow_id` is available else `None`.
         """
-        nf_script_path = self.to_workflow_script(workflow_id)
+        nf_script_path = to_workflow_script(workflow_id)
         if not os.path.isfile(nf_script_path):
             return None
 
         return WorkflowRsrc(id=nf_script_path, description="Workflow nextflow script")
-
-    def to_workflow_script(self, workflow_id: str) -> Union[str, None]:
-        workflow_path = self.to_workflow_dir(workflow_id)
-
-        script_name = None
-        for file in os.listdir(workflow_path):
-            if file.endswith(".nf"):
-                script_name = file
-
-        if not script_name:
-            return None
-
-        """
-        Return the local path to Nextflow script of `workflow_id`. No check if existing.
-        """
-        return os.path.join(workflow_path, script_name)
-
-    def to_workflow_dir(self, workflow_id: str) -> str:
-        """
-        Return the local path to workflow with id `workflow_id`. No check if existing.
-        """
-        return os.path.join(WORKFLOWS_DIR, workflow_id)
-
-    def to_workflow_url(self, workflow_id: str) -> str:
-        """
-        Create the url where the workflow with id `workflow_id` is available.
-        """
-        return f"{SERVER_PATH}/workflow/{workflow_id}"
 
     def parse_nf_version(self, version_string: str) -> Union[str, None]:
         regex_pattern = r"nextflow version\s*([\d.]+)"
@@ -172,7 +148,7 @@ class WorkflowManager:
 
     def create_workflow_execution_space(self, workflow_id) -> [str, str]:
         job_id = str(uuid.uuid4())
-        workflow_dir = self.to_workflow_dir(workflow_id)
+        workflow_dir = to_workflow_dir(workflow_id)
         job_dir = os.path.join(workflow_dir, job_id)
         os.mkdir(job_dir)
 
@@ -226,7 +202,7 @@ class WorkflowManager:
         self.log.info(f"Using Nextflow version: {nf_version}")
 
         # nf_script is the path to the Nextflow script inside workflow_id
-        nf_script_path = self.to_workflow_script(workflow_id)
+        nf_script_path = to_workflow_script(workflow_id)
 
         workspace_id = workflow_args.workspace_id
         workspace_dir = to_workspace_dir(workspace_id)

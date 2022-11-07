@@ -36,6 +36,7 @@ from ocrd_webapi.models import (
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
+    to_workflow_dir,
     to_workspace_dir,
 )
 from ocrd_webapi.workflow_manager import WorkflowManager
@@ -143,7 +144,7 @@ async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs) -> Union
 
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
-    if not os.path.exists(workflow_manager.to_workflow_dir(workflow_id)):
+    if not os.path.exists(to_workflow_dir(workflow_id)):
         raise ResponseException(500, {"error": f"Workflow not existing. Id: {workflow_id}"})
     if not os.path.exists(to_workspace_dir(workflow_args.workspace_id)):
         raise ResponseException(500, {"error": "Workspace not existing. Id:"
