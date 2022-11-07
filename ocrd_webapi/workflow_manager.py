@@ -16,9 +16,6 @@ from ocrd_webapi.models import (
     WorkflowJobRsrc,
     WorkspaceRsrc,
 )
-from ocrd_webapi.constants import (
-    SERVER_PATH,
-)
 from ocrd_webapi.utils import (
     to_workspace_dir,
     WorkflowJobException,
@@ -27,25 +24,25 @@ from ocrd_webapi.utils import (
 from ocrd_utils import getLogger
 from pathlib import Path
 from ocrd_webapi.database import save_workflow_job
+from ocrd_webapi.constants import WORKFLOWS_DIR
 
 
 class WorkflowManager:
 
-    def __init__(self, workflows_dir):
+    def __init__(self):
         self.log = getLogger('ocrd_webapi.workflow_manager')
-        if not os.path.exists(workflows_dir):
-            Path(workflows_dir).mkdir(parents=True, exist_ok=True)
-            self.log.info("Created non-existing workflows-directory: %s" % workflows_dir)
+        if not os.path.exists(WORKFLOWS_DIR):
+            Path(WORKFLOWS_DIR).mkdir(parents=True, exist_ok=True)
+            self.log.info("Created non-existing workflows-directory: %s" % WORKFLOWS_DIR)
         else:
-            self.log.info("Workflows-directory is '%s'" % workflows_dir)
-        self.workflows_dir = workflows_dir
+            self.log.info("workflows-directory is '%s'" % WORKFLOWS_DIR)
 
     def get_workflows(self) -> List[WorkflowRsrc]:
         """
         Get a list of all available workflows.
         """
         res = []
-        for f in os.scandir(self.workflows_dir):
+        for f in os.scandir(WORKFLOWS_DIR):
             if f.is_dir():
                 res.append(WorkflowRsrc(id=self.to_workflow_url(f.name), description="Workflow"))
         return res
@@ -129,7 +126,7 @@ class WorkflowManager:
         """
         Return the local path to workflow with id `workflow_id`. No check if existing.
         """
-        return os.path.join(self.workflows_dir, workflow_id)
+        return os.path.join(WORKFLOWS_DIR, workflow_id)
 
     def to_workflow_url(self, workflow_id: str) -> str:
         """
