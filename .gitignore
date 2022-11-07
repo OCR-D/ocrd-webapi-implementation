@@ -4,3 +4,4 @@ venv/
 
 .env
 .flake8
+*.egg-info/

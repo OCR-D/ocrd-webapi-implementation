@@ -1,26 +1,12 @@
 [build-system]
-requires = ["setuptools>=59.0.", "setuptools-scm"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-
-[project]
-name = "ocrd-webapi-implementation"
-version = "0.0.1"
-authors = [
-	{ name="joschrew" },
-	{ name="MehmedGIT" },
-]
-dynamic = ["dependencies"]
-description = "Implementation of the OCR-D-webapi"
-readme = "readme.md"
 
 [project.urls]
 "Homepage" = "https://github.com/OCR-D/ocrd-webapi-implementation"
 
 [tool.setuptools]
 packages = ["ocrd_webapi"]
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
