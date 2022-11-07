@@ -19,7 +19,7 @@ services:
 
   mongo:
     image: "mongo"
-    container_name: ocrd-mongodb
+    container_name: ocrd-mongodb-2
     ports:
       - "${OCRD_WEBAPI_MONGO_PORT}:27017"
     volumes:

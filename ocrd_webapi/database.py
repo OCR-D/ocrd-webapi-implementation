@@ -17,7 +17,7 @@ safe_init_logging()
 async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
     await init_beanie(
-        database=client.get_default_database(default='operandi'),
+        database=client.get_default_database(default='ocrd-webapi'),
         document_models=[WorkspaceDb, WorkflowJobDb]
     )
 
