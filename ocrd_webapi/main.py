@@ -13,15 +13,8 @@ from .routers import (
 
 from fastapi import (
     FastAPI,
-    UploadFile,
     Request,
-    Header,
-    HTTPException,
-    status,
-    BackgroundTasks,
-    Depends
 )
-from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 from ocrd_utils import getLogger
 
@@ -31,31 +24,11 @@ from ocrd_webapi.constants import (
     WORKFLOWS_DIR,
     DB_URL,
 )
-from ocrd_webapi.database import (
-    initiate_database,
-    get_workflow_job,
-    set_workflow_job_finished,
-)
-from ocrd_webapi.models import (
-    WorkspaceRsrc,
-    WorkflowRsrc,
-    WorkflowArgs,
-    WorkflowJobRsrc,
-)
+from ocrd_webapi.database import initiate_database
 from ocrd_webapi.utils import (
     ResponseException,
-    WorkspaceNotValidException,
     safe_init_logging,
 )
-from ocrd_webapi.workflow_manager import WorkflowManager
-from ocrd_webapi.workspace_manager import WorkspaceManager
-from ocrd_webapi import database
-from ocrd_webapi.utils import (
-    WorkspaceException,
-    to_workspace_dir
-)
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-
 
 app = FastAPI(
     title="OCR-D Web API",
