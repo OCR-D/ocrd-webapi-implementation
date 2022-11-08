@@ -10,18 +10,19 @@ from typing import Union
 __all__ = [
     "ResponseException",
     "JobState",
+    "read_baginfos_from_zip",
+    "safe_init_logging", 
     "to_workflow_job_dir",
+    "to_workflow_job_url",
+    "to_workflow_script",
+    "to_workflow_dir",
+    "to_workflow_url",
     "to_workspace_url",
     "to_workspace_dir",
-    "to_workflow_url",
-    "WorkspaceException",
-    "WorkspaceNotValidException",
-    "WorkspaceGoneException",
-    "read_baginfos_from_zip",
-    "safe_init_logging",
-    "to_workflow_job_url",
-    "to_workflow_url",
     "WorkflowJobException",
+    "WorkspaceException",
+    "WorkspaceGoneException",
+    "WorkspaceNotValidException",
 ]
 import zipfile
 import bagit
@@ -44,30 +45,36 @@ class JobState(Enum):
     RUNNING = 2
     STOPPED = 3
 
-
 def to_workflow_job_dir(workflow_id, job_id) -> str:
     """
     returns path to workflow-job directory
     """
     return os.path.join(WORKFLOWS_DIR, workflow_id, job_id)
-
-
-def to_workspace_url(workspace_id: str) -> str:
+def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
     """
-    create the url where workspace is available e.g. http://localhost:8000/workspace/{workspace_id}
-
-    does not verify that the workspace_id exists
+    returns path to job-id of the workflow-id
     """
-    return f"{SERVER_PATH}/workspace/{workspace_id}"
+    return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
+def to_workflow_script(workflow_id: str) -> Union[str, None]:
+    workflow_path = to_workflow_dir(workflow_id)
 
+    script_name = None
+    for file in os.listdir(workflow_path):
+        if file.endswith(".nf"):
+            script_name = file
 
-def to_workspace_dir(workspace_id: str) -> str:
+    if not script_name:
+        return None
+
     """
-    return path to workspace with id `workspace_id`. No check if existing
+    Return the local path to Nextflow script of `workflow_id`. No check if existing.
     """
-    return os.path.join(WORKSPACES_DIR, workspace_id)
-
-
+    return os.path.join(workflow_path, script_name)
+def to_workflow_dir(workflow_id: str) -> str:
+    """
+    Return the local path to workflow with id `workflow_id`. No check if existing.
+    """
+    return os.path.join(WORKFLOWS_DIR, workflow_id)
 def to_workflow_url(workflow_id: str) -> str:
     """
     create the url where a workflow is available e.g. http://localhost:8000/workflow/{workflow_id}
@@ -76,10 +83,18 @@ def to_workflow_url(workflow_id: str) -> str:
     """
     return f"{SERVER_PATH}/workflow/{workflow_id}"
 
+def to_workspace_url(workspace_id: str) -> str:
+    """
+    create the url where workspace is available e.g. http://localhost:8000/workspace/{workspace_id}
 
-def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
-    return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
-
+    does not verify that the workspace_id exists
+    """
+    return f"{SERVER_PATH}/workspace/{workspace_id}"
+def to_workspace_dir(workspace_id: str) -> str:
+    """
+    return path to workspace with id `workspace_id`. No check if existing
+    """
+    return os.path.join(WORKSPACES_DIR, workspace_id)
 
 def to_processor_job_url(processor_name: str, job_id: str) -> str:
     """
@@ -89,9 +104,7 @@ def to_processor_job_url(processor_name: str, job_id: str) -> str:
     """
     return f"{SERVER_PATH}/processor/{processor_name}/{job_id}"
 
-
 logging_initialized = False
-
 
 def safe_init_logging() -> None:
     """
@@ -110,21 +123,17 @@ class WorkspaceException(Exception):
     """
     pass
 
-
 class WorkspaceNotValidException(WorkspaceException):
     pass
 
-
 class WorkspaceGoneException(WorkspaceException):
     pass
-
 
 class WorkflowJobException(Exception):
     """
     Exception to indicate something is wrong with a workflow-job
     """
     pass
-
 
 def read_baginfos_from_zip(path_to_zip) -> dict:
     """
@@ -142,7 +151,6 @@ def read_baginfos_from_zip(path_to_zip) -> dict:
             with open(tmp.name, 'wb') as f:
                 f.write(bag_info_bytes)
             return bagit._load_tag_file(tmp.name)
-
 
 def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
     """
