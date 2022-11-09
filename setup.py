@@ -15,5 +15,5 @@ setup(
     packages=['ocrd_webapi',
               'ocrd_webapi.routers'
               ],
-    package_data={'': ['things/']},
+    package_data={'': ['things/*']},
 )
