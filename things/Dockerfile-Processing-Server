@@ -1,4 +1,4 @@
-FROM ocrd/all:minimum
+FROM ocrd/all:maximum
 
 RUN git clone --depth=100 https://github.com/OCR-D/core.git /code/pr-processing-server && \
 	cd /code/pr-processing-server/ && \
@@ -8,5 +8,10 @@ RUN git clone --depth=100 https://github.com/OCR-D/core.git /code/pr-processing-
     git config --global user.name niemand && \
 	git merge -X theirs master --no-commit && \
 	make uninstall && \
-	make install
+	make deps-ubuntu && \
+	make install && \
+	. /usr/local/sub-venv/headless-tf1/bin/activate && \
+	make uninstall && \
+	make install && \
+	deactivate
 	
