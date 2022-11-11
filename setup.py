@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-install_requires = open('requirements_3.7.txt').read().split('\n')
+install_requires = open('requirements.txt').read().split('\n')
 
 setup(
     name='ocrd_webapi',
