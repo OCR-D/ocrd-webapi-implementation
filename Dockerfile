@@ -7,8 +7,7 @@ WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 COPY . /code
 
-RUN apt-get update
-RUN apt-get -y install \
+RUN apt-get update && apt-get -y install \
     ca-certificates \
     software-properties-common \
     python3-dev \
