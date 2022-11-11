@@ -70,9 +70,8 @@ async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, Pr
         "path": ws_path,
         "input_file_grps": p_args.input_file_grps.split(","),
         "output_file_grps": p_args.output_file_grps.split(","),
+        "parameters": p_args.parameters.copy if p_args.parameters else {}
     }
-    if p_args.parameters:
-        data["parameters"] = p_args.parameters.copy()
     async with httpx.AsyncClient() as client:
         try:
             r = await client.post(url, headers={"Content-Type": "application/json"}, json=data)
