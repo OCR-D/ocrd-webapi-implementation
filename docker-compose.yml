@@ -19,7 +19,7 @@ services:
 
   mongo:
     image: "mongo"
-    container_name: ocrd-mongodb-2
+    container_name: ocrd-mongodb
     ports:
       - "${OCRD_WEBAPI_MONGO_PORT}:27017"
     volumes:
@@ -40,3 +40,64 @@ services:
       - "--address"
       - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
 
+  ocrd-cis-ocropy-binarize:
+    container_name:
+      ocrd-cis-ocropy-binarize-ps
+    build:
+      context: .
+      dockerfile: things/Dockerfile-Processing-Server
+    ports:
+      - 5052:5050
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data/workspaces:/workspaces"
+    command:
+      - "ocrd-cis-ocropy-binarize"
+      - "--address"
+      - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
+
+  ocrd-eynollah-segment:
+    container_name:
+      ocrd-eynollah-segment-ps
+    build:
+      context: .
+      dockerfile: things/Dockerfile-Processing-Server
+    ports:
+      - 5053:5050
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data/workspaces:/workspaces"
+    command:
+      - "ocrd-eynollah-segment"
+      - "--address"
+      - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
+
+  ocrd-calamari-recognize:
+    container_name:
+      ocrd-calamari-recognize-ps
+    build:
+      context: .
+      dockerfile: things/Dockerfile-Processing-Server
+    ports:
+      - 5054:5050
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data/workspaces:/workspaces"
+    command:
+      - "ocrd-calamari-recognize"
+      - "--address"
+      - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
+
+  ocrd-olena-binarize:
+    container_name:
+      ocrd-olena-binarize
+    build:
+      context: .
+      dockerfile: things/Dockerfile-Processing-Server
+    ports:
+      - 5055:5050
+    volumes:
+      - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data/workspaces:/workspaces"
+    command:
+      - "ocrd"
+      - "processing-server"
+      - "olena-binarize"
+      - "--address"
+      - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
