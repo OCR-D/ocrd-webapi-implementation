@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name="ocrd_webapi"
+version="0.0.1"
+description="Implementation of the OCR-D Web API"
+readme = "readme.md"
+requires-python = ">=3.7"
+license = { text = "Apache License 2.0" }
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+"Homepage" = "https://github.com/OCR-D/ocrd-webapi-implementation"
+
+[tool.setuptools]
+packages = ["ocrd_webapi", "ocrd_webapi.routers"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+norecursedirs = "tests/utils"
+# for this to work pytest-env has to be installed
+env = [
+	"OCRD_WEBAPI_STORAGE_DIR = /tmp/ocrd_webapi_test",
+	"OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi",
+	"OCRD_WEBAPI_USERNAME = test",
+	"OCRD_WEBAPI_PASSWORD = test",
+	"OCRD_PROCESSOR_CONFIG_PATH = tests/processor_config_test.yml",
+]
+
+[flake8]
+max-line-length = 100
+ignore = ["F405", "F403", "W402", "W503", "F722"]
+
+
+# https://flake8.pycqa.org/en/2.6.0/warnings.html
+# F405: <name> may be undefined, or defined from star imports: module
+# F403: from <module> import * used; unable to detect undefined names
+# W402: <module> imported but unused
+# W503: line break before binary operator
+# F722: syntax error in forward annotation
