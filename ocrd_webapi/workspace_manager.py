@@ -41,6 +41,41 @@ class WorkspaceManager(ResourceManager):
         self.__workspaces_dir = workspaces_dir
         self._initiate_resource_dir(self.__workspaces_dir)
 
+    # TODO: Should probably go inside utils.py
+    def extract_bag_infos(self, zip_dest, workspace_dir):
+        try:
+            resolver = Resolver()
+            valid_report = OcrdZipValidator(resolver, zip_dest).validate()
+        except Exception as e:
+            raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
+
+        if valid_report is not None and not valid_report.is_valid:
+            raise WorkspaceNotValidException(valid_report.to_xml())
+
+        workspace_bagger = WorkspaceBagger(resolver)
+        workspace_bagger.spill(zip_dest, workspace_dir)
+
+        # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
+        # maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
+        bag_infos = read_baginfos_from_zip(zip_dest)
+
+        return bag_infos
+
+    def extract_bag_dest(self, workspace_db, workspace_dir):
+        bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
+        
+        mets = workspace_db.ocrd_mets or "mets.xml"
+        identifier = workspace_db.ocrd_identifier
+        resolver = Resolver()
+        WorkspaceBagger(resolver).bag(
+            Workspace(resolver, directory=workspace_dir, mets_basename=mets),
+            dest=bag_dest,
+            ocrd_identifier=identifier,
+            ocrd_mets=mets,
+        )
+
+        return bag_dest
+
     def get_workspaces(self):
         """
         Get a list of all available workspaces.
@@ -139,38 +174,3 @@ class WorkspaceManager(ResourceManager):
 
         ws_rsrc_url = self._to_resource_url(workspace_id)
         return WorkspaceRsrc(id=ws_rsrc_url, description="Workspace")
-
-    # TODO: Should probably go inside utils.py
-    def extract_bag_infos(self, zip_dest, workspace_dir):
-        try:
-            resolver = Resolver()
-            valid_report = OcrdZipValidator(resolver, zip_dest).validate()
-        except Exception as e:
-            raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
-
-        if valid_report is not None and not valid_report.is_valid:
-            raise WorkspaceNotValidException(valid_report.to_xml())
-
-        workspace_bagger = WorkspaceBagger(resolver)
-        workspace_bagger.spill(zip_dest, workspace_dir)
-
-        # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
-        # maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
-        bag_infos = read_baginfos_from_zip(zip_dest)
-
-        return bag_infos
-
-    def extract_bag_dest(self, workspace_db, workspace_dir):
-        bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
-        
-        mets = workspace_db.ocrd_mets or "mets.xml"
-        identifier = workspace_db.ocrd_identifier
-        resolver = Resolver()
-        WorkspaceBagger(resolver).bag(
-            Workspace(resolver, directory=workspace_dir, mets_basename=mets),
-            dest=bag_dest,
-            ocrd_identifier=identifier,
-            ocrd_mets=mets,
-        )
-
-        return bag_dest

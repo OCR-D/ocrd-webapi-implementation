@@ -68,6 +68,7 @@ class WorkflowManager(ResourceManager):
 
         """
         workflow_id, workflow_dir = self._create_resource_dir(uid)
+        os.mkdir(workflow_dir)
         nf_script_dest = os.path.join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
 

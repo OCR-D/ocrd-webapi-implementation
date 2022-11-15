@@ -59,7 +59,6 @@ class ResourceManager:
             self.log.error("Cannot create a new resource with id: {resource_id}. Resource already exists!")
             # TODO: Raise an Exception here
 
-        os.mkdir(resource_dir)
         return resource_id, resource_dir
     def _delete_resource_dir(self, resource_id):
         resource_dir = self._to_resource_dir(resource_id)
@@ -73,9 +72,3 @@ class ResourceManager:
             while content:
                 await fpt.write(content)
                 content = await file.read(1024)
-
-
-
-    def temp(self):
-        pass
-
