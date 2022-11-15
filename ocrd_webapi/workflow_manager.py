@@ -9,7 +9,6 @@ import subprocess
 import shlex
 from re import search as regex_search
 
-import aiofiles
 from ocrd_webapi.models import (
     WorkflowRsrc,
     WorkflowArgs,
@@ -28,32 +27,35 @@ from ocrd_webapi.utils import (
 from ocrd_utils import getLogger
 from pathlib import Path
 from ocrd_webapi.database import save_workflow_job
-from ocrd_webapi.constants import (
-    SERVER_PATH,
-    WORKFLOWS_DIR,
-)
 
-class WorkflowManager:
+from ocrd_webapi.constants import SERVER_PATH, WORKFLOWS_DIR
+from ocrd_webapi.resource_manager import ResourceManager
 
-    def __init__(self):
-        self.log = getLogger('ocrd_webapi.workflow_manager')
-        if not os.path.exists(WORKFLOWS_DIR):
-            Path(WORKFLOWS_DIR).mkdir(parents=True, exist_ok=True)
-            self.log.info("Created non-existing workflows-directory: %s" % WORKFLOWS_DIR)
-        else:
-            self.log.info("workflows-directory is '%s'" % WORKFLOWS_DIR)
 
-    def get_workflows(self) -> List[WorkflowRsrc]:
+class WorkflowManager(ResourceManager):
+    """Class to handle workflow related tasks"""
+    def __init__(self, 
+        workflows_dir=WORKFLOWS_DIR, 
+        resource_url=SERVER_PATH, 
+        resource_router='workflow', 
+        logger_label='ocrd_webapi.workflow_manager'):
+        super().__init__(workflows_dir, resource_url, resource_router, logger_label)
+        self.__workflows_dir = workflows_dir
+        self._initiate_resource_dir(self.__workflows_dir)
+
+    def get_workflows(self):
         """
         Get a list of all available workflows.
         """
+        wf_resources = self._get_all_resource_dirs(self.__workflows_dir)
         res = []
-        for f in os.scandir(WORKFLOWS_DIR):
-            if f.is_dir():
-                res.append(WorkflowRsrc(id=to_workflow_url(f.name), description="Workflow"))
+        for wf in wf_resources:
+            wf_rsrc_url = self._to_resource_url(wf.name)
+            res.append(WorkflowRsrc(id=wf_rsrc_url, description="Workflow"))
+
         return res
 
-    async def create_workflow_space(self, file, uid=None) -> Union[WorkflowRsrc, None]:
+    async def create_workflow_space(self, file: str, uid=None):
         """
         Create a new workflow space. Upload a Nextflow script inside.
 
@@ -65,54 +67,43 @@ class WorkflowManager:
         Returns:
 
         """
-        if uid:
-            workflow_dir = to_workflow_dir(uid)
-            if os.path.exists(workflow_dir):
-                self.log.warning("cannot create: workflow already existing. Id: %s" % uid)
-                return None
-        else:
-            uid = str(uuid.uuid4())
-            workflow_dir = to_workflow_dir(uid)
-
-        os.mkdir(workflow_dir)
-        nf_script_path = os.path.join(workflow_dir, file.filename)
-        async with aiofiles.open(nf_script_path, "wb") as fpt:
-            content = await file.read(1024)
-            while content:
-                await fpt.write(content)
-                content = await file.read(1024)
+        workflow_id, workflow_dir = self._create_resource_dir(uid)
+        nf_script_dest = os.path.join(workflow_dir, file.filename)
+        await self._receive_resource(file, nf_script_dest)
 
         # TODO:
         # 1. Check if the uploaded file is in fact a Nextflow script
         # 2. Validate the Nextflow script
 
-        return WorkflowRsrc(id=to_workflow_url(uid), description="Workflow")
+        # 3. Provide a functionality to enable/disable writing to/reading from a DB
+        # await save_workflow(workflow_id, workflow_dir)
 
-    async def update_workflow_space(self, file, workflow_id: str):
+        wf_rsrc_url = self._to_resource_url(workflow_id)
+        return WorkflowRsrc(id=wf_rsrc_url, description="Workflow")
+
+    async def update_workflow_space(self, file: str, workflow_id):
         """
         Update a workflow space
 
         Delete the workflow space if existing and then delegate to
         :py:func:`ocrd_webapi.workflow_manager.WorkflowManager.create_workflow_space
         """
-        workflow_dir = to_workflow_dir(workflow_id)
-        if os.path.isdir(workflow_dir):
-            shutil.rmtree(workflow_dir)
+        self._delete_resource_dir(workflow_id)
         return await self.create_workflow_space(file, workflow_id)
 
-    def get_workflow_script_rsrc(self, workflow_id: str) -> Union[WorkflowRsrc, None]:
+    def get_workflow_script_rsrc(self, workflow_id):
         """
         Get a workflow script available on disk as a Resource via its workflow_id
         Returns:
             `WorkflowRsrc` if `workflow_id` is available else `None`.
         """
-        nf_script_path = to_workflow_script(workflow_id)
-        if not os.path.isfile(nf_script_path):
-            return None
+        nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
+        if nf_script_path:
+            return WorkflowRsrc(id=nf_script_path, description="Workflow nextflow script")
+        
+        return None
 
-        return WorkflowRsrc(id=nf_script_path, description="Workflow nextflow script")
-
-    def parse_nf_version(self, version_string: str) -> Union[str, None]:
+    def parse_nf_version(self, version_string):
         regex_pattern = r"nextflow version\s*([\d.]+)"
         nf_version = regex_search(regex_pattern, version_string).group(1)
 
@@ -121,7 +112,7 @@ class WorkflowManager:
 
         return nf_version
 
-    def is_nf_available(self) -> Union[str, None]:
+    def is_nf_available(self):
         # The path to Nextflow must be in $PATH
         # Otherwise, the full path must be provided
 
@@ -146,7 +137,7 @@ class WorkflowManager:
 
         return nf_version
 
-    def create_workflow_execution_space(self, workflow_id) -> [str, str]:
+    def create_workflow_execution_space(self, workflow_id):
         job_id = str(uuid.uuid4())
         workflow_dir = to_workflow_dir(workflow_id)
         job_dir = os.path.join(workflow_dir, job_id)
@@ -154,7 +145,7 @@ class WorkflowManager:
 
         return job_id, job_dir
 
-    def build_nf_command(self, nf_script_path: str, ws_dir: str) -> str:
+    def build_nf_command(self, nf_script_path, ws_dir):
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --workspace {ws_dir}/"
@@ -163,7 +154,7 @@ class WorkflowManager:
 
         return nf_command
 
-    def get_nf_out_err_paths(self, job_dir: str) -> [str, str]:
+    def get_nf_out_err_paths(self, job_dir):
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
@@ -188,7 +179,7 @@ class WorkflowManager:
         except Exception as error:
             self.log.exception(f"Nextflow process failed to start: {error}")
 
-    async def start_nf_workflow(self, workflow_id: str, workflow_args: WorkflowArgs) -> Union[WorkflowJobRsrc, None]:
+    async def start_nf_workflow(self, workflow_id, workflow_args: WorkflowArgs):
         # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongdb
         #       (ocrd_webapi.models.WorkspaceDb.ocrd_mets). Try to make it possible to tell nextflow the
         #       name of the mets if it is not mets.xml.
@@ -224,7 +215,7 @@ class WorkflowManager:
                                       workflow=WorkflowRsrc.from_id(workflow_id),
                                       workspace=WorkspaceRsrc.from_id(workflow_args.workspace_id))
 
-    def is_job_finished(self, workflow_id, job_id) -> Union[bool, None]:
+    def is_job_finished(self, workflow_id, job_id):
         """
         Tests if the file `WORKFLOW_DIR/{workflow_id}/{job_id}/report.html` exists.
 

@@ -3,22 +3,22 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="ocrd_webapi"
-version="0.0.1"
-description="Implementation of the OCR-D Web API"
+name = "ocrd_webapi"
+version = "0.0.1"
+description = "Implementation of the OCR-D Web API"
 readme = "readme.md"
 requires-python = ">=3.7"
 license = { text = "Apache License 2.0" }
 dynamic = ["dependencies"]
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
 
 [project.urls]
 "Homepage" = "https://github.com/OCR-D/ocrd-webapi-implementation"
 
 [tool.setuptools]
 packages = ["ocrd_webapi", "ocrd_webapi.routers"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
