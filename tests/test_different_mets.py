@@ -50,7 +50,9 @@ def test_run_workflow(utils, client, dummy_workflow):
     workspace_id = response.json()['@id'].split("/")[-1]
 
     # act
-    response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": workspace_id})
+    # WorkflowArgs were removed, the line below does not work anymore
+    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": workspace_id})
+    response = client.post(f"/workflow/{dummy_workflow}?workspace_id={workspace_id}")
 
     # assert
     assert response.status_code // 100 == 2, f"expected statuscode 2xx, got {response.status_code}"

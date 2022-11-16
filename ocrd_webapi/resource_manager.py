@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 import aiofiles
 import shutil
+
 from ocrd_utils import getLogger
 
 class ResourceManager:
@@ -30,12 +31,19 @@ class ResourceManager:
 
         return resource_base_dir
     def _get_all_resource_dirs(self, resource_base_dir):
-        resources = []
+        resource_dirs = []
         for f in os.scandir(resource_base_dir):
             if f.is_dir():
-                resources.append(f)
+                resource_dirs.append(f)
 
-        return resources
+        return resource_dirs
+    def _get_all_resource_urls(self, resource_base_dir):
+        resource_dirs = self._get_all_resource_dirs(resource_base_dir)
+        resource_urls = []
+        for resource_dir in resource_dirs:
+            resource_urls.append(self._to_resource_url(resource_dir.name))
+
+        return resource_urls
 
     def _is_resource_dir_available(self, resource_id):
         resource_dir = self._to_resource_dir(resource_id)
@@ -45,7 +53,7 @@ class ResourceManager:
     def _is_resource_file_available(self, resource_id, file_ext=None):
         resource_dir = self._to_resource_dir(resource_id)
         for file in os.listdir(resource_dir):
-            if file.endswith(file_ext):
+            if file_ext and file.endswith(file_ext):
                 return os.path.join(resource_dir, file)
 
         return None 
@@ -72,3 +80,4 @@ class ResourceManager:
             while content:
                 await fpt.write(content)
                 content = await file.read(1024)
+

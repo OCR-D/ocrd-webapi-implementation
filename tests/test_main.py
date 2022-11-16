@@ -47,7 +47,9 @@ def test_update_workflow_script(utils, client, auth):
 
 
 def test_start_workflow_script(client, dummy_workspace, dummy_workflow, auth):
-    response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace}, auth=auth)
+    # WorkflowArgs were removed, the line below does not work anymore
+    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace}, auth=auth)
+    response = client.post(f"/workflow/{dummy_workflow}?workspace_id={dummy_workspace}", auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     assert_job_id(response)
 
@@ -213,8 +215,11 @@ def test_delete_previous_existing_workspaces(utils, workspace_mongo_coll, client
 
 def test_job_status(client, dummy_workspace, dummy_workflow):
     # arrange
-    response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace})
+    # WorkflowArgs were removed, the line below does not work anymore
+    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace})
+    response = client.post(f"/workflow/{dummy_workflow}?workspace_id={dummy_workspace}")
     job_id = response.json()['@id'].split("/")[-1]
+    print(response.json())
 
     # act
     for x in range(0,20):

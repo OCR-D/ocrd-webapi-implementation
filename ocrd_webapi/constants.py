@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 __all__ = [
-    'SERVER_PATH',
+    'SERVER_URL',
     'WORKSPACES_DIR',
     'JOB_DIR',
     'WORKFLOWS_DIR',
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 # variables for local testing are read from .env in base-dir with `load_dotenv()`
-SERVER_PATH: str = os.getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")
+SERVER_URL: str = os.getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")
 BASE_DIR: str = os.getenv("OCRD_WEBAPI_STORAGE_DIR", "/tmp/ocrd-webapi-data")
 DB_URL: str = os.getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
 # path to config file for processing servers

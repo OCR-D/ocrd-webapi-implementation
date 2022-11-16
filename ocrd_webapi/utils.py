@@ -1,20 +1,32 @@
 import os
+from pathlib import Path
+from enum import Enum
+from typing import Union
+import zipfile
+import bagit
+import tempfile
+
+from ocrd import Resolver
+from ocrd_utils import initLogging
+from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
+from ocrd.workspace import Workspace
+from ocrd.workspace_bagger import WorkspaceBagger
+
 from .constants import (
     WORKSPACES_DIR,
     WORKFLOWS_DIR,
-    SERVER_PATH,
+    SERVER_URL,
 )
-from enum import Enum
-from typing import Union
 
 __all__ = [
     "ResponseException",
     "JobState",
+    "extract_bag_dest",
+    "extract_bad_infos",
     "read_baginfos_from_zip",
     "safe_init_logging", 
     "to_workflow_job_dir",
     "to_workflow_job_url",
-    "to_workflow_script",
     "to_workflow_dir",
     "to_workflow_url",
     "to_workspace_url",
@@ -24,22 +36,28 @@ __all__ = [
     "WorkspaceGoneException",
     "WorkspaceNotValidException",
 ]
-import zipfile
-import bagit
-import tempfile
-from ocrd_utils import initLogging
-from pathlib import Path
-
 
 class ResponseException(Exception):
     """
     Exception to return a response
     """
-    def __init__(self, status_code: int, body: Union[dict, None] = None):
+    def __init__(self, status_code: int, body: str):
         self.status_code = status_code
         self.body = body
-
-
+class WorkspaceException(Exception):
+    """
+    Exception to indicate something is wrong with the workspace
+    """
+    pass
+class WorkspaceNotValidException(WorkspaceException):
+    pass
+class WorkspaceGoneException(WorkspaceException):
+    pass
+class WorkflowJobException(Exception):
+    """
+    Exception to indicate something is wrong with a workflow-job
+    """
+    pass
 class JobState(Enum):
     QUEUED = 1
     RUNNING = 2
@@ -54,7 +72,7 @@ def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
     """
     returns path to job-id of the workflow-id
     """
-    return f"{SERVER_PATH}/workflow/{workflow_id}/{job_id}"
+    return f"{SERVER_URL}/workflow/{workflow_id}/{job_id}"
 def to_workflow_script(workflow_id: str) -> Union[str, None]:
     workflow_path = to_workflow_dir(workflow_id)
 
@@ -81,7 +99,7 @@ def to_workflow_url(workflow_id: str) -> str:
 
     does not verify that the workflow_id exists
     """
-    return f"{SERVER_PATH}/workflow/{workflow_id}"
+    return f"{SERVER_URL}/workflow/{workflow_id}"
 
 def to_workspace_url(workspace_id: str) -> str:
     """
@@ -89,7 +107,7 @@ def to_workspace_url(workspace_id: str) -> str:
 
     does not verify that the workspace_id exists
     """
-    return f"{SERVER_PATH}/workspace/{workspace_id}"
+    return f"{SERVER_URL}/workspace/{workspace_id}"
 def to_workspace_dir(workspace_id: str) -> str:
     """
     return path to workspace with id `workspace_id`. No check if existing
@@ -102,7 +120,7 @@ def to_processor_job_url(processor_name: str, job_id: str) -> str:
 
     does not verify that the proessor or/and the processor-job exists
     """
-    return f"{SERVER_PATH}/processor/{processor_name}/{job_id}"
+    return f"{SERVER_URL}/processor/{processor_name}/{job_id}"
 
 logging_initialized = False
 
@@ -116,24 +134,35 @@ def safe_init_logging() -> None:
         logging_initialized = True
         initLogging()
 
+def extract_bag_infos(zip_dest, workspace_dir):
+    try:
+        resolver = Resolver()
+        valid_report = OcrdZipValidator(resolver, zip_dest).validate()
+    except Exception as e:
+        raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
 
-class WorkspaceException(Exception):
-    """
-    Exception to indicate something is wrong with the workspace
-    """
-    pass
+    if valid_report is not None and not valid_report.is_valid:
+        raise WorkspaceNotValidException(valid_report.to_xml())
 
-class WorkspaceNotValidException(WorkspaceException):
-    pass
+    workspace_bagger = WorkspaceBagger(resolver)
+    workspace_bagger.spill(zip_dest, workspace_dir)
 
-class WorkspaceGoneException(WorkspaceException):
-    pass
+    # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
+    # maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
+    bag_infos = read_baginfos_from_zip(zip_dest)
 
-class WorkflowJobException(Exception):
-    """
-    Exception to indicate something is wrong with a workflow-job
-    """
-    pass
+    return bag_infos
+
+def extract_bag_dest(workspace_db, workspace_dir, bag_dest):    
+    mets = workspace_db.ocrd_mets or "mets.xml"
+    identifier = workspace_db.ocrd_identifier
+    resolver = Resolver()
+    WorkspaceBagger(resolver).bag(
+        Workspace(resolver, directory=workspace_dir, mets_basename=mets),
+        dest=bag_dest,
+        ocrd_identifier=identifier,
+        ocrd_mets=mets,
+    )
 
 def read_baginfos_from_zip(path_to_zip) -> dict:
     """

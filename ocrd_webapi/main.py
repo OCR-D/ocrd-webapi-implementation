@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from ocrd_utils import getLogger
 
 from ocrd_webapi.constants import (
-    SERVER_PATH,
+    SERVER_URL,
     WORKSPACES_DIR,
     WORKFLOWS_DIR,
     DB_URL,
@@ -41,7 +41,7 @@ app = FastAPI(
     version="0.0.1",
     servers=[
         {
-            "url": SERVER_PATH,
+            "url": SERVER_URL,
             "description": "The URL of your server offering the OCR-D API.",
         }
     ],

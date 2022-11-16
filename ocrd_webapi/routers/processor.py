@@ -8,12 +8,6 @@ from fastapi.responses import (
     JSONResponse,
 )
 
-from typing import (
-    Union,
-    Dict,
-    List,
-)
-
 from ocrd_webapi.constants import (
     PROCESSOR_CONFIG_PATH,
     PROCESSOR_WORKSPACES_PATH,
@@ -47,7 +41,7 @@ log = getLogger('ocrd_webapi.processor')
 
 
 @router.post("/processor/{processor}")
-async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, ProcessorJobRsrc]:
+async def run_processor(processor: str, p_args: ProcessorArgs):
     """
     run a processor. Delegate call to fitting processing server
     """
@@ -89,7 +83,7 @@ async def run_processor(processor: str, p_args: ProcessorArgs) -> Union[None, Pr
 
 
 @router.get("/processor/{processor}")
-async def get_processor(processor: str) -> Union[None, Dict]:
+async def get_processor(processor: str):
     """
     return processors ocrd-tool.json. Delegates to respective processing server
     """
@@ -104,7 +98,7 @@ async def get_processor(processor: str) -> Union[None, Dict]:
 
 
 @router.get("/processor/")
-async def list_processors() -> List:
+async def list_processors():
     """
     list all available processors. Delegates to all available processing servers and returs a
     summary of their ocrd-tool.json
@@ -124,7 +118,7 @@ async def list_processors() -> List:
 
 
 @router.get("/processor/{processor}/{job_id}", responses={"201": {"model": ProcessorJobRsrc}})
-async def get_processor_job(processor: str, job_id: str) -> ProcessorJobRsrc:
+async def get_processor_job(processor: str, job_id: str):
     """
     deliver infos about a procossor job to client. Delegates to Processong-Server exstracts
     job-state and workspace and returns results

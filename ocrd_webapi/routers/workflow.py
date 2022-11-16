@@ -30,22 +30,14 @@ from ocrd_webapi.database import (
 )
 from ocrd_webapi.models import (
     WorkflowRsrc,
-    WorkflowArgs,
+    WorkspaceRsrc,
     WorkflowJobRsrc,
 )
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
-    to_workflow_dir,
-    to_workspace_dir,
 )
 from ocrd_webapi.workflow_manager import WorkflowManager
-
-from typing import (
-    List,
-    Union,
-)
-
 
 router = APIRouter(
     tags=["Workflow"],
@@ -66,37 +58,45 @@ def __dummy_security_check(auth):
     """
     user = auth.username.encode("utf8")
     pw = auth.password.encode("utf8")
-    expected_user = os.getenv("OCRD_WEBAPI_USERNAME", "").encode("utf8")
-    expected_pw = os.getenv("OCRD_WEBAPI_PASSWORD", "").encode("utf8")
+    expected_user = os.getenv("OCRD_WEBAPI_USERNAME", "test").encode("utf8")
+    expected_pw = os.getenv("OCRD_WEBAPI_PASSWORD", "test").encode("utf8")
     if not user or not pw or not secrets.compare_digest(pw, expected_pw) or \
             not secrets.compare_digest(user, expected_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             headers={"WWW-Authenticate": "Basic"})
 
+# TODO: Refine all the exceptions...
 @router.get("/workflow")
-async def list_workflow_scripts() -> List[WorkflowRsrc]:
+async def get_workflows():
     """
-    Get a list of existing workflow spaces. Each workflow space has a Nextflow script inside.
+    Get a list of existing workflow space urls. Each workflow space has a Nextflow script inside.
 
     curl http://localhost:8000/workflow/
     """
-    return workflow_manager.get_workflows()
+    workflow_space_urls = workflow_manager.get_workflows()
+    response = []
+    for wf in workflow_space_urls:
+        response.append(WorkflowRsrc(id=wf, description="Workflow"))
+    return response
 
-@router.get("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def get_workflow_script(workflow_id: str, accept: str = Header(...)) -> Union[WorkflowRsrc, FileResponse]:
+# TODO: This get method works only with curl but not with the browser navigation through -> http://localhost:8000/docs
+@router.get("/workflow/{workflow_id}")
+async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
 
+    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "Accept: application/json" --output ./nextflow.nf
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "Accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     """
     if accept in ["application/json", "text/vnd.ocrd.workflow"]:
-        workflow_script = workflow_manager.get_workflow_script_rsrc(workflow_id)
-        if not workflow_script:
+        workflow_script_path = workflow_manager.get_workflow_script(workflow_id)
+        workflow_script_url = workflow_manager._to_resource_url(workflow_id)
+        if not workflow_script_path:
             raise ResponseException(404, {})
         if accept == "application/json":
-            return workflow_script
+            return WorkflowRsrc(id=workflow_script_url, description="Workflow nextflow script")
         else:
-            return FileResponse(path=workflow_script.id, filename=workflow_script.id)
+            return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -104,7 +104,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)) -> Un
         )
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def get_workflowjob(workflow_id: str, job_id: str) -> WorkflowJobRsrc:
+async def get_workflowjob(workflow_id: str, job_id: str):
     """
     Query a job from the database. Used to query if a job is finished or still running
 
@@ -122,55 +122,62 @@ async def get_workflowjob(workflow_id: str, job_id: str) -> WorkflowJobRsrc:
     return job.to_rsrc()
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
-async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(
-                                 security)) -> Union[None, WorkflowRsrc]:
+async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(security)):
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
     curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
-    __dummy_security_check(auth)
+
+    # __dummy_security_check(auth)
     try:
-        return await workflow_manager.create_workflow_space(nextflow_script)
+        workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception:
         log.exception("error in upload_workflow_script")
         raise ResponseException(500, {"error": "internal server error"})
 
+    return WorkflowRsrc(id=workflow_url, description="Workflow")
+
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs) -> Union[None, WorkflowJobRsrc]:
+async def start_workflow(workflow_id: str, workspace_id: str):
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
 
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
-    if not os.path.exists(to_workflow_dir(workflow_id)):
-        raise ResponseException(500, {"error": f"Workflow not existing. Id: {workflow_id}"})
-    if not os.path.exists(to_workspace_dir(workflow_args.workspace_id)):
-        raise ResponseException(500, {"error": "Workspace not existing. Id:"
-                                               f" {workflow_args.workspace_id}"})
-
     try:
-        return await workflow_manager.start_nf_workflow(workflow_id, workflow_args)
+        parameters = await workflow_manager.start_nf_workflow(workflow_id, workspace_id)
     except Exception as e:
         log.exception("error in start_workflow")
         raise ResponseException(500, {"error": "internal server error", "message": str(e)})
 
+    # Parse parameters for better readability of the code
+    job_url = parameters[0]
+    status = parameters[1]
+    workflow_url = parameters[2]
+    workspace_url = parameters[3]
+    workflow_rsrc = WorkflowRsrc(id=workflow_url, description="Workflow")
+    workspace_rsrc = WorkspaceRsrc(id=workspace_url, description="Workspace")
+
+    return WorkflowJobRsrc(id=job_url, state=status, workflow=workflow_rsrc, workspace=workspace_rsrc, description="Workflow-Job")
+
 @router.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def update_workflow_script(
-    nextflow_script: UploadFile, workflow_id: str,
-    auth: HTTPBasicCredentials = Depends(security)) -> Union[None, WorkflowRsrc]:
+async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str, auth: HTTPBasicCredentials = Depends(security)):
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 
     curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
-    __dummy_security_check(auth)
+
+    # __dummy_security_check(auth)
     try:
-        return await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
+        updated_workflow_url = await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
     except Exception:
         log.exception("error in update_workflow_script")
         raise ResponseException(500, {"error": "internal server error"})
+
+    return WorkflowRsrc(id=updated_workflow_url, description="Workflow")
 
 # Not in the Web API Specification. Will be implemented if needed.
 # TODO: Implement that since we have some sort of dummy security check
