@@ -5,9 +5,9 @@ from ocrd_webapi.utils import (
 )
 from ocrd_utils import getLogger
 
-from ocrd_webapi.models import (
-    WorkspaceDb,
+from ocrd_webapi.database_models import (
     WorkflowJobDb,
+    WorkspaceDb,
 )
 
 
@@ -16,6 +16,7 @@ safe_init_logging()
 
 async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
+    # Documentation: https://beanie-odm.dev/
     await init_beanie(
         database=client.get_default_database(default='ocrd-webapi'),
         document_models=[WorkspaceDb, WorkflowJobDb]

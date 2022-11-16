@@ -5,13 +5,9 @@ import os
 import uuid
 
 from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
-from ocrd_webapi.database import (
-    save_workspace,
-    mark_deleted_workspace,
-    get_workspace,
-)
-# TODO: DB interactions should not happen through a response model...
-from ocrd_webapi.models import WorkspaceDb
+from ocrd_webapi import database
+from ocrd_webapi.database_models import WorkspaceDb
+
 from ocrd_webapi.utils import (
     extract_bag_dest,
     extract_bag_infos,
@@ -56,7 +52,7 @@ class WorkspaceManager(ResourceManager):
         bag_infos = extract_bag_infos(zip_dest, workspace_dir)
         
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
-        await save_workspace(workspace_id, bag_infos)
+        await database.save_workspace(workspace_id, bag_infos)
 
         os.remove(zip_dest)
 
@@ -100,7 +96,7 @@ class WorkspaceManager(ResourceManager):
         #       database.py to read it from mongdb
         #     - write tests for this cases
         if self._is_resource_dir_available(workspace_id):
-            workspace_db = await get_workspace(workspace_id)
+            workspace_db = await database.get_workspace(workspace_id)
             workspace_dir = self._to_resource_dir(workspace_id)
             bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
@@ -121,6 +117,6 @@ class WorkspaceManager(ResourceManager):
 
         deleted_workspace_url = self._to_resource_url(workspace_id)
         self._delete_resource_dir(workspace_id)
-        await mark_deleted_workspace(workspace_id)
+        await database.mark_deleted_workspace(workspace_id)
 
         return deleted_workspace_url

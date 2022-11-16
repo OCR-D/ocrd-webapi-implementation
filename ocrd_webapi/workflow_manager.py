@@ -6,7 +6,7 @@ from pathlib import Path
 import uuid
 
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
-from ocrd_webapi.database import save_workflow_job
+from ocrd_webapi import database
 from ocrd_webapi.nextflow import NextflowExecutor
 from ocrd_webapi.resource_manager import ResourceManager
 from ocrd_webapi.utils import (
@@ -105,7 +105,7 @@ class WorkflowManager(ResourceManager):
         self._nextflow_executor.execute_workflow(nf_script_path, workspace_dir, job_dir)
 
         status = 'RUNNING'
-        await save_workflow_job(job_id, workflow_id, workspace_id, status)
+        await database.save_workflow_job(job_id, workflow_id, workspace_id, status)
 
         parameters = []
         parameters.append(self._to_resource_job_url(workflow_id, job_id)) # Job URL

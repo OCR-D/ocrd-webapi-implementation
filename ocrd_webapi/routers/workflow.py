@@ -23,11 +23,7 @@ from ocrd_utils import getLogger
 from ocrd_webapi.constants import (
     WORKFLOWS_DIR,
 )
-from ocrd_webapi.database import (
-    initiate_database,
-    get_workflow_job,
-    set_workflow_job_finished,
-)
+from ocrd_webapi import database
 from ocrd_webapi.models import (
     WorkflowRsrc,
     WorkspaceRsrc,
@@ -114,8 +110,8 @@ async def get_workflowjob(workflow_id: str, job_id: str):
     workflow_id.
     """
     if workflow_manager.is_job_finished(workflow_id, job_id):
-        await set_workflow_job_finished(job_id)
-    job = await get_workflow_job(job_id)
+        await database.set_workflow_job_finished(job_id)
+    job = await database.get_workflow_job(job_id)
 
     if not job:
         raise ResponseException(404, {})
