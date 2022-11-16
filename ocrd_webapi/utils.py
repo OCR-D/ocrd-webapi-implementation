@@ -41,7 +41,7 @@ class ResponseException(Exception):
     """
     Exception to return a response
     """
-    def __init__(self, status_code: int, body: str):
+    def __init__(self, status_code: int, body: dict):
         self.status_code = status_code
         self.body = body
 class WorkspaceException(Exception):

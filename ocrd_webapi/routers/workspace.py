@@ -68,7 +68,7 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
         if not bag_path:
             raise ResponseException(404, {})
         # Remove the produced bag after sending it in the response
-        # background_tasks.add_task(os.unlink, bag_path)
+        background_tasks.add_task(os.unlink, bag_path)
         return FileResponse(bag_path)
     else:
         raise HTTPException(
