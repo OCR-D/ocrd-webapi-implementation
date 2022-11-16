@@ -67,6 +67,27 @@ def is_url_responsive(url, retries: int = 0):
                 return False
             retries -= 1
 
+@pytest.fixture(scope="session")
+def docker_compose_project_name(docker_compose_project_name):
+    return "ocrd-webapi-mongo-testdb"
+
+@pytest.fixture(name='mongo_client', scope="session")
+def _fixture_mongo_client(start_docker):
+    # TODO: think about changing this in the long run!
+    mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
+    yield mongo_client
+
+
+@pytest.fixture(name='workspace_mongo_coll', scope="session")
+def _fixture_workspace_mongo_coll(mongo_client):
+    # TODO: think about changing this in the long run!
+    mydb = mongo_client[constants.MONGO_TESTDB]
+    workspace_coll = mydb["workspace"]
+    yield workspace_coll
+    workspace_coll.drop()
+
+
+
 @pytest.fixture(name='auth')
 def _fixture_auth():
     user = os.getenv("OCRD_WEBAPI_USERNAME")
@@ -112,24 +133,5 @@ def _fixture_dummy_workspace(asset_workspace1, client):
     response = client.post("/workspace", files=asset_workspace1)
     assert_status_code(response.status_code, expected_floor=2)
     yield parse_resource_id(response) # returns dummy_workspace_id
-
-@pytest.fixture(name='mongo_client', scope="session")
-def _fixture_mongo_client(start_docker):
-    # TODO: think about changing this in the long run!
-    mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
-    yield mongo_client
-
-
-@pytest.fixture(name='workspace_mongo_coll', scope="session")
-def _fixture_workspace_mongo_coll(mongo_client):
-    # TODO: think about changing this in the long run!
-    mydb = mongo_client[constants.MONGO_TESTDB]
-    workspace_coll = mydb["workspace"]
-    yield workspace_coll
-    workspace_coll.drop()
-
-
-
-
 
 
