@@ -11,7 +11,6 @@ from ocrd_webapi import (
 )
 from time import sleep
 
-
 @pytest.fixture(scope="session", autouse=True)
 def do_around_tests():
     """
@@ -24,11 +23,11 @@ def do_around_tests():
                     "alpine", "find", "/workspaces", "-mindepth", "1", "-delete"])
 
 
-def test_run_prcessor(client, dummy_workspace):
+def test_run_prcessor(client, dummy_workspace_id):
     # act
     new_file_grp = "OCR-D-DUMMY"
     params = {"input_file_grps": 'OCR-D-IMG', "output_file_grps": new_file_grp,
-              "workspace_id": dummy_workspace, "parameters": {}}
+              "workspace_id": dummy_workspace_id, "parameters": {}}
     resp = client.post("/processor/ocrd-dummy", json=params)
 
     # assert
@@ -39,5 +38,5 @@ def test_run_prcessor(client, dummy_workspace):
         if client.get(f"processor/ocrd-dummy/{job_id}").json()['state'] in ['STOPPED', 'SUCCESS']:
             break
         sleep(0.5)
-    path = os.path.join(utils.to_workspace_dir(dummy_workspace), new_file_grp)
+    path = os.path.join(utils.to_workspace_dir(dummy_workspace_id), new_file_grp)
     assert os.path.exists(path), f"ouput_file_grp not created. expecting exists: '{path}'"
