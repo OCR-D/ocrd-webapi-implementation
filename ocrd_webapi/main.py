@@ -1,28 +1,25 @@
-"""
-Test-implementation of ocrd webApi: https://github.com/OCR-D/spec/blob/master/openapi.yml
-"""
 import datetime
 import os
 import secrets
 from typing import Union, List
-from .routers import (
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from ocrd_utils import getLogger
+
+from ocrd_webapi.constants import (
+    DB_URL,
+    SERVER_URL,
+)
+from ocrd_webapi.database import (
+    initiate_database
+)
+from ocrd_webapi.routers import (
     processor,
     workflow,
     workspace,
 )
-
-from fastapi import (
-    FastAPI,
-    Request,
-)
-from fastapi.responses import JSONResponse
-from ocrd_utils import getLogger
-
-from ocrd_webapi.constants import (
-    SERVER_URL,
-    DB_URL,
-)
-from ocrd_webapi.database import initiate_database
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,

@@ -10,13 +10,11 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-# OCR-D core related imports
 from ocrd_utils import getLogger
 
-# OCR-D WebAPI related imports
 from ocrd_webapi import database
 from ocrd_webapi.models import (
-    WorkspaceRsrc,
+    WorkspaceRsrc
 )
 from ocrd_webapi.utils import (
     ResponseException,
@@ -24,7 +22,9 @@ from ocrd_webapi.utils import (
     WorkspaceException,
     WorkspaceNotValidException,
 )
-from ocrd_webapi.workspace_manager import WorkspaceManager
+from ocrd_webapi.workspace_manager import (
+    WorkspaceManager
+)
 
 router = APIRouter(
     tags=["Workspace"],

@@ -1,23 +1,24 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-from ocrd_webapi.utils import (
-    safe_init_logging,
-)
+
 from ocrd_utils import getLogger
 
 from ocrd_webapi.database_models import (
     WorkflowJobDb,
     WorkspaceDb,
 )
+from ocrd_webapi.utils import (
+    safe_init_logging,
+)
 
 safe_init_logging()
 
-async def initiate_database(db_url: str):
+async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=[WorkspaceDb, WorkflowJobDb]):
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(
-        database=client.get_default_database(default='ocrd-webapi'),
-        document_models=[WorkspaceDb, WorkflowJobDb]
+        database=client.get_default_database(default=db_name),
+        document_models=doc_models
     )
 
 async def get_workspace(uid: str):
@@ -40,9 +41,12 @@ async def save_workspace(uid: str, bag_infos: dict):
         ocrd_base_version_checksum = bag_infos.pop("Ocrd-Base-Version-Checksum")
 
     workspace_db = WorkspaceDb(
-        _id=uid, ocrd_mets=ocrd_mets, ocrd_identifier=ocrd_identifier,
+        _id=uid, 
+        ocrd_mets=ocrd_mets, 
+        ocrd_identifier=ocrd_identifier,
         bagit_profile_identifier=bagit_profile_identifier,
-        ocrd_base_version_checksum=ocrd_base_version_checksum, bag_info_adds=bag_infos
+        ocrd_base_version_checksum=ocrd_base_version_checksum, 
+        bag_info_adds=bag_infos
     )
     await workspace_db.save()
 async def mark_deleted_workspace(uid: str):
@@ -78,11 +82,11 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
         state=state
     )
     await job.save()
-async def set_workflow_job_finished(uid: str):
+async def set_workflow_job_state(uid: str, state):
     """
-    set state of job to 'STOPPED'
+    set state of job to 'state'
     """
     job = await WorkflowJobDb.get(uid)
     if job:
-        job.state = 'STOPPED'
-    await job.save()
+        job.state = state
+        await job.save()

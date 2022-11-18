@@ -1,6 +1,3 @@
-"""
-module for functionality regarding the workspace section of the api
-"""
 import os
 import uuid
 
@@ -16,11 +13,11 @@ from ocrd_webapi.utils import (
     WorkspaceGoneException,
     WorkspaceNotValidException,
 )
-from ocrd_webapi.resource_manager import ResourceManager
-
+from ocrd_webapi.resource_manager import (
+    ResourceManager
+)
 
 class WorkspaceManager(ResourceManager):
-    """Class to handle workspace related tasks"""
     def __init__(self, 
         workspaces_dir=WORKSPACES_DIR, 
         resource_url=SERVER_URL, 

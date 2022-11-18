@@ -1,10 +1,14 @@
+import re
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
-
 from uuid import uuid4
-from ocrd_webapi import utils
-import re
 
+from ocrd_webapi.utils import (
+    to_processor_job_url,
+    to_workflow_job_url,
+    to_workflow_url,
+    to_workspace_url,
+)
 
 class DiscoveryResponse(BaseModel):
     ram: Union[int, None] = Field(
@@ -68,12 +72,12 @@ class Resource(BaseModel):
 class WorkspaceRsrc(Resource):
     @staticmethod
     def from_id(uid) -> 'WorkspaceRsrc':
-        return WorkspaceRsrc(id=utils.to_workspace_url(uid), description="Workspace")
+        return WorkspaceRsrc(id=to_workspace_url(uid), description="Workspace")
 
 class WorkflowRsrc(Resource):
     @staticmethod
     def from_id(uid) -> 'WorkflowRsrc':
-        return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
+        return WorkflowRsrc(id=to_workflow_url(uid), description="Workflow")
 
     def get_workflow_id(self) -> str:
         """
@@ -96,7 +100,7 @@ class ProcessorJobRsrc(Job):
         processor = ProcessorRsrc.from_name(processor_name)
         workspace = WorkspaceRsrc.from_id(workspace_id)
         return ProcessorJobRsrc(
-            id=utils.to_processor_job_url(processor_name, job_id), processor=processor,
+            id=to_processor_job_url(processor_name, job_id), processor=processor,
             workspace=workspace, state=state, description="Processor-Job"
         )
 
@@ -107,6 +111,6 @@ class WorkflowJobRsrc(Job):
     @staticmethod
     def create(uid, workflow=WorkflowRsrc, workspace=WorkspaceRsrc, state: JobState = None) -> 'WorkflowJobRsrc':
         workflow_id = workflow.get_workflow_id()
-        job_url = utils.to_workflow_job_url(workflow_id, uid)
+        job_url = to_workflow_job_url(workflow_id, uid)
         return WorkflowJobRsrc(id=job_url, workflow=workflow, workspace=workspace, state=state,
                                description="Workflow-Job")

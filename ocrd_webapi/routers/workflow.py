@@ -16,10 +16,8 @@ from fastapi.security import (
     HTTPBasicCredentials,
 )
 
-# OCR-D core related imports
 from ocrd_utils import getLogger
 
-# OCR-D WebAPI related imports
 from ocrd_webapi.constants import (
     WORKFLOWS_DIR,
 )
@@ -34,7 +32,9 @@ from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
 )
-from ocrd_webapi.workflow_manager import WorkflowManager
+from ocrd_webapi.workflow_manager import (
+    WorkflowManager
+)
 
 router = APIRouter(
     tags=["Workflow"],
@@ -111,7 +111,7 @@ async def get_workflowjob(workflow_id: str, job_id: str):
     workflow_id.
     """
     if workflow_manager.is_job_finished(workflow_id, job_id):
-        await database.set_workflow_job_finished(job_id)
+        await database.set_workflow_job_state(job_id, 'STOPPED')
     job = await database.get_workflow_job(job_id)
 
     if not job:

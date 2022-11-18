@@ -1,44 +1,41 @@
+import httpx
+import os
+import re
 import sys
+import yaml
 
 from fastapi import APIRouter
-import yaml
-import os
-import httpx
-from fastapi.responses import (
-    JSONResponse,
-)
+from fastapi.responses import JSONResponse
+
+from ocrd_utils import getLogger
 
 from ocrd_webapi.constants import (
     PROCESSOR_CONFIG_PATH,
     PROCESSOR_WORKSPACES_PATH,
 )
-from ocrd_webapi.utils import (
-    ResponseException,
-    to_workspace_dir,
-    safe_init_logging,
-)
 from ocrd_webapi.models import (
     ProcessorArgs,
     ProcessorJobRsrc,
 )
-from ocrd_utils import getLogger
-import re
-from ocrd_webapi import utils
+from ocrd_webapi.utils import (
+    find_upwards,
+    ResponseException,
+    safe_init_logging,
+    to_workspace_dir,
+)
 
 router = APIRouter(
     tags=["processor"],
 )
+safe_init_logging()
+log = getLogger('ocrd_webapi.processor')
 
 try:
-    with open(utils.find_upwards(PROCESSOR_CONFIG_PATH)) as fin:
+    with open(find_upwards(PROCESSOR_CONFIG_PATH)) as fin:
         processor_config = yaml.safe_load(fin)
 except TypeError:
     print(f"Processor config file not found: {PROCESSOR_CONFIG_PATH}", file=sys.stderr)
     exit(1)
-
-safe_init_logging()
-log = getLogger('ocrd_webapi.processor')
-
 
 @router.post("/processor/{processor}")
 async def run_processor(processor: str, p_args: ProcessorArgs):

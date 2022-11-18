@@ -1,16 +1,15 @@
-from pydantic import BaseModel, Field, constr
-from typing import Any, Dict, Optional, Union
-from beanie import (
-    Document
-)
+from beanie import Document
+from pydantic import Field
+from typing import Optional
 from uuid import uuid4
-from ocrd_webapi import utils
-import re
 
 from ocrd_webapi.models import (
     WorkflowJobRsrc, 
     WorkflowRsrc,
     WorkspaceRsrc,
+)
+from ocrd_webapi.utils import (
+    to_workflow_job_url
 )
 
 class WorkspaceDb(Document):
@@ -59,7 +58,7 @@ class WorkflowJobDb(Document):
         name = "workflow_job"
 
     def to_rsrc(self) -> 'WorkflowJobRsrc':
-        return WorkflowJobRsrc(id=utils.to_workflow_job_url(self.workflow_id, self.id),
+        return WorkflowJobRsrc(id=to_workflow_job_url(self.workflow_id, self.id),
                                workflow=WorkflowRsrc.from_id(self.workflow_id),
                                workspace=WorkspaceRsrc.from_id(self.workspace_id),
                                state=self.state, description="Workflow-Job")

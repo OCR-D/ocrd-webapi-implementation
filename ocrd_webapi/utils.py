@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from enum import Enum
 from typing import Union
 import zipfile
 import bagit
@@ -12,15 +11,14 @@ from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
 
-from .constants import (
+from ocrd_webapi.constants import (
+    SERVER_URL,
     WORKSPACES_DIR,
     WORKFLOWS_DIR,
-    SERVER_URL,
 )
 
 __all__ = [
     "ResponseException",
-    "JobState",
     "extract_bag_dest",
     "extract_bad_infos",
     "read_baginfos_from_zip",

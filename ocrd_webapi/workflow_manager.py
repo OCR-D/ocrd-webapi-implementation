@@ -1,6 +1,3 @@
-"""
-module for implementing the workflow section of the api
-"""
 import os
 from pathlib import Path
 import uuid
@@ -8,15 +5,16 @@ import uuid
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
 from ocrd_webapi import database
 from ocrd_webapi.nextflow import NextflowExecutor
-from ocrd_webapi.resource_manager import ResourceManager
 from ocrd_webapi.utils import (
     to_workspace_dir,
     to_workspace_url,
     WorkflowJobException,
 )
+from ocrd_webapi.resource_manager import (
+    ResourceManager
+)
 
 class WorkflowManager(ResourceManager):
-    """Class to handle workflow related tasks"""
     def __init__(self, 
         workflows_dir=WORKFLOWS_DIR, 
         resource_url=SERVER_URL, 
