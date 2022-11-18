@@ -27,6 +27,7 @@ from ocrd_webapi import database
 from ocrd_webapi.models import (
     WorkflowRsrc,
     WorkspaceRsrc,
+    WorkflowArgs,
     WorkflowJobRsrc,
 )
 from ocrd_webapi.utils import (
@@ -135,7 +136,7 @@ async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCre
     return WorkflowRsrc(id=workflow_url, description="Workflow")
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def start_workflow(workflow_id: str, workspace_id: str):
+async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs):
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
@@ -143,7 +144,7 @@ async def start_workflow(workflow_id: str, workspace_id: str):
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
     try:
-        parameters = await workflow_manager.start_nf_workflow(workflow_id, workspace_id)
+        parameters = await workflow_manager.start_nf_workflow(workflow_id, workflow_args.workspace_id)
     except Exception as e:
         log.exception("error in start_workflow")
         raise ResponseException(500, {"error": "internal server error", "message": str(e)})

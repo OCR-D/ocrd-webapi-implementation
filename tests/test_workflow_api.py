@@ -43,9 +43,7 @@ def test_update_workflow_script(asset_workflow2, client, auth):
 
 
 def test_start_workflow_script(client, dummy_workspace_id, dummy_workflow_id, auth):
-    # WorkflowArgs were removed, the line below does not work anymore
-    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace}, auth=auth)
-    response = client.post(f"/workflow/{dummy_workflow_id}?workspace_id={dummy_workspace_id}", auth=auth)
+    response = client.post(f"/workflow/{dummy_workflow_id}", json={"workspace_id": dummy_workspace_id}, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     assert_job_id(response)
 
@@ -74,9 +72,7 @@ def find_workflow_id(client):
 
 def test_job_status(client, dummy_workspace_id, dummy_workflow_id):
     # arrange
-    # WorkflowArgs were removed, the line below does not work anymore
-    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": dummy_workspace})
-    response = client.post(f"/workflow/{dummy_workflow_id}?workspace_id={dummy_workspace_id}")
+    response = client.post(f"/workflow/{dummy_workflow_id}", json={"workspace_id": dummy_workspace_id})
     job_id = parse_resource_id(response)
 
     # act

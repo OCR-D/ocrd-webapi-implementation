@@ -41,14 +41,11 @@ def test_get_workspace(asset_workspace3, client):
 def test_run_workflow(asset_workspace3, client, dummy_workflow_id):
     response = client.post("/workspace", files=asset_workspace3)
     workspace_id = parse_resource_id(response)
-
-    # act
-    # WorkflowArgs were removed, the line below does not work anymore
-    # response = client.post(f"/workflow/{dummy_workflow}", json={"workspace_id": workspace_id})
-    response = client.post(f"/workflow/{dummy_workflow_id}?workspace_id={workspace_id}")
-
-    # assert
+    
+    response = client.post(f"/workflow/{dummy_workflow_id}", json={"workspace_id": workspace_id})
     assert_status_code(response.status_code, expected_floor=2)
+    
+    
     # TODO: assert the workflow finished successfully. Currently mets.xml is not dynamic, so first
     #       the possibility to provide a different-mets-name to run the workflow has to be
     #       implemented
