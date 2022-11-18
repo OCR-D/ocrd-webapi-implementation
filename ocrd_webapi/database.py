@@ -10,9 +10,7 @@ from ocrd_webapi.database_models import (
     WorkspaceDb,
 )
 
-
 safe_init_logging()
-
 
 async def initiate_database(db_url: str):
     client = AsyncIOMotorClient(db_url)
@@ -22,7 +20,8 @@ async def initiate_database(db_url: str):
         document_models=[WorkspaceDb, WorkflowJobDb]
     )
 
-
+async def get_workspace(uid: str):
+    return await WorkspaceDb.get(uid)
 async def save_workspace(uid: str, bag_infos: dict):
     """
     save a workspace to the database. Can also be used to update a workspace
@@ -46,8 +45,6 @@ async def save_workspace(uid: str, bag_infos: dict):
         ocrd_base_version_checksum=ocrd_base_version_checksum, bag_info_adds=bag_infos
     )
     await workspace_db.save()
-
-
 async def mark_deleted_workspace(uid: str):
     """
     set 'WorkspaceDb.deleted' to True
@@ -62,11 +59,8 @@ async def mark_deleted_workspace(uid: str):
     else:
         getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
 
-
-async def get_workspace(uid: str):
-    return await WorkspaceDb.get(uid)
-
-
+async def get_workflow_job(uid: str):
+    return await WorkflowJobDb.get(uid)
 async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
     """
     save a workflow_job to the database
@@ -84,12 +78,6 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
         state=state
     )
     await job.save()
-
-
-async def get_workflow_job(uid: str):
-    return await WorkflowJobDb.get(uid)
-
-
 async def set_workflow_job_finished(uid: str):
     """
     set state of job to 'STOPPED'

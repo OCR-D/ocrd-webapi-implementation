@@ -13,6 +13,28 @@ class ResourceManager:
         self.__resource_url = resource_url
         self.__resource_router = resource_router
 
+    def _initiate_resource_dir(self, resource_base_dir):
+        if not os.path.exists(resource_base_dir):
+            Path(resource_base_dir).mkdir(parents=True, exist_ok=True)
+            self.log.info(f"Created non-existing {self.__resource_router}s base directory: {resource_base_dir}")
+        else:
+            self.log.info(f"Using the existing {self.__resource_router}s base directory: {resource_base_dir}")
+
+        return resource_base_dir
+
+    def _is_resource_dir_available(self, resource_id):
+        resource_dir = self._to_resource_dir(resource_id)
+        if os.path.exists(resource_dir) and os.path.isdir(resource_dir):
+            return resource_dir
+        return None
+    def _is_resource_file_available(self, resource_id, file_ext=None):
+        resource_dir = self._to_resource_dir(resource_id)
+        for file in os.listdir(resource_dir):
+            if file_ext and file.endswith(file_ext):
+                return os.path.join(resource_dir, file)
+
+        return None 
+
     def _to_resource_dir(self, resource_id):
         return os.path.join(self.__resource_dir, resource_id)
     def _to_resource_job_dir(self, resource_id, job_id):
@@ -22,14 +44,6 @@ class ResourceManager:
     def _to_resource_job_url(self, resource_id, job_id):
         return self._to_resource_url(resource_id) + f"/{job_id}"
 
-    def _initiate_resource_dir(self, resource_base_dir):
-        if not os.path.exists(resource_base_dir):
-            Path(resource_base_dir).mkdir(parents=True, exist_ok=True)
-            self.log.info(f"Created non-existing {self.__resource_router}s base directory: {resource_base_dir}")
-        else:
-            self.log.info(f"Using the existing {self.__resource_router}s base directory: {resource_base_dir}")
-
-        return resource_base_dir
     def _get_all_resource_dirs(self, resource_base_dir):
         resource_dirs = []
         for f in os.scandir(resource_base_dir):
@@ -45,18 +59,6 @@ class ResourceManager:
 
         return resource_urls
 
-    def _is_resource_dir_available(self, resource_id):
-        resource_dir = self._to_resource_dir(resource_id)
-        if os.path.exists(resource_dir) and os.path.isdir(resource_dir):
-            return resource_dir
-        return None
-    def _is_resource_file_available(self, resource_id, file_ext=None):
-        resource_dir = self._to_resource_dir(resource_id)
-        for file in os.listdir(resource_dir):
-            if file_ext and file.endswith(file_ext):
-                return os.path.join(resource_dir, file)
-
-        return None 
     def _create_resource_dir(self, resource_id):
         if resource_id is None:
             # assign a randomly generated resource id

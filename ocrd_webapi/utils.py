@@ -58,10 +58,6 @@ class WorkflowJobException(Exception):
     Exception to indicate something is wrong with a workflow-job
     """
     pass
-class JobState(Enum):
-    QUEUED = 1
-    RUNNING = 2
-    STOPPED = 3
 
 def to_workflow_job_dir(workflow_id, job_id) -> str:
     """

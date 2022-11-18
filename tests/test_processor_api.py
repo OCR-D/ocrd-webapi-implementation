@@ -40,3 +40,4 @@ def test_run_prcessor(client, dummy_workspace_id):
         sleep(0.5)
     path = os.path.join(utils.to_workspace_dir(dummy_workspace_id), new_file_grp)
     assert os.path.exists(path), f"ouput_file_grp not created. expecting exists: '{path}'"
+    

@@ -7,12 +7,18 @@ import re
 
 
 class DiscoveryResponse(BaseModel):
-    ram: Union[int, None] = Field(None, description='All available RAM in bytes')
-    cpu_cores: Union[int, None] = Field(None, description='Number of available CPU cores')
+    ram: Union[int, None] = Field(
+        None, description='All available RAM in bytes'
+    )
+    cpu_cores: Union[int, None] = Field(
+        None, description='Number of available CPU cores'
+    )
     has_cuda: Union[bool, None] = Field(
         None, description="Whether deployment supports NVIDIA's CUDA"
     )
-    cuda_version: Union[str, None] = Field(None, description='Major/minor version of CUDA')
+    cuda_version: Union[str, None] = Field(
+        None, description='Major/minor version of CUDA'
+    )
     has_ocrd_all: Union[bool, None] = Field(
         None, description='Whether deployment is based on ocrd_all'
     )
@@ -23,33 +29,6 @@ class DiscoveryResponse(BaseModel):
         None, description='Whether the OCR-D executables run in a Docker container'
     )
 
-
-class Resource(BaseModel):
-    id: str = Field(..., alias='@id', description='URL of this thing')
-    description: Union[str, None] = Field(None, description='Description of the thing')
-
-    class Config:
-        allow_population_by_field_name = True
-
-
-class WorkspaceRsrc(Resource):
-    @staticmethod
-    def from_id(uid) -> 'WorkspaceRsrc':
-        return WorkspaceRsrc(id=utils.to_workspace_url(uid), description="Workspace")
-
-
-class WorkflowRsrc(Resource):
-    @staticmethod
-    def from_id(uid) -> 'WorkflowRsrc':
-        return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
-
-    def get_workflow_id(self) -> str:
-        """
-        get uid from a WorkflowRsrc's workflow-url
-        """
-        return re.search(r".*/([^/]+)/?$", self.id).group(1)
-
-
 class ProcessorArgs(BaseModel):
     workspace_id: str = None
     input_file_grps: str = None
@@ -57,17 +36,12 @@ class ProcessorArgs(BaseModel):
     page_id: str = None
     parameters: Optional[Dict[str, Any]] = {}
 
+class WorkflowArgs(BaseModel):
+    workspace_id: str = None
+    workflow_parameters: Optional[Dict[str, Any]] = {}
 
 class JobState(BaseModel):
     __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')
-
-
-class Job(Resource):
-    state: Optional[JobState] = None
-
-    class Config:
-        allow_population_by_field_name = True
-
 
 class ProcessorRsrc(BaseModel):
     description: Union[str, None] = Field(None, description='Description of the thing')
@@ -84,6 +58,34 @@ class ProcessorRsrc(BaseModel):
     class Config:
         allow_population_by_field_name = True
 
+class Resource(BaseModel):
+    id: str = Field(..., alias='@id', description='URL of this thing')
+    description: Union[str, None] = Field(None, description='Description of the thing')
+
+    class Config:
+        allow_population_by_field_name = True
+
+class WorkspaceRsrc(Resource):
+    @staticmethod
+    def from_id(uid) -> 'WorkspaceRsrc':
+        return WorkspaceRsrc(id=utils.to_workspace_url(uid), description="Workspace")
+
+class WorkflowRsrc(Resource):
+    @staticmethod
+    def from_id(uid) -> 'WorkflowRsrc':
+        return WorkflowRsrc(id=utils.to_workflow_url(uid), description="Workflow")
+
+    def get_workflow_id(self) -> str:
+        """
+        get uid from a WorkflowRsrc's workflow-url
+        """
+        return re.search(r".*/([^/]+)/?$", self.id).group(1)
+
+class Job(Resource):
+    state: Optional[JobState] = None
+
+    class Config:
+        allow_population_by_field_name = True
 
 class ProcessorJobRsrc(Job):
     processor: Optional[ProcessorRsrc] = None
@@ -98,12 +100,6 @@ class ProcessorJobRsrc(Job):
             workspace=workspace, state=state, description="Processor-Job"
         )
 
-
-class WorkflowArgs(BaseModel):
-    workspace_id: str = None
-    workflow_parameters: Optional[Dict[str, Any]] = {}
-
-
 class WorkflowJobRsrc(Job):
     workflow: Optional[WorkflowRsrc]
     workspace: Optional[WorkspaceRsrc]
@@ -114,4 +110,3 @@ class WorkflowJobRsrc(Job):
         job_url = utils.to_workflow_job_url(workflow_id, uid)
         return WorkflowJobRsrc(id=job_url, workflow=workflow, workspace=workspace, state=state,
                                description="Workflow-Job")
-

@@ -20,8 +20,6 @@ from ocrd_utils import getLogger
 
 from ocrd_webapi.constants import (
     SERVER_URL,
-    WORKSPACES_DIR,
-    WORKFLOWS_DIR,
     DB_URL,
 )
 from ocrd_webapi.database import initiate_database
@@ -66,8 +64,6 @@ async def startup_event():
     """
     Executed once on startup
     """
-    os.makedirs(WORKSPACES_DIR, exist_ok=True)
-    os.makedirs(WORKFLOWS_DIR, exist_ok=True)
     await initiate_database(DB_URL)
 
 @app.get("/")
