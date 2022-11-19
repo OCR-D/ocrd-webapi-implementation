@@ -36,7 +36,7 @@ workspace_manager = WorkspaceManager()
 
 # TODO: Refine all the exceptions...
 @router.get("/workspace")
-async def get_workspaces():
+async def list_workspaces():
     """
     Get a list of existing workspace urls
 

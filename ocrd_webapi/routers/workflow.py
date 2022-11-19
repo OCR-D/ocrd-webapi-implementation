@@ -64,7 +64,7 @@ def __dummy_security_check(auth):
 
 # TODO: Refine all the exceptions...
 @router.get("/workflow")
-async def get_workflows():
+async def list_workflows():
     """
     Get a list of existing workflow space urls. Each workflow space has a Nextflow script inside.
 
@@ -81,19 +81,19 @@ async def get_workflows():
 async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
-
-    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "Accept: application/json" --output ./nextflow.nf
-    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "Accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
+    
+    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
+    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
     """
-    if accept in ["application/json", "text/vnd.ocrd.workflow"]:
+    if accept in ["text/vnd.ocrd.workflow", "application/json"]:
         workflow_script_path = workflow_manager.get_workflow_script(workflow_id)
         workflow_script_url = workflow_manager._to_resource_url(workflow_id)
         if not workflow_script_path:
             raise ResponseException(404, {})
-        if accept == "application/json":
-            return WorkflowRsrc(id=workflow_script_url, description="Workflow nextflow script")
-        else:
+        if accept == "text/vnd.ocrd.workflow":
             return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
+        else:
+            return WorkflowRsrc(id=workflow_script_url, description="Workflow nextflow script")
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -101,7 +101,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
         )
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def get_workflowjob(workflow_id: str, job_id: str):
+async def get_workflow_job(workflow_id: str, job_id: str):
     """
     Query a job from the database. Used to query if a job is finished or still running
 
@@ -136,7 +136,7 @@ async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCre
     return WorkflowRsrc(id=workflow_url, description="Workflow")
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def start_workflow(workflow_id: str, workflow_args: WorkflowArgs):
+async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.

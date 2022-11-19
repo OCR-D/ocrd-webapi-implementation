@@ -1,15 +1,15 @@
-"""
-tests for ocrd_webapi.routers.processor.py
-"""
 import os.path
-
 import pytest
 import subprocess
+from time import sleep
+
 from ocrd_webapi import (
     constants,
-    utils
 )
-from time import sleep
+from .utils_test import (
+    assert_status_code,
+    parse_resource_id,
+)
 
 @pytest.fixture(scope="session", autouse=True)
 def do_around_tests():
@@ -19,25 +19,27 @@ def do_around_tests():
     is used to clean workspaces after the tests.
     """
     yield
+    # constants.WORKSPACE_DIR - may not always be de default dir 
+    # depending on the passed parameter to the WorkflowManager constructor.
     subprocess.run(["docker", "run", "--rm", "-v", f"{constants.WORKSPACES_DIR}:/workspaces",
                     "alpine", "find", "/workspaces", "-mindepth", "1", "-delete"])
 
-
+# TODO: This should be better implemented...
 def test_run_prcessor(client, dummy_workspace_id):
     # act
     new_file_grp = "OCR-D-DUMMY"
     params = {"input_file_grps": 'OCR-D-IMG', "output_file_grps": new_file_grp,
               "workspace_id": dummy_workspace_id, "parameters": {}}
-    resp = client.post("/processor/ocrd-dummy", json=params)
+    response = client.post("/processor/ocrd-dummy", json=params)
 
-    # assert
-    assert resp.status_code // 100 == 2, f"run-processor returned error-code: {resp.status_code}"
-    job_id = resp.json()['@id'].split("/")[-1]
+    assert_status_code(response.status_code, expected_floor=2)
+    job_id = parse_resource_id(response)
+
+    # try several times because finishing execution needs some time
     for x in range(0, 10):
-        # try several times because finishing execution needs some time
         if client.get(f"processor/ocrd-dummy/{job_id}").json()['state'] in ['STOPPED', 'SUCCESS']:
             break
         sleep(0.5)
-    path = os.path.join(utils.to_workspace_dir(dummy_workspace_id), new_file_grp)
+
+    path = os.path.join(constants.WORKSPACES_DIR, dummy_workspace_id, new_file_grp)
     assert os.path.exists(path), f"ouput_file_grp not created. expecting exists: '{path}'"
-    

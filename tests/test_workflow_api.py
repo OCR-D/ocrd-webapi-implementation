@@ -16,74 +16,112 @@ from .utils_test import (
     parse_resource_id,
 )
 
+# TODO: Database part for Workflows is missing
+# Implement both the source code and the tests
+@pytest.fixture(autouse=True)
+def run_around_tests(mongo_client):
+    # Before each test (until yield):
+    mongo_client[constants.MONGO_TESTDB]["workflow"].delete_many({})
+    yield
+    # After each test:
 
-def test_upload_workflow_script(asset_workflow1, client, auth):
-    response = client.post("/workflow", files=asset_workflow1, auth=auth)
-    workflow_id = parse_resource_id(response)
-    assert_status_code(response.status_code, expected_floor=2)
-    assert_workflow_dir(workflow_id)
-
-
-def test_get_workflow_script(asset_workflow1, client, auth):
-    client.post("/workflow", files=asset_workflow1, auth=auth)
-    existing_workflow_id = find_workflow_id(client)
-    request = f"/workflow/{existing_workflow_id}"
-    headers = {"accept": "text/vnd.ocrd.workflow"}
-    response = client.get(request, headers=headers)
-    assert_status_code(response.status_code, expected_floor=2)
-    assert_workflow_dir(existing_workflow_id)
-
-
-def test_update_workflow_script(asset_workflow2, client, auth):
-    existing_workflow_id = find_workflow_id(client)
-    request = f"/workflow/{existing_workflow_id}"
-    response = client.put(request, files=asset_workflow2, auth=auth)
-    assert_status_code(response.status_code, expected_floor=2)
-    assert_workflow_dir(existing_workflow_id)
-
-
-def test_start_workflow_script(client, dummy_workspace_id, dummy_workflow_id, auth):
-    response = client.post(f"/workflow/{dummy_workflow_id}", json={"workspace_id": dummy_workspace_id}, auth=auth)
-    assert_status_code(response.status_code, expected_floor=2)
-    assert_job_id(response)
-
+# Helper assert functions
+def assert_workflow_dir(workflow_id):
+    assert exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
+def assert_not_workflow_dir(workflow_id):
+    assert not exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir existing"
 def assert_workflows_len(expected_len, client):
     response = client.get("/workflow")
     assert_status_code(response.status_code, expected_floor=2)
     response_len = len(response.json())
     assert expected_len == response_len, "more workflows than expected existing"
 
-def assert_workflow_dir(workflow_id):
-    assert exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
+# Test cases
+def test_post_workflow_script(client, auth, asset_workflow1):
+    # Post a new workflow script
+    response = client.post("/workflow", files=asset_workflow1, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    workflow_id = parse_resource_id(response)
+    assert_workflow_dir(workflow_id)
+def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, asset_workflow3):
+    # Post a new workflow script
+    response = client.post("/workflow", files=asset_workflow1, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    workflow_id = parse_resource_id(response)
+    assert_workflow_dir(workflow_id)
 
-def assert_job_id(response):
-    # Asserts that the job id is not an empty string
-    assert not response.json()['@id'].split("/")[-1] == "", "job id was not assigned"
+    # Put to the same workflow_id
+    request = f"/workflow/{workflow_id}"
+    response = client.put(request, files=asset_workflow2, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    workflow_id = parse_resource_id(response)
+    assert_workflow_dir(workflow_id)
+def test_put_workflow_script_non_existing(client, auth, asset_workflow1):
+    # Put to a non-existing workflow_id
+    non_existing = 'non_existing_123'
+    request = f"/workflow/{non_existing}"
+    response = client.put(request, files=asset_workflow1, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    newly_created_workflow_id = parse_resource_id(response)
+    assert_workflow_dir(newly_created_workflow_id)
+def test_get_workflow_script(client, auth, asset_workflow1):
+    # Post a new workflow script
+    response = client.post("/workflow", files=asset_workflow1, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    workflow_id = parse_resource_id(response)
+    assert_workflow_dir(workflow_id)
 
-def find_workflow_id(client):
-    """Find an existing workflow id"""
-    response = client.get("/workflow")
-    # Return the id of the first member in the workflow list
-    if len(response.json()) > 0:
-        existing_workflow_id = response.json()[0]['@id'].split("/")[-1]
-    else:
-        existing_workflow_id = "NO_WORKFLOWS_AVAILABLE"
-    return existing_workflow_id
+    # Get the same workflow script
+    headers = {"accept": "text/vnd.ocrd.workflow"}
+    response = client.get(f"/workflow/{workflow_id}", headers=headers)
+    assert_status_code(response.status_code, expected_floor=2)
+        # the response is actually the workflow script
+        # checking for the resource_id doesn't make sense
+    # workflow_id = parse_resource_id(response)
 
-def test_job_status(client, dummy_workspace_id, dummy_workflow_id):
-    # arrange
-    response = client.post(f"/workflow/{dummy_workflow_id}", json={"workspace_id": dummy_workspace_id})
+        # It should be checked the following way
+        # Not working currently:
+    # assert response.headers.get('content-type').find(".nf") > -1, "content-type should be something with '.nf'"
+    # assert response.headers.get('content-type').find("nextflow") > -1, "content-type should be something with 'nextflow'"
+def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):
+    params = {"workspace_id": dummy_workspace_id}
+    response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
+    assert_status_code(response.status_code, expected_floor=2)
+    job_id = parse_resource_id(response)
+    assert job_id
+def test_run_workflow_different_mets(client, dummy_workflow_id, asset_workspace3):
+    # The name of the mets file is not `mets.xml` inside the provided workspace
+    response = client.post("/workspace", files=asset_workspace3)
+    workspace_id = parse_resource_id(response)
+    params = {"workspace_id": workspace_id}
+    response = client.post(f"/workflow/{dummy_workflow_id}", json=params)
+    assert_status_code(response.status_code, expected_floor=2)
+    job_id = parse_resource_id(response)
+    assert job_id
+
+    # TODO: assert the workflow finished successfully. Currently mets.xml is not dynamic, so first
+    # the possibility to provide a different-mets-name to run the workflow has to be implemented
+
+# TODO: This should be better implemented...
+def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
+    params = {"workspace_id": dummy_workspace_id}
+    response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
     job_id = parse_resource_id(response)
 
-    # act
+    # try several times because finishing execution needs some time
     for x in range(0,20):
-        # try several times because finishing execution needs some time
         response = client.get(f"workflow/{dummy_workflow_id}/{job_id}")
         state = response.json()['state']
         if state == 'STOPPED':
             break
         sleep(0.5)
 
-    # assert
     assert state == 'STOPPED', f"expecting job.state to be set to stopped but is {state}"
 
+# TODO: Implement the test once there is an 
+# delete workflow script source code implemented
+# delete workflow is not in the WebAPI specification
+def test_delete_workflow_script(client, auth):
+    pass
+def test_delete_workspace_non_existing(client, auth):
+    pass

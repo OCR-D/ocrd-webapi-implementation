@@ -12,6 +12,7 @@ from ocrd_utils import getLogger
 from ocrd_webapi.constants import (
     PROCESSOR_CONFIG_PATH,
     PROCESSOR_WORKSPACES_PATH,
+    WORKSPACES_DIR,
 )
 from ocrd_webapi.models import (
     ProcessorArgs,
@@ -21,11 +22,10 @@ from ocrd_webapi.utils import (
     find_upwards,
     ResponseException,
     safe_init_logging,
-    to_workspace_dir,
 )
 
 router = APIRouter(
-    tags=["processor"],
+    tags=["Processor"],
 )
 safe_init_logging()
 log = getLogger('ocrd_webapi.processor')
@@ -37,6 +37,39 @@ except TypeError:
     print(f"Processor config file not found: {PROCESSOR_CONFIG_PATH}", file=sys.stderr)
     exit(1)
 
+@router.get("/processor/")
+async def list_processors():
+    """
+    list all available processors. Delegates to all available processing servers and returs a
+    summary of their ocrd-tool.json
+    """
+    # TODO: maybe use caching unless this should be used to test if processors available
+    res = []
+    for processor in processor_config:
+        url = processor_config[processor]
+        async with httpx.AsyncClient() as client:
+            try:
+                r = await client.get(url, headers={"Content-Type": "application/json"})
+                res.append(r.json())
+            except httpx.ConnectError:
+                log.warn(f"Error while listing processors: '{processor}' - '{url}' not responding")
+
+    return JSONResponse(content=res)
+
+@router.get("/processor/{processor}")
+async def get_processor(processor: str):
+    """
+    return processors ocrd-tool.json. Delegates to respective processing server
+    """
+    if processor not in processor_config:
+        raise ResponseException(404, {"error": "Processor not available"})
+
+    url = processor_config[processor]
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers={"Content-Type": "application/json"})
+
+    return JSONResponse(content=r.json())
+
 @router.post("/processor/{processor}")
 async def run_processor(processor: str, p_args: ProcessorArgs):
     """
@@ -47,7 +80,7 @@ async def run_processor(processor: str, p_args: ProcessorArgs):
     workspace_id = p_args.workspace_id
     if not workspace_id:
         raise ResponseException(422, {"error": "workspace_id missing"})
-    if not os.path.exists(to_workspace_dir(p_args.workspace_id)):
+    if not os.path.exists(os.path.join(WORKSPACES_DIR, p_args.workspace_id)):
         raise ResponseException(500, {"error": f"Workspace not existing. Id: {workspace_id}"})
     if not p_args.input_file_grps:
         raise ResponseException(422, {"error": "input_file_grps missing"})
@@ -77,42 +110,6 @@ async def run_processor(processor: str, p_args: ProcessorArgs):
     job_id, job_state = x["_id"], x["state"]
 
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
-
-
-@router.get("/processor/{processor}")
-async def get_processor(processor: str):
-    """
-    return processors ocrd-tool.json. Delegates to respective processing server
-    """
-    if processor not in processor_config:
-        raise ResponseException(404, {"error": "Processor not available"})
-
-    url = processor_config[processor]
-    async with httpx.AsyncClient() as client:
-        r = await client.get(url, headers={"Content-Type": "application/json"})
-
-    return JSONResponse(content=r.json())
-
-
-@router.get("/processor/")
-async def list_processors():
-    """
-    list all available processors. Delegates to all available processing servers and returs a
-    summary of their ocrd-tool.json
-    """
-    # TODO: maybe use caching unless this should be used to test if processors available
-    res = []
-    for processor in processor_config:
-        url = processor_config[processor]
-        async with httpx.AsyncClient() as client:
-            try:
-                r = await client.get(url, headers={"Content-Type": "application/json"})
-                res.append(r.json())
-            except httpx.ConnectError:
-                log.warn(f"Error while listing processors: '{processor}' - '{url}' not responding")
-
-    return JSONResponse(content=res)
-
 
 @router.get("/processor/{processor}/{job_id}", responses={"201": {"model": ProcessorJobRsrc}})
 async def get_processor_job(processor: str, job_id: str):
