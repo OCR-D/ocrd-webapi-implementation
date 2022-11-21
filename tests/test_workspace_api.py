@@ -121,8 +121,7 @@ def test_get_workspace(client, asset_workspace3):
     assert_status_code(response.status_code, expected_floor=2)
     assert response.headers.get('content-type').find("zip") > -1, \
     "content-type should be something with 'zip'"
-
-# TODO: Tests must be implemented to test how it reacts to 
-# non existing workspaces
-def test_get_workspace_non_existing(client, workspace_mongo_coll):
-    pass
+def test_get_workspace_non_existing(client):
+    headers = {"accept": "application/vnd.ocrd+zip"}
+    response = client.get(f"/workspace/non-existing-workspace-id", headers=headers)
+    assert response.status_code == 404, "expect 404 error code for non existing workspace"
