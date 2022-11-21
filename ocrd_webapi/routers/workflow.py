@@ -76,12 +76,16 @@ async def list_workflows():
         response.append(WorkflowRsrc(id=wf, description="Workflow"))
     return response
 
-# TODO: This get method works only with curl but not with the browser navigation through -> http://localhost:8000/docs
 @router.get("/workflow/{workflow_id}")
 async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
-    
+
+    When testet with fastapi's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
+    accept-header is allways set to application/json (no matter what is specified in the gui) so it
+    can not be used to test getting the workflow as a file. See:
+    https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
+
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
     """
