@@ -48,11 +48,15 @@ async def list_workspaces():
         response.append(WorkspaceRsrc(id=ws, description="Workspace"))
     return response
 
-# TODO: This get method works only with curl but not with the browser navigation through -> http://localhost:8000/docs
 @router.get("/workspace/{workspace_id}")
 async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)):
     """
     Get an existing workspace
+
+    When testet with fastapi's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
+    accept-header is allways set to application/json (no matter what is specified in the gui) so to
+    test getting the workspace as a zip it cannot be used.
+    See: https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
 
     can be testet with:
     `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/json"` and
