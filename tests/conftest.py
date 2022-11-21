@@ -84,12 +84,10 @@ def docker_compose_project_name(docker_compose_project_name):
 # Fixtures related to the Mongo DB
 @pytest.fixture(scope="session", name='mongo_client')
 def _fixture_mongo_client(start_docker):
-    # TODO: think about changing this in the long run!
     mongo_client = MongoClient(constants.DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 @pytest.fixture(scope="session", name='workspace_mongo_coll')
 def _fixture_workspace_mongo_coll(mongo_client):
-    # TODO: think about changing this in the long run!
     mydb = mongo_client[constants.MONGO_TESTDB]
     workspace_coll = mydb["workspace"]
     yield workspace_coll

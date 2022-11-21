@@ -14,6 +14,9 @@ def assert_status_code(status_code, expected_floor):
 def assert_resources_len(resource_router, resources_len, expected_len):
     assert resources_len == expected_len, f"Amount of {resource_router} resources expected: {expected_len}, got: {resources_len}."
 
-# TODO: An exception check should be done here
 def parse_resource_id(response):
-    return response.json()['@id'].split("/")[-1]
+    try:
+        return response.json()['@id'].split("/")[-1]
+    except (AttributeError, KeyError):
+        return None
+
