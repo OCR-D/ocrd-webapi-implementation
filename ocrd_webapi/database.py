@@ -13,7 +13,10 @@ from ocrd_webapi.utils import (
 
 safe_init_logging()
 
-async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=[WorkspaceDb, WorkflowJobDb]):
+
+async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None):
+    if doc_models is None:
+        doc_models = [WorkspaceDb, WorkflowJobDb]
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(
@@ -21,34 +24,39 @@ async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=[Work
         document_models=doc_models
     )
 
+
 async def get_workspace(uid: str):
     return await WorkspaceDb.get(uid)
-async def save_workspace(uid: str, bag_infos: dict):
+
+
+async def save_workspace(uid: str, bag_info: dict):
     """
     save a workspace to the database. Can also be used to update a workspace
 
     Arguments:
          uid: uid of the workspace which must be available on disk
-         bag_infos: dict with key-value-pairs from bag-info.txt
+         bag_info: dict with key-value-pairs from bag-info.txt
     """
-    bag_infos = dict(bag_infos)
+    bag_info = dict(bag_info)
     ocrd_mets, ocrd_base_version_checksum = None, None
-    ocrd_identifier = bag_infos.pop("Ocrd-Identifier")
-    bagit_profile_identifier = bag_infos.pop("BagIt-Profile-Identifier")
-    if "Ocrd-Mets" in bag_infos:
-        ocrd_mets = bag_infos.pop("Ocrd-Mets")
-    if "Ocrd-Base-Version-Checksum" in bag_infos:
-        ocrd_base_version_checksum = bag_infos.pop("Ocrd-Base-Version-Checksum")
+    ocrd_identifier = bag_info.pop("Ocrd-Identifier")
+    bagit_profile_identifier = bag_info.pop("BagIt-Profile-Identifier")
+    if "Ocrd-Mets" in bag_info:
+        ocrd_mets = bag_info.pop("Ocrd-Mets")
+    if "Ocrd-Base-Version-Checksum" in bag_info:
+        ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
     workspace_db = WorkspaceDb(
-        _id=uid, 
-        ocrd_mets=ocrd_mets, 
+        _id=uid,
+        ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,
         bagit_profile_identifier=bagit_profile_identifier,
-        ocrd_base_version_checksum=ocrd_base_version_checksum, 
-        bag_info_adds=bag_infos
+        ocrd_base_version_checksum=ocrd_base_version_checksum,
+        bag_info_adds=bag_info
     )
     await workspace_db.save()
+
+
 async def mark_deleted_workspace(uid: str):
     """
     set 'WorkspaceDb.deleted' to True
@@ -63,8 +71,11 @@ async def mark_deleted_workspace(uid: str):
     else:
         getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
 
+
 async def get_workflow_job(uid: str):
     return await WorkflowJobDb.get(uid)
+
+
 async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
     """
     save a workflow_job to the database
@@ -82,6 +93,8 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
         state=state
     )
     await job.save()
+
+
 async def set_workflow_job_state(uid: str, state):
     """
     set state of job to 'state'

@@ -14,12 +14,13 @@ from ocrd_webapi.resource_manager import (
     ResourceManager
 )
 
+
 class WorkflowManager(ResourceManager):
-    def __init__(self, 
-        workflows_dir=WORKFLOWS_DIR, 
-        resource_url=SERVER_URL, 
-        resource_router='workflow', 
-        logger_label='ocrd_webapi.workflow_manager'):
+    def __init__(self,
+                 workflows_dir=WORKFLOWS_DIR,
+                 resource_url=SERVER_URL,
+                 resource_router='workflow',
+                 logger_label='ocrd_webapi.workflow_manager'):
         super().__init__(workflows_dir, resource_url, resource_router, logger_label)
         self._nextflow_executor = NextflowExecutor()
         self.__workflows_dir = workflows_dir
@@ -29,10 +30,10 @@ class WorkflowManager(ResourceManager):
         """
         Get a list of all available workflow urls.
         """
-        workflow_urls = self._get_all_resource_urls(self.__workflows_dir)
+        workflow_urls = self._get_all_resource_urls()
         return workflow_urls
 
-    async def create_workflow_space(self, file: str, uid=None):
+    async def create_workflow_space(self, file, uid=None):
         """
         Create a new workflow space. Upload a Nextflow script inside.
 
@@ -56,7 +57,7 @@ class WorkflowManager(ResourceManager):
 
         return self._to_resource_url(workflow_id)
 
-    async def update_workflow_space(self, file: str, workflow_id):
+    async def update_workflow_space(self, file, workflow_id):
         """
         Update a workflow space
 
@@ -74,7 +75,7 @@ class WorkflowManager(ResourceManager):
         nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
         if nf_script_path:
             return nf_script_path
-        
+
         return None
 
     def create_workflow_execution_space(self, workflow_id):
@@ -86,7 +87,7 @@ class WorkflowManager(ResourceManager):
         return job_id, job_dir
 
     async def start_nf_workflow(self, workflow_id, workspace_id):
-        # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongdb
+        # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongodb
         #       (ocrd_webapi.models.WorkspaceDb.ocrd_mets). Try to make it possible to tell nextflow the
         #       name of the mets if it is not mets.xml.        
 
@@ -106,10 +107,13 @@ class WorkflowManager(ResourceManager):
         await database.save_workflow_job(job_id, workflow_id, workspace_id, status)
 
         parameters = []
-        parameters.append(self._to_resource_job_url(workflow_id, job_id)) # Job URL
+        # Job URL
+        parameters.append(self._to_resource_job_url(workflow_id, job_id))
         parameters.append(status)
-        parameters.append(self._to_resource_url(workflow_id)) # Workflow URL
-        parameters.append(to_workspace_url(workspace_id)) # Workspace URL
+        # Workflow URL
+        parameters.append(self._to_resource_url(workflow_id))
+        # Workspace URL
+        parameters.append(to_workspace_url(workspace_id))
 
         return parameters
 

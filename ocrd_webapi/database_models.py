@@ -4,13 +4,14 @@ from typing import Optional
 from uuid import uuid4
 
 from ocrd_webapi.models import (
-    WorkflowJobRsrc, 
+    WorkflowJobRsrc,
     WorkflowRsrc,
     WorkspaceRsrc,
 )
 from ocrd_webapi.utils import (
     to_workflow_job_url
 )
+
 
 class WorkspaceDb(Document):
     """

@@ -1,7 +1,6 @@
 import re
 from pydantic import BaseModel, Field, constr
 from typing import Any, Dict, Optional, Union
-from uuid import uuid4
 
 from ocrd_webapi.utils import (
     to_processor_job_url,
@@ -9,6 +8,7 @@ from ocrd_webapi.utils import (
     to_workflow_url,
     to_workspace_url,
 )
+
 
 class DiscoveryResponse(BaseModel):
     ram: Union[int, None] = Field(
@@ -33,6 +33,7 @@ class DiscoveryResponse(BaseModel):
         None, description='Whether the OCR-D executables run in a Docker container'
     )
 
+
 class ProcessorArgs(BaseModel):
     workspace_id: str = None
     input_file_grps: str = None
@@ -40,12 +41,15 @@ class ProcessorArgs(BaseModel):
     page_id: str = None
     parameters: Optional[Dict[str, Any]] = {}
 
+
 class WorkflowArgs(BaseModel):
     workspace_id: str = None
     workflow_parameters: Optional[Dict[str, Any]] = {}
 
+
 class JobState(BaseModel):
     __root__: constr(regex=r'^(QUEUED|RUNNING|STOPPED|SUCCESS)')
+
 
 class ProcessorRsrc(BaseModel):
     description: Union[str, None] = Field(None, description='Description of the thing')
@@ -54,13 +58,14 @@ class ProcessorRsrc(BaseModel):
     @staticmethod
     def from_name(processor_name):
         # TODO: howto to get a link to the ocrd-tool.json for a processor. Maybe this is not what
-        #       is intendet, so ask someone who could know
+        #       is intended, so ask someone who could know
         return ProcessorRsrc(
             ref=f"TODO: find a way to get a link to {processor_name}'s ocrd-tool.json",
             description="Processor")
 
     class Config:
         allow_population_by_field_name = True
+
 
 class Resource(BaseModel):
     id: str = Field(..., alias='@id', description='URL of this thing')
@@ -69,10 +74,12 @@ class Resource(BaseModel):
     class Config:
         allow_population_by_field_name = True
 
+
 class WorkspaceRsrc(Resource):
     @staticmethod
     def from_id(uid) -> 'WorkspaceRsrc':
         return WorkspaceRsrc(id=to_workspace_url(uid), description="Workspace")
+
 
 class WorkflowRsrc(Resource):
     @staticmethod
@@ -85,11 +92,13 @@ class WorkflowRsrc(Resource):
         """
         return re.search(r".*/([^/]+)/?$", self.id).group(1)
 
+
 class Job(Resource):
     state: Optional[JobState] = None
 
     class Config:
         allow_population_by_field_name = True
+
 
 class ProcessorJobRsrc(Job):
     processor: Optional[ProcessorRsrc] = None
@@ -103,6 +112,7 @@ class ProcessorJobRsrc(Job):
             id=to_processor_job_url(processor_name, job_id), processor=processor,
             workspace=workspace, state=state, description="Processor-Job"
         )
+
 
 class WorkflowJobRsrc(Job):
     workflow: Optional[WorkflowRsrc]

@@ -3,18 +3,18 @@
   for how that is accomplished currently.
 - to get the on_startup_event of the app running `with TestClient(app) as client` is necessary. The
   on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
-  session-state mabye), but didn't try it yet
+  session-state maybe), but didn't try it yet
 """
 import ocrd_webapi.constants as constants
 import pytest
 from os.path import exists, join
 from .conftest import WORKSPACE_2_ID
-from time import sleep
 
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
 )
+
 
 @pytest.fixture(autouse=True)
 def run_around_tests(mongo_client):
@@ -23,16 +23,22 @@ def run_around_tests(mongo_client):
     yield
     # After each test:
 
+
 # Helper assert functions
 def assert_workspace_dir(workspace_id):
     assert exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir not existing"
+
+
 def assert_not_workspace_dir(workspace_id):
     assert not exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir existing"
+
+
 def assert_workspaces_len(client, expected_len):
     response = client.get("/workspace")
     assert_status_code(response.status_code, expected_floor=2)
     response_len = len(response.json())
     assert expected_len == response_len, "more workspaces than expected existing"
+
 
 # Test cases
 def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
@@ -46,6 +52,8 @@ def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
     assert workspace_from_db, "workspace-entry was not created in mongodb"
     db_id = workspace_from_db["_id"]
     assert db_id == workspace_id, f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+
+
 def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_workspace3):
     # The name of the mets file is not `mets.xml` inside the provided workspace
     response = client.post("/workspace", files=asset_workspace3)
@@ -58,6 +66,8 @@ def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_works
     assert workspace_from_db, "workspace-entry was not created in mongodb"
     db_id = workspace_from_db["_id"]
     assert db_id == workspace_id, f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+
+
 def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_workspace2):
     test_id = "workspace_put_test_id"
     request1 = f"/workspace/{test_id}"
@@ -88,6 +98,8 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
     mets_path = join(constants.WORKSPACES_DIR, test_id, "mets.xml")
     with open(mets_path) as fin:
         assert WORKSPACE_2_ID in fin.read(), "expected string '%s' in metsfile" % WORKSPACE_2_ID
+
+
 def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
     # Upload a workspace
     response = client.post("/workspace", files=asset_workspace1)
@@ -106,13 +118,17 @@ def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
     workspace_from_db = workspace_mongo_coll.find_one()
     assert workspace_from_db, "workspace-entry not existing but should still exist."
     assert workspace_from_db["deleted"], "deleted-flag of workspace should be set to true"
+
+
 def test_delete_workspace_non_existing(client, workspace_mongo_coll, asset_workspace1):
     response = client.post("/workspace", files=asset_workspace1)
     workspace_id = parse_resource_id(response)
     response = client.delete(f"/workspace/{workspace_id}")
-    assert_status_code(response.status_code, expected_floor=2) # Deleted
+    assert_status_code(response.status_code, expected_floor=2)  # Deleted
     response = client.delete(f"/workspace/{workspace_id}")
-    assert_status_code(response.status_code, expected_floor=4) # Not available
+    assert_status_code(response.status_code, expected_floor=4)  # Not available
+
+
 def test_get_workspace(client, asset_workspace3):
     response = client.post("/workspace", files=asset_workspace3)
     workspace_id = parse_resource_id(response)
@@ -120,7 +136,9 @@ def test_get_workspace(client, asset_workspace3):
     response = client.get(f"/workspace/{workspace_id}", headers=headers)
     assert_status_code(response.status_code, expected_floor=2)
     assert response.headers.get('content-type').find("zip") > -1, \
-    "content-type should be something with 'zip'"
+        "content-type should be something with 'zip'"
+
+
 def test_get_workspace_non_existing(client):
     headers = {"accept": "application/vnd.ocrd+zip"}
     response = client.get(f"/workspace/non-existing-workspace-id", headers=headers)

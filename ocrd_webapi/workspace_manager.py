@@ -7,22 +7,21 @@ from ocrd_webapi.database_models import WorkspaceDb
 
 from ocrd_webapi.utils import (
     extract_bag_dest,
-    extract_bag_infos,
-    read_baginfos_from_zip,
+    extract_bag_info,
     WorkspaceException,
     WorkspaceGoneException,
-    WorkspaceNotValidException,
 )
 from ocrd_webapi.resource_manager import (
     ResourceManager
 )
 
+
 class WorkspaceManager(ResourceManager):
-    def __init__(self, 
-        workspaces_dir=WORKSPACES_DIR, 
-        resource_url=SERVER_URL, 
-        resource_router='workspace', 
-        logger_label='ocrd_webapi.workspace_manager'):
+    def __init__(self,
+                 workspaces_dir=WORKSPACES_DIR,
+                 resource_url=SERVER_URL,
+                 resource_router='workspace',
+                 logger_label='ocrd_webapi.workspace_manager'):
         super().__init__(workspaces_dir, resource_url, resource_router, logger_label)
         self.__workspaces_dir = workspaces_dir
         self._initiate_resource_dir(self.__workspaces_dir)
@@ -31,7 +30,7 @@ class WorkspaceManager(ResourceManager):
         """
         Get a list of all available workspace urls.
         """
-        workspace_urls = self._get_all_resource_urls(self.__workspaces_dir)
+        workspace_urls = self._get_all_resource_urls()
         return workspace_urls
 
     async def create_workspace_from_zip(self, file: str, uid=None):
@@ -46,10 +45,10 @@ class WorkspaceManager(ResourceManager):
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         zip_dest = os.path.join(self.__workspaces_dir, workspace_id + ".zip")
         await self._receive_resource(file, zip_dest)
-        bag_infos = extract_bag_infos(zip_dest, workspace_dir)
-        
+        bag_info = extract_bag_info(zip_dest, workspace_dir)
+
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
-        await database.save_workspace(workspace_id, bag_infos)
+        await database.save_workspace(workspace_id, bag_info)
 
         os.remove(zip_dest)
 
@@ -71,7 +70,7 @@ class WorkspaceManager(ResourceManager):
         """
         if self._is_resource_dir_available(workspace_id):
             return self._to_resource_url(workspace_id)
-        
+
         return None
 
     # TODO: Refine this and get rid of the low level os.path bullshits
@@ -90,7 +89,7 @@ class WorkspaceManager(ResourceManager):
         """
         # TODO: workspace-bagging must be revised:
         #     - ocrd_identifier is stored in mongodb. use that for bagging. Write method in
-        #       database.py to read it from mongdb
+        #       database.py to read it from mongodb
         #     - write tests for this cases
         if self._is_resource_dir_available(workspace_id):
             workspace_db = await database.get_workspace(workspace_id)
@@ -98,7 +97,7 @@ class WorkspaceManager(ResourceManager):
             bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
-        
+
         return None
 
     async def delete_workspace(self, workspace_id):

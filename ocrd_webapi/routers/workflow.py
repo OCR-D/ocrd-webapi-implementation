@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from fastapi.security import (
-    HTTPBasic, 
+    HTTPBasic,
     HTTPBasicCredentials,
 )
 
@@ -50,8 +50,6 @@ def __dummy_security_check(auth):
     """
     currently it would be possible to upload any nextflow script and execute anything on the server
     this way. The purpose of this security is just for temporarily disable that possibility kind of
-    TODO: delete this 
-    (Mehmed: Don't delete, yet. It's a good idea to have dummy functionalities as an example (till we get real ones).)
     """
     user = auth.username.encode("utf8")
     pw = auth.password.encode("utf8")
@@ -61,6 +59,7 @@ def __dummy_security_check(auth):
             not secrets.compare_digest(user, expected_user):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             headers={"WWW-Authenticate": "Basic"})
+
 
 # TODO: Refine all the exceptions...
 @router.get("/workflow")
@@ -76,13 +75,14 @@ async def list_workflows():
         response.append(WorkflowRsrc(id=wf, description="Workflow"))
     return response
 
+
 @router.get("/workflow/{workflow_id}")
 async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     """
     Get the Nextflow script of an existing workflow space. Specify your download path with --output
 
-    When testet with fastapi's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
-    accept-header is allways set to application/json (no matter what is specified in the gui) so it
+    When tested with FastAPI's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
+    accept-header is always set to application/json (no matter what is specified in the gui) so it
     can not be used to test getting the workflow as a file. See:
     https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
 
@@ -104,6 +104,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
             "Unsupported media, expected application/json or text/vnd.ocrd.workflow",
         )
 
+
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"201": {"model": WorkflowJobRsrc}})
 async def get_workflow_job(workflow_id: str, job_id: str):
     """
@@ -122,6 +123,7 @@ async def get_workflow_job(workflow_id: str, job_id: str):
         raise ResponseException(404, {})
     return job.to_rsrc()
 
+
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(security)):
     """
@@ -138,6 +140,7 @@ async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCre
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkflowRsrc(id=workflow_url, description="Workflow")
+
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
 async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
@@ -161,10 +164,13 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
     workflow_rsrc = WorkflowRsrc(id=workflow_url, description="Workflow")
     workspace_rsrc = WorkspaceRsrc(id=workspace_url, description="Workspace")
 
-    return WorkflowJobRsrc(id=job_url, state=status, workflow=workflow_rsrc, workspace=workspace_rsrc, description="Workflow-Job")
+    return WorkflowJobRsrc(id=job_url, state=status, workflow=workflow_rsrc, workspace=workspace_rsrc,
+                           description="Workflow-Job")
+
 
 @router.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str, auth: HTTPBasicCredentials = Depends(security)):
+async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
+                                 auth: HTTPBasicCredentials = Depends(security)):
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 
@@ -180,8 +186,8 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str, 
 
     return WorkflowRsrc(id=updated_workflow_url, description="Workflow")
 
-# Not in the Web API Specification. Will be implemented if needed.
-# TODO: Implement that since we have some sort of dummy security check
+    # Not in the Web API Specification. Will be implemented if needed.
+    # TODO: Implement that since we have some sort of dummy security check
     """
     @router.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
     async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:

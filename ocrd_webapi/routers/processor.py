@@ -37,10 +37,11 @@ except TypeError:
     print(f"Processor config file not found: {PROCESSOR_CONFIG_PATH}", file=sys.stderr)
     exit(1)
 
+
 @router.get("/processor/")
 async def list_processors():
     """
-    list all available processors. Delegates to all available processing servers and returs a
+    list all available processors. Delegates to all available processing servers and returns a
     summary of their ocrd-tool.json
     """
     # TODO: maybe use caching unless this should be used to test if processors available
@@ -56,6 +57,7 @@ async def list_processors():
 
     return JSONResponse(content=res)
 
+
 @router.get("/processor/{processor}")
 async def get_processor(processor: str):
     """
@@ -69,6 +71,7 @@ async def get_processor(processor: str):
         r = await client.get(url, headers={"Content-Type": "application/json"})
 
     return JSONResponse(content=r.json())
+
 
 @router.post("/processor/{processor}")
 async def run_processor(processor: str, p_args: ProcessorArgs):
@@ -111,10 +114,11 @@ async def run_processor(processor: str, p_args: ProcessorArgs):
 
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
 
+
 @router.get("/processor/{processor}/{job_id}", responses={"201": {"model": ProcessorJobRsrc}})
 async def get_processor_job(processor: str, job_id: str):
     """
-    deliver infos about a procossor job to client. Delegates to Processong-Server exstracts
+    deliver info about a processor job to client. Delegates to Processing-Server extracts
     job-state and workspace and returns results
     """
     # TODO: when Pull-Request is merged to core: fetch Job from mongodb via beanie and Job-Model
@@ -131,7 +135,7 @@ async def get_processor_job(processor: str, job_id: str):
     if not r.is_success:
         raise ResponseException(422, {"error": f"no job found for job_id: '{job_id}"})
 
-    job_infos = r.json()
-    job_state = job_infos['state']
-    workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_infos['path']).group(1)
+    job_info = r.json()
+    job_state = job_info['state']
+    workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_info['path']).group(1)
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)

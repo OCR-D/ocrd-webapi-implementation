@@ -48,19 +48,20 @@ async def list_workspaces():
         response.append(WorkspaceRsrc(id=ws, description="Workspace"))
     return response
 
+
 @router.get("/workspace/{workspace_id}")
 async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)):
     """
     Get an existing workspace
 
-    When testet with fastapi's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
-    accept-header is allways set to application/json (no matter what is specified in the gui) so to
+    When tested with FastAPI's interactive API docs / Swagger (e.g. http://127.0.0.1:8000/docs) the
+    accept-header is always set to application/json (no matter what is specified in the gui) so to
     test getting the workspace as a zip it cannot be used.
     See: https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
 
-    can be testet with:
-    `curl http://localhost:8000/workspace/-the-id-of-ws -H "Accept: application/json"` and
-    `curl http://localhost:8000/workspace/{ws-id} -H "Accept: application/vnd.ocrd+zip" -o foo.zip`
+    can be tested with:
+    `curl http://localhost:8000/workspace/-the-id-of-ws -H "accept: application/json"` and
+    `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     if accept == "application/json":
         workspace_url = workspace_manager.get_workspace_url(workspace_id)
@@ -80,6 +81,7 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
             "Unsupported media, expected application/json or application/vnd.ocrd+zip",
         )
 
+
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
 async def post_workspace(workspace: UploadFile):
     """
@@ -97,6 +99,7 @@ async def post_workspace(workspace: UploadFile):
 
     return WorkspaceRsrc(id=workspace_url, description="Workspace")
 
+
 @router.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def put_workspace(workspace: UploadFile, workspace_id: str):
     """
@@ -111,6 +114,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str):
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkspaceRsrc(id=updated_workspace_url, description="Workspace")
+
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(workspace_id: str):

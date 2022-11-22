@@ -9,7 +9,8 @@ from ocrd_webapi.models import (
 
 
 class Discovery:
-    def discovery(self) -> DiscoveryResponse:
+    @staticmethod
+    def discovery() -> DiscoveryResponse:
         """
         Discovery of capabilities of the server
         """

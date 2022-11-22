@@ -1,7 +1,4 @@
 import datetime
-import os
-import secrets
-from typing import Union, List
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -49,6 +46,7 @@ safe_init_logging()
 log = getLogger('ocrd_webapi.main')
 log.info(f"DB_URL: {DB_URL}")
 
+
 @app.exception_handler(ResponseException)
 async def exception_handler_empty404(request: Request, exc: ResponseException):
     """
@@ -56,12 +54,14 @@ async def exception_handler_empty404(request: Request, exc: ResponseException):
     """
     return JSONResponse(status_code=exc.status_code, content={} if not exc.body else exc.body)
 
+
 @app.on_event("startup")
 async def startup_event():
     """
     Executed once on startup
     """
     await initiate_database(DB_URL)
+
 
 @app.get("/")
 async def test():
