@@ -1,5 +1,5 @@
 PYTHON ?= python3.7
-REQUIREMENTSTXT ?= requirements_3.7.txt
+REQUIREMENTSTXT ?= requirements.txt
 
 help:
 	@echo ""
@@ -7,6 +7,7 @@ help:
 	@echo ""
 	@echo "    venv           Create virtual-environment for the project"
 	@echo "    start-mongo    start mongodb for local dev environment"
+	@echo "    test           Run all available tests"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -15,8 +16,11 @@ help:
 
 
 venv:
-	$(PYTHON) -m venv venv
-	venv/bin/pip install -r $(REQUIREMENTSTXT)
+	$(PYTHON) -m venv webapi-venv
+	webapi-venv/bin/pip install -r $(REQUIREMENTSTXT)
 
 start-mongo:
 	docker-compose --env-file things/env-template-localdev up -d mongo
+
+test:
+	pytest tests
