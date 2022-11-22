@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 
 import ocrd_webapi.constants as constants
 from ocrd_webapi.main import app
-from ocrd_webapi.workflow_manager import WorkflowManager
-from ocrd_webapi.workspace_manager import WorkspaceManager
+from ocrd_webapi.managers.workflow_manager import WorkflowManager
+from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 
 from .utils_test import (
     allocate_asset,

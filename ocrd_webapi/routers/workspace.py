@@ -21,9 +21,7 @@ from ocrd_webapi.utils import (
     WorkspaceException,
     WorkspaceNotValidException,
 )
-from ocrd_webapi.workspace_manager import (
-    WorkspaceManager
-)
+from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 
 router = APIRouter(
     tags=["Workspace"],

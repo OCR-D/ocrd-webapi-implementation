@@ -11,9 +11,7 @@ from ocrd_webapi.utils import (
     WorkspaceException,
     WorkspaceGoneException,
 )
-from ocrd_webapi.resource_manager import (
-    ResourceManager
-)
+from ocrd_webapi.managers.resource_manager import ResourceManager
 
 
 class WorkspaceManager(ResourceManager):

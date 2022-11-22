@@ -3,15 +3,13 @@ import uuid
 
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
 from ocrd_webapi import database
-from ocrd_webapi.nextflow import NextflowExecutor
 from ocrd_webapi.utils import (
     to_workspace_dir,
     to_workspace_url,
     WorkflowJobException,
 )
-from ocrd_webapi.resource_manager import (
-    ResourceManager
-)
+from ocrd_webapi.managers.nextflow_manager import NextflowManager
+from ocrd_webapi.managers.resource_manager import ResourceManager
 
 
 class WorkflowManager(ResourceManager):
@@ -21,7 +19,7 @@ class WorkflowManager(ResourceManager):
                  resource_router='workflow',
                  logger_label='ocrd_webapi.workflow_manager'):
         super().__init__(workflows_dir, resource_url, resource_router, logger_label)
-        self._nextflow_executor = NextflowExecutor()
+        self._nextflow_executor = NextflowManager()
         self.__workflows_dir = workflows_dir
         self._initiate_resource_dir(self.__workflows_dir)
 

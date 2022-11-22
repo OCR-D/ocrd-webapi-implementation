@@ -6,7 +6,7 @@ from ocrd_utils import getLogger
 
 
 # Must be further refined
-class NextflowExecutor:
+class NextflowManager:
     def __init__(self):
         # Check if Nextflow is installed
         # If installed, get the version

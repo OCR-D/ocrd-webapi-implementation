@@ -26,9 +26,7 @@ from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
 )
-from ocrd_webapi.workflow_manager import (
-    WorkflowManager
-)
+from ocrd_webapi.managers.workflow_manager import WorkflowManager
 
 router = APIRouter(
     tags=["Workflow"],

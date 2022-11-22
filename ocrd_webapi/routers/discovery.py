@@ -3,7 +3,12 @@ module for implementing the discovery section of the api
 """
 import os
 import psutil
+from fastapi import APIRouter
 from ocrd_webapi.models.discovery import DiscoveryResponse
+
+router = APIRouter(
+    tags=["Discovery"],
+)
 
 
 class Discovery:

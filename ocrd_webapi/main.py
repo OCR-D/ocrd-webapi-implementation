@@ -13,6 +13,7 @@ from ocrd_webapi.database import (
     initiate_database
 )
 from ocrd_webapi.routers import (
+    discovery,
     processor,
     workflow,
     workspace,
@@ -38,6 +39,7 @@ app = FastAPI(
         }
     ],
 )
+app.include_router(discovery.router)
 app.include_router(processor.router)
 app.include_router(workflow.router)
 app.include_router(workspace.router)
