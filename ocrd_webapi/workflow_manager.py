@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import uuid
 
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR

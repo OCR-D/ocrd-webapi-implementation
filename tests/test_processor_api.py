@@ -37,11 +37,12 @@ def test_run_processor(client, dummy_workspace_id):
     assert_status_code(response.status_code, expected_floor=2)
     job_id = parse_resource_id(response)
 
-    # try several times because finishing execution needs some time
-    for x in range(0, 25):
+    # Try several times because finishing execution needs some time
+    # This would still fail if X amount of tries is still not enough
+    for x in range(0, 500):
         if client.get(f"processor/ocrd-dummy/{job_id}").json()['state'] in ['STOPPED', 'SUCCESS']:
             break
-        sleep(0.5)
+        sleep(0.3)
 
     path = os.path.join(constants.WORKSPACES_DIR, dummy_workspace_id, new_file_grp)
     assert os.path.exists(path), f"output_file_grp not created. expecting exists: '{path}'"

@@ -40,8 +40,7 @@ class NextflowExecutor:
                                          stdout=subprocess.PIPE,
                                          universal_newlines=True)
         except Exception:
-            self.log.exception("error in is_nextflow_available. \
-                Nextflow installation not found!")
+            self.log.exception("Failed to detect Nextflow version")
             return None
 
         nf_version = self.parse_nf_version(ver_process.stdout)

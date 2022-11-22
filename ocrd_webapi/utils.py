@@ -137,7 +137,7 @@ def to_processor_job_url(processor_name: str, job_id: str) -> str:
     """
     create the url where the processor job is available e.g. http://localhost:8000/processor/ocrd-dummy/{job_id}
 
-    does not verify that the proessor or/and the processor-job exists
+    does not verify that the processor or/and the processor-job exists
     """
     return f"{SERVER_URL}/processor/{processor_name}/{job_id}"
 
@@ -148,7 +148,7 @@ logging_initialized = False
 def safe_init_logging() -> None:
     """
     wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called
-    once. This function may be called mutliple times
+    once. This function may be called multiple times
     """
     global logging_initialized
     if not logging_initialized:
@@ -171,9 +171,9 @@ def extract_bag_info(zip_dest, workspace_dir):
 
     # TODO: work is done twice here: spill already extracts the bag-info.txt but throws it away.
     # maybe workspace_bagger.spill can be changed to deliver the bag-info.txt here
-    bag_infos = read_bag_info_from_zip(zip_dest)
+    bag_info = read_bag_info_from_zip(zip_dest)
 
-    return bag_infos
+    return bag_info
 
 
 def extract_bag_dest(workspace_db, workspace_dir, bag_dest):

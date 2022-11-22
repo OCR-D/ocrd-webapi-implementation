@@ -13,9 +13,8 @@ from fastapi.responses import FileResponse
 from ocrd_utils import getLogger
 
 from ocrd_webapi import database
-from ocrd_webapi.models import (
-    WorkspaceRsrc
-)
+from ocrd_webapi.models.workspace import WorkspaceRsrc
+
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,

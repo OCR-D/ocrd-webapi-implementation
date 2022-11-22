@@ -3,11 +3,8 @@ from pydantic import Field
 from typing import Optional
 from uuid import uuid4
 
-from ocrd_webapi.models import (
-    WorkflowJobRsrc,
-    WorkflowRsrc,
-    WorkspaceRsrc,
-)
+from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
+from ocrd_webapi.models.workspace import WorkspaceRsrc
 from ocrd_webapi.utils import (
     to_workflow_job_url
 )
@@ -24,10 +21,11 @@ class WorkspaceDb(Document):
         bagit_profile_identifier    BagIt-Profile-Identifier (mandatory)
         ocrd_base_version_checksum  Ocrd-Base-Version-Checksum (mandatory)
         ocrd_mets                   Ocrd-Mets (optional)
-        bag_info_adds               bag-info.txt can also (optionally) contain aditional
+        bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
     """
     # TODO: no id is currently generated anywhere, but this might not work if the latter is changed
+    # Why is this the case?
     id: str = Field(default_factory=uuid4)
     ocrd_identifier: str
     bagit_profile_identifier: str
@@ -59,7 +57,11 @@ class WorkflowJobDb(Document):
         name = "workflow_job"
 
     def to_rsrc(self) -> 'WorkflowJobRsrc':
-        return WorkflowJobRsrc(id=to_workflow_job_url(self.workflow_id, self.id),
-                               workflow=WorkflowRsrc.from_id(self.workflow_id),
-                               workspace=WorkspaceRsrc.from_id(self.workspace_id),
-                               state=self.state, description="Workflow-Job")
+        workflow_rsrc = WorkflowRsrc.from_id(self.workflow_id)
+        workspace_rsrc = WorkspaceRsrc.from_id(self.workspace_id)
+        wf_job_id = to_workflow_job_url(self.workflow_id, self.id)
+        return WorkflowJobRsrc(id=wf_job_id,
+                               workflow=workflow_rsrc,
+                               workspace=workspace_rsrc,
+                               state=self.state,
+                               description="Workflow-Job")

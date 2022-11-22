@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
 
-from ocrd_webapi.database_models import (
+from ocrd_webapi.models.database import (
     WorkflowJobDb,
     WorkspaceDb,
 )

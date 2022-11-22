@@ -50,7 +50,7 @@ log.info(f"DB_URL: {DB_URL}")
 @app.exception_handler(ResponseException)
 async def exception_handler_empty404(request: Request, exc: ResponseException):
     """
-    Exception-Handler needed to return Empty 404 JSON repsonse
+    Exception-Handler needed to return Empty 404 JSON response
     """
     return JSONResponse(status_code=exc.status_code, content={} if not exc.body else exc.body)
 

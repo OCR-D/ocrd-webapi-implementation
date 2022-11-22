@@ -3,7 +3,7 @@ import uuid
 
 from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
 from ocrd_webapi import database
-from ocrd_webapi.database_models import WorkspaceDb
+from ocrd_webapi.models.database import WorkspaceDb
 
 from ocrd_webapi.utils import (
     extract_bag_dest,
@@ -33,7 +33,7 @@ class WorkspaceManager(ResourceManager):
         workspace_urls = self._get_all_resource_urls()
         return workspace_urls
 
-    async def create_workspace_from_zip(self, file: str, uid=None):
+    async def create_workspace_from_zip(self, file, uid=None):
         """
         create a workspace from an ocrd-zipfile
 
@@ -54,7 +54,7 @@ class WorkspaceManager(ResourceManager):
 
         return self._to_resource_url(workspace_id)
 
-    async def update_workspace(self, file: str, workspace_id):
+    async def update_workspace(self, file, workspace_id):
         """
         Update a workspace
 

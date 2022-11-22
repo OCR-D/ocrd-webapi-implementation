@@ -3,7 +3,6 @@ import secrets
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Depends,
     Header,
     HTTPException,
@@ -18,16 +17,11 @@ from fastapi.security import (
 
 from ocrd_utils import getLogger
 
-from ocrd_webapi.constants import (
-    WORKFLOWS_DIR,
-)
 from ocrd_webapi import database
-from ocrd_webapi.models import (
-    WorkflowRsrc,
-    WorkspaceRsrc,
-    WorkflowArgs,
-    WorkflowJobRsrc,
-)
+from ocrd_webapi.models.base import WorkflowArgs
+from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
+from ocrd_webapi.models.workspace import WorkspaceRsrc
+
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
@@ -48,8 +42,7 @@ security = HTTPBasic()
 
 def __dummy_security_check(auth):
     """
-    currently it would be possible to upload any nextflow script and execute anything on the server
-    this way. The purpose of this security is just for temporarily disable that possibility kind of
+    Reference security check implementation
     """
     user = auth.username.encode("utf8")
     pw = auth.password.encode("utf8")

@@ -14,10 +14,8 @@ from ocrd_webapi.constants import (
     PROCESSOR_WORKSPACES_PATH,
     WORKSPACES_DIR,
 )
-from ocrd_webapi.models import (
-    ProcessorArgs,
-    ProcessorJobRsrc,
-)
+from ocrd_webapi.models.base import ProcessorArgs
+from ocrd_webapi.models.processor import ProcessorJobRsrc
 from ocrd_webapi.utils import (
     find_upwards,
     ResponseException,

@@ -127,12 +127,12 @@ def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
 
     state = 'NoState'
     # try several times because finishing execution needs some time
-    for x in range(0, 20):
+    for x in range(0, 500):
         response = client.get(f"workflow/{dummy_workflow_id}/{job_id}")
         state = response.json()['state']
         if state == 'STOPPED':
             break
-        sleep(0.5)
+        sleep(0.3)
 
     assert state == 'STOPPED', f"expecting job.state to be set to stopped but is {state}"
 
