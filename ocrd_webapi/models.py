@@ -57,8 +57,9 @@ class ProcessorRsrc(BaseModel):
 
     @staticmethod
     def from_name(processor_name):
-        # TODO: howto to get a link to the ocrd-tool.json for a processor. Maybe this is not what
-        #       is intended, so ask someone who could know
+        # TODO: How to to get a link to the ocrd-tool.json ?
+        # Running `ocrd-.* --dump-json`
+        # returns the ocrd-tool.json of a processor
         return ProcessorRsrc(
             ref=f"TODO: find a way to get a link to {processor_name}'s ocrd-tool.json",
             description="Processor")

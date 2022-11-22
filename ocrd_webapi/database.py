@@ -25,7 +25,7 @@ async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None)
     )
 
 
-async def get_workspace(uid: str):
+async def get_workspace(uid):
     return await WorkspaceDb.get(uid)
 
 
@@ -57,7 +57,7 @@ async def save_workspace(uid: str, bag_info: dict):
     await workspace_db.save()
 
 
-async def mark_deleted_workspace(uid: str):
+async def mark_deleted_workspace(uid):
     """
     set 'WorkspaceDb.deleted' to True
 
@@ -72,7 +72,7 @@ async def mark_deleted_workspace(uid: str):
         getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
 
 
-async def get_workflow_job(uid: str):
+async def get_workflow_job(uid):
     return await WorkflowJobDb.get(uid)
 
 
@@ -95,7 +95,7 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
     await job.save()
 
 
-async def set_workflow_job_state(uid: str, state):
+async def set_workflow_job_state(uid, state):
     """
     set state of job to 'state'
     """
