@@ -125,14 +125,15 @@ async def get_workflow_job(workflow_id: str, job_id: str):
 
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
-async def upload_workflow_script(nextflow_script: UploadFile, auth: HTTPBasicCredentials = Depends(security)):
+async def upload_workflow_script(nextflow_script: UploadFile,
+                                 auth: HTTPBasicCredentials = Depends(security)):
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
     curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
 
-    # __dummy_security_check(auth)
+    __dummy_security_check(auth)
     try:
         workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception:
@@ -158,14 +159,14 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
 
     # Parse parameters for better readability of the code
     job_url = parameters[0]
-    status = parameters[1]
+    job_status = parameters[1]
     workflow_url = parameters[2]
     workspace_url = parameters[3]
     workflow_rsrc = WorkflowRsrc(id=workflow_url, description="Workflow")
     workspace_rsrc = WorkspaceRsrc(id=workspace_url, description="Workspace")
 
-    return WorkflowJobRsrc(id=job_url, state=status, workflow=workflow_rsrc, workspace=workspace_rsrc,
-                           description="Workflow-Job")
+    return WorkflowJobRsrc(id=job_url, state=job_status, workflow=workflow_rsrc,
+                           workspace=workspace_rsrc, description="Workflow-Job")
 
 
 @router.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
@@ -177,7 +178,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
     curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
 
-    # __dummy_security_check(auth)
+    __dummy_security_check(auth)
     try:
         updated_workflow_url = await workflow_manager.update_workflow_space(nextflow_script, workflow_id)
     except Exception:
