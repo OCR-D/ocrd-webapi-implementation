@@ -139,7 +139,7 @@ async def get_processor_job(processor: str, job_id: str):
     workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_info['path']).group(1)
     workspace_url = to_workspace_url(workspace_id)
     job_state = job_info['state']
-    # job_url = to_workspace_job_url(job_id)
+    # job_url = to_processor_job_url(job_id) from utils.py
     # TODO: job_url must be sent here, not job_id
     return ProcessorJobRsrc.create(job_url=job_id,
                                    processor_name=processor_id,
