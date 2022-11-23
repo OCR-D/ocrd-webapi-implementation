@@ -25,6 +25,7 @@ from ocrd_webapi.models.workspace import WorkspaceRsrc
 from ocrd_webapi.utils import (
     ResponseException,
     safe_init_logging,
+    to_workspace_url,
 )
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 
@@ -62,8 +63,8 @@ async def list_workflows():
     """
     workflow_space_urls = workflow_manager.get_workflows()
     response = []
-    for wf in workflow_space_urls:
-        response.append(WorkflowRsrc(id=wf, description="Workflow"))
+    for wf_url in workflow_space_urls:
+        response.append(WorkflowRsrc.create(workflow_url=wf_url))
     return response
 
 
@@ -80,15 +81,16 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
     """
-    if accept in ["text/vnd.ocrd.workflow", "application/json"]:
+    if accept == "application/json":
+        workflow_script_url = workflow_manager.get_workflow_url(workflow_id)
+        if not workflow_script_url:
+            raise ResponseException(404, {})
+        return WorkflowRsrc.create(workflow_url=workflow_script_url)
+    elif accept == "text/vnd.ocrd.workflow":
         workflow_script_path = workflow_manager.get_workflow_script(workflow_id)
-        workflow_script_url = workflow_manager._to_resource_url(workflow_id)
         if not workflow_script_path:
             raise ResponseException(404, {})
-        if accept == "text/vnd.ocrd.workflow":
-            return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
-        else:
-            return WorkflowRsrc(id=workflow_script_url, description="Workflow nextflow script")
+        return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -109,10 +111,25 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     if workflow_manager.is_job_finished(workflow_id, job_id):
         await database.set_workflow_job_state(job_id, 'STOPPED')
     job = await database.get_workflow_job(job_id)
+    # job is of type WorkflowJobDb
 
     if not job:
         raise ResponseException(404, {})
-    return job.to_rsrc()
+    # return job.to_rsrc()
+
+    # TODO: this should not use a protected function, if a separate wrapper
+    #  function is provided, this would duplicate some code...
+    wf_job_url = workflow_manager._to_resource_job_url(job.workflow_id, job.id)
+    workflow_url = workflow_manager.get_workflow_url(job.workflow_id)
+    workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
+    workspace_url = to_workspace_url(job.workspace_id)
+    workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)
+    job_state = job.state
+
+    return WorkflowJobRsrc.create(job_url=wf_job_url,
+                                  workflow_rsrc=workflow_rsrc,
+                                  workspace_rsrc=workspace_rsrc,
+                                  job_state=job_state)
 
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
@@ -131,7 +148,7 @@ async def upload_workflow_script(nextflow_script: UploadFile,
         log.exception("error in upload_workflow_script")
         raise ResponseException(500, {"error": "internal server error"})
 
-    return WorkflowRsrc(id=workflow_url, description="Workflow")
+    return WorkflowRsrc.create(workflow_url=workflow_url)
 
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
@@ -153,11 +170,13 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
     job_status = parameters[1]
     workflow_url = parameters[2]
     workspace_url = parameters[3]
-    workflow_rsrc = WorkflowRsrc(id=workflow_url, description="Workflow")
-    workspace_rsrc = WorkspaceRsrc(id=workspace_url, description="Workspace")
+    workflow_rsrc = WorkflowRsrc(id=workflow_url)
+    workspace_rsrc = WorkspaceRsrc(id=workspace_url)
 
-    return WorkflowJobRsrc(id=job_url, state=job_status, workflow=workflow_rsrc,
-                           workspace=workspace_rsrc, description="Workflow-Job")
+    return WorkflowJobRsrc.create(job_url=job_url,
+                                  job_state=job_status,
+                                  workflow_rsrc=workflow_rsrc,
+                                  workspace_rsrc=workspace_rsrc)
 
 
 @router.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
@@ -176,12 +195,10 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
         log.exception("error in update_workflow_script")
         raise ResponseException(500, {"error": "internal server error"})
 
-    return WorkflowRsrc(id=updated_workflow_url, description="Workflow")
+    return WorkflowRsrc.create(workflow_url=updated_workflow_url)
 
     # Not in the Web API Specification. Will be implemented if needed.
     # TODO: Implement that since we have some sort of dummy security check
-    """
-    @router.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
-    async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
-        pass
-    """
+    # @router.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
+    # async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
+    #   pass

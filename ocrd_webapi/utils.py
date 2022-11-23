@@ -14,7 +14,6 @@ from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd_webapi.constants import (
     SERVER_URL,
     WORKSPACES_DIR,
-    WORKFLOWS_DIR,
 )
 
 __all__ = [
@@ -24,11 +23,7 @@ __all__ = [
     "find_upwards",
     "read_bag_info_from_zip",
     "safe_init_logging",
-    "to_processor_job_url",
-    "to_workflow_job_dir",
-    "to_workflow_job_url",
-    "to_workflow_dir",
-    "to_workflow_url",
+
     "to_workspace_url",
     "to_workspace_dir",
     "WorkflowJobException",
@@ -38,6 +33,7 @@ __all__ = [
 ]
 
 
+# TODO: Exceptions would be better if separated in a file
 class ResponseException(Exception):
     """
     Exception to return a response
@@ -70,53 +66,8 @@ class WorkflowJobException(Exception):
     pass
 
 
-def to_workflow_job_dir(workflow_id, job_id) -> str:
-    """
-    returns path to workflow-job directory
-    """
-    return os.path.join(WORKFLOWS_DIR, workflow_id, job_id)
-
-
-def to_workflow_job_url(workflow_id: str, job_id: str) -> str:
-    """
-    returns path to job-id of the workflow-id
-    """
-    return f"{SERVER_URL}/workflow/{workflow_id}/{job_id}"
-
-
-def to_workflow_script(workflow_id: str) -> Union[str, None]:
-    workflow_path = to_workflow_dir(workflow_id)
-
-    script_name = None
-    for file in os.listdir(workflow_path):
-        if file.endswith(".nf"):
-            script_name = file
-
-    if not script_name:
-        return None
-
-    """
-    Return the local path to Nextflow script of `workflow_id`. No check if existing.
-    """
-    return os.path.join(workflow_path, script_name)
-
-
-def to_workflow_dir(workflow_id: str) -> str:
-    """
-    Return the local path to workflow with id `workflow_id`. No check if existing.
-    """
-    return os.path.join(WORKFLOWS_DIR, workflow_id)
-
-
-def to_workflow_url(workflow_id: str) -> str:
-    """
-    create the url where a workflow is available e.g. http://localhost:8000/workflow/{workflow_id}
-
-    does not verify that the workflow_id exists
-    """
-    return f"{SERVER_URL}/workflow/{workflow_id}"
-
-
+# TODO: Get rid of the rest of of to_* functions
+#  once there is a proper implementation
 def to_workspace_url(workspace_id: str) -> str:
     """
     create the url where workspace is available e.g. http://localhost:8000/workspace/{workspace_id}
@@ -133,6 +84,7 @@ def to_workspace_dir(workspace_id: str) -> str:
     return os.path.join(WORKSPACES_DIR, workspace_id)
 
 
+# TODO: This is not used anymore, keeping still around for reference
 def to_processor_job_url(processor_name: str, job_id: str) -> str:
     """
     create the url where the processor job is available e.g. http://localhost:8000/processor/ocrd-dummy/{job_id}

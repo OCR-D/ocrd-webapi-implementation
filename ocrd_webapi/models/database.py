@@ -3,13 +3,10 @@ from pydantic import Field
 from typing import Optional
 from uuid import uuid4
 
-from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
-from ocrd_webapi.models.workspace import WorkspaceRsrc
-from ocrd_webapi.utils import (
-    to_workflow_job_url
-)
 
-
+# NOTE: Database models must not reuse any
+# response models [discovery, processor, workflow, workspace]
+# Database models are supposed to be low level models
 class WorkspaceDb(Document):
     """
     Model to store a workspace in the mongo-database.
@@ -55,13 +52,3 @@ class WorkflowJobDb(Document):
 
     class Settings:
         name = "workflow_job"
-
-    def to_rsrc(self) -> 'WorkflowJobRsrc':
-        workflow_rsrc = WorkflowRsrc.from_id(self.workflow_id)
-        workspace_rsrc = WorkspaceRsrc.from_id(self.workspace_id)
-        wf_job_id = to_workflow_job_url(self.workflow_id, self.id)
-        return WorkflowJobRsrc(id=wf_job_id,
-                               workflow=workflow_rsrc,
-                               workspace=workspace_rsrc,
-                               state=self.state,
-                               description="Workflow-Job")

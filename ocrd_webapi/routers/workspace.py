@@ -41,8 +41,8 @@ async def list_workspaces():
     """
     workspace_urls = workspace_manager.get_workspaces()
     response = []
-    for ws in workspace_urls:
-        response.append(WorkspaceRsrc(id=ws, description="Workspace"))
+    for ws_url in workspace_urls:
+        response.append(WorkspaceRsrc(id=ws_url))
     return response
 
 
@@ -64,7 +64,7 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
         workspace_url = workspace_manager.get_workspace_url(workspace_id)
         if not workspace_url:
             raise ResponseException(404, {})
-        return WorkspaceRsrc(id=workspace_url, description="Workspace")
+        return WorkspaceRsrc.create(workspace_url=workspace_url)
     elif accept == "application/vnd.ocrd+zip":
         bag_path = await workspace_manager.get_workspace_bag(workspace_id)
         if not bag_path:
@@ -94,7 +94,7 @@ async def post_workspace(workspace: UploadFile):
         log.exception("unexpected error in post_workspace")
         raise ResponseException(500, {"error": "internal server error"})
 
-    return WorkspaceRsrc(id=workspace_url, description="Workspace")
+    return WorkspaceRsrc.create(workspace_url=workspace_url)
 
 
 @router.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
@@ -110,7 +110,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str):
         log.exception("unexpected error in put_workspace")
         raise ResponseException(500, {"error": "internal server error"})
 
-    return WorkspaceRsrc(id=updated_workspace_url, description="Workspace")
+    return WorkspaceRsrc.create(workspace_url=updated_workspace_url)
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
@@ -127,4 +127,4 @@ async def delete_workspace(workspace_id: str):
         else:
             raise ResponseException(404, {})
 
-    return WorkspaceRsrc(id=deleted_workspace_url, description="Workspace")
+    return WorkspaceRsrc.create(workspace_url=deleted_workspace_url)

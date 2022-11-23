@@ -1,19 +1,18 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Union
 
-from ocrd_webapi.utils import (
-    to_processor_job_url
-)
-from ocrd_webapi.models.base import Job, JobState
+from ocrd_webapi.models.base import Job, JobState, Resource
 from ocrd_webapi.models.workspace import WorkspaceRsrc
 
 
+# TODO: ProcessorRsrc must inherit Resource, not BaseModel
+# in order to preserver the consistency
 class ProcessorRsrc(BaseModel):
     description: Union[str, None] = Field(None, description='Description of the thing')
     ref: str = Field(..., description='link to ocrd-tool.json')
 
     @staticmethod
-    def from_name(processor_name):
+    def create(processor_name):
         # TODO: How to to get a link to the ocrd-tool.json ?
         # Running `ocrd-.* --dump-json`
         # returns the ocrd-tool.json of a processor
@@ -26,14 +25,21 @@ class ProcessorRsrc(BaseModel):
 
 
 class ProcessorJobRsrc(Job):
+    # Local variables:
+    # id: (str)          - inherited from Resource -> Job
+    # description: (str) - inherited from Resource -> Job
+    # state: (JobState)  - inherited from Job
     processor: Optional[ProcessorRsrc] = None
     workspace: Optional[WorkspaceRsrc] = None
 
     @staticmethod
-    def create(job_id, processor_name, workspace_id, state: JobState = None) -> 'ProcessorJobRsrc':
-        processor = ProcessorRsrc.from_name(processor_name)
-        workspace = WorkspaceRsrc.from_id(workspace_id)
+    def create(job_url, processor_name, workspace_url, job_state: JobState):
+        processor_rsrc = ProcessorRsrc.create(processor_name)
+        workspace_rsrc = WorkspaceRsrc.create(workspace_url)
         return ProcessorJobRsrc(
-            id=to_processor_job_url(processor_name, job_id), processor=processor,
-            workspace=workspace, state=state, description="Processor-Job"
+            id=job_url,
+            processor=processor_rsrc,
+            workspace=workspace_rsrc,
+            state=job_state,
+            description="Processor-Job"
         )

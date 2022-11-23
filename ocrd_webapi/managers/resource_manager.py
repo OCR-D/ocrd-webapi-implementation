@@ -7,6 +7,8 @@ import shutil
 from ocrd_utils import getLogger
 
 
+# TODO: There is still some duplicate code in
+#  ResourceManager, WorkspaceManager, and WorkflowManager :/
 class ResourceManager:
     def __init__(self, resource_dir, resource_url, resource_router, logger_label):
         self.log = getLogger(logger_label)
@@ -41,13 +43,19 @@ class ResourceManager:
         return os.path.join(self._resource_dir, resource_id)
 
     def _to_resource_job_dir(self, resource_id, job_id):
-        return os.path.join(self._to_resource_dir(resource_id), job_id)
+        if self._is_resource_dir_available(resource_id):
+            resource_dir = self._to_resource_dir(resource_id)
+            return os.path.join(resource_dir, job_id)
+        return None
 
     def _to_resource_url(self, resource_id):
         return f"{self._resource_url}/{self._resource_router}/{resource_id}"
 
     def _to_resource_job_url(self, resource_id, job_id):
-        return self._to_resource_url(resource_id) + f"/{job_id}"
+        if self._is_resource_dir_available(resource_id):
+            resource_url = self._to_resource_url(resource_id)
+            return resource_url + f"/{job_id}"
+        return None
 
     def _get_all_resource_dirs(self):
         resource_dirs = []

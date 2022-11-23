@@ -64,6 +64,15 @@ class WorkflowManager(ResourceManager):
         self._delete_resource_dir(workflow_id)
         return await self.create_workflow_space(file, workflow_id)
 
+    def get_workflow_url(self, workflow_id):
+        """
+        Get workflow available on disk as Resource via it's id
+        """
+        if self._is_resource_dir_available(workflow_id):
+            return self._to_resource_url(workflow_id)
+
+        return None
+
     # TODO: Simplify this...
     def get_workflow_script(self, workflow_id):
         """
@@ -92,6 +101,7 @@ class WorkflowManager(ResourceManager):
         nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
         workspace_dir = to_workspace_dir(workspace_id)
 
+        # TODO: These checks must happen inside the Resource Manager, not here
         if not os.path.exists(nf_script_path):
             raise WorkflowJobException(f"Workflow not existing. Id: {workflow_id}")
         if not os.path.exists(workspace_dir):

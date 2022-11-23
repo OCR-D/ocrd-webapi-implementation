@@ -20,6 +20,7 @@ from ocrd_webapi.utils import (
     find_upwards,
     ResponseException,
     safe_init_logging,
+    to_workspace_url,
 )
 
 router = APIRouter(
@@ -134,6 +135,13 @@ async def get_processor_job(processor: str, job_id: str):
         raise ResponseException(422, {"error": f"no job found for job_id: '{job_id}"})
 
     job_info = r.json()
-    job_state = job_info['state']
+    processor_id = processor
     workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_info['path']).group(1)
-    return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
+    workspace_url = to_workspace_url(workspace_id)
+    job_state = job_info['state']
+    # job_url = to_workspace_job_url(job_id)
+    # TODO: job_url must be sent here, not job_id
+    return ProcessorJobRsrc.create(job_url=job_id,
+                                   processor_name=processor_id,
+                                   workspace_url=workspace_url,
+                                   job_state=job_state)

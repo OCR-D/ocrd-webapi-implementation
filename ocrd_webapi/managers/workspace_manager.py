@@ -41,6 +41,8 @@ class WorkspaceManager(ResourceManager):
                 this. If corresponding dir already existing, None is returned
         """
         workspace_id, workspace_dir = self._create_resource_dir(uid)
+        # TODO: Get rid of this low level os.path access,
+        #  should happen inside the Resource manager
         zip_dest = os.path.join(self.__workspaces_dir, workspace_id + ".zip")
         await self._receive_resource(file, zip_dest)
         bag_info = extract_bag_info(zip_dest, workspace_dir)
@@ -92,6 +94,8 @@ class WorkspaceManager(ResourceManager):
         if self._is_resource_dir_available(workspace_id):
             workspace_db = await database.get_workspace(workspace_id)
             workspace_dir = self._to_resource_dir(workspace_id)
+            # TODO: Get rid of this low level os.path access,
+            #  should happen inside the Resource manager
             bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
