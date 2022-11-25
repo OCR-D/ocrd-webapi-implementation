@@ -11,6 +11,7 @@ from ocrd_webapi.constants import (
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
+    parse_job_state,
 )
 
 
@@ -42,7 +43,8 @@ def test_run_processor(client, dummy_workspace_id):
     # Try several times because finishing execution needs some time
     # This would still fail if X amount of tries is still not enough
     for x in range(0, 500):
-        job_state = client.get(f"processor/ocrd-dummy/{job_id}").json()['state']
+        response = client.get(f"processor/ocrd-dummy/{job_id}")
+        job_state = parse_job_state(response)
         if job_state in ['STOPPED', 'SUCCESS']:
             break
         sleep(0.3)

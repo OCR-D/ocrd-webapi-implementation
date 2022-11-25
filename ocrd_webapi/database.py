@@ -87,7 +87,7 @@ async def save_workflow_job(job_id: str, workflow_id, workspace_id, job_state):
         _id=job_id,
         workflow_id=workflow_id,
         workspace_id=workspace_id,
-        state=job_state
+        job_state=job_state
     )
     await job.save()
 
@@ -98,5 +98,5 @@ async def set_workflow_job_state(job_id, job_state):
     """
     job = await WorkflowJobDB.get(job_id)
     if job:
-        job.state = job_state
+        job.job_state = job_state
         await job.save()

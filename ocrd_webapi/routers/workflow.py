@@ -111,21 +111,21 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     """
     if workflow_manager.is_job_finished(workflow_id, job_id):
         await db.set_workflow_job_state(job_id, 'STOPPED')
-    job = await db.get_workflow_job(job_id)
+    wf_job_db = await db.get_workflow_job(job_id)
     # job is of type WorkflowJobDb
 
-    if not job:
+    if not wf_job_db:
         raise ResponseException(404, {})
     # return job.to_rsrc()
 
     # TODO: this should not use a protected function, if a separate wrapper
     #  function is provided, this would duplicate some code...
-    wf_job_url = workflow_manager._to_resource_job_url(job.workflow_id, job.id)
-    workflow_url = workflow_manager.get_workflow_url(job.workflow_id)
+    wf_job_url = workflow_manager._to_resource_job_url(wf_job_db.workflow_id, wf_job_db.id)
+    workflow_url = workflow_manager.get_workflow_url(wf_job_db.workflow_id)
     workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
-    workspace_url = to_workspace_url(job.workspace_id)
+    workspace_url = to_workspace_url(wf_job_db.workspace_id)
     workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)
-    job_state = job.state
+    job_state = wf_job_db.job_state
 
     return WorkflowJobRsrc.create(job_url=wf_job_url,
                                   workflow_rsrc=workflow_rsrc,

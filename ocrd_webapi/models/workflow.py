@@ -18,7 +18,7 @@ class WorkflowJobRsrc(Job):
     # Local variables:
     # id: (str)          - inherited from Resource -> Job
     # description: (str) - inherited from Resource -> Job
-    # state: (JobState)  - inherited from Job
+    # job_state: (JobState)  - inherited from Job
     workflow: Optional[WorkflowRsrc]
     workspace: Optional[WorkspaceRsrc]
 
@@ -27,7 +27,7 @@ class WorkflowJobRsrc(Job):
         return WorkflowJobRsrc(
             id=job_url,
             description=description,
-            state=job_state,
+            job_state=job_state,
             workflow=workflow_rsrc,
             workspace=workspace_rsrc,
             )

@@ -26,3 +26,10 @@ def parse_resource_id(response):
         return response.json()['@id'].split("/")[-1]
     except (AttributeError, KeyError):
         return None
+
+
+def parse_job_state(response):
+    try:
+        return response.json()['job_state'].split("/")[-1]
+    except (AttributeError, KeyError):
+        return None

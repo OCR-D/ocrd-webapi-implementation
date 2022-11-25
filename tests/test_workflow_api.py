@@ -16,6 +16,7 @@ from ocrd_webapi.constants import (
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
+    parse_job_state,
 )
 
 
@@ -136,7 +137,8 @@ def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
     job_state = 'NoState'
     # try several times because finishing execution needs some time
     for x in range(0, 500):
-        job_state = client.get(f"workflow/{dummy_workflow_id}/{job_id}").json()['state']
+        response = client.get(f"workflow/{dummy_workflow_id}/{job_id}")
+        job_state = parse_job_state(response)
         if job_state == 'STOPPED':
             break
         sleep(0.3)
