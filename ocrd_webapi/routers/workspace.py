@@ -11,17 +11,15 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from ocrd_utils import getLogger
-
 from ocrd_webapi import database
-from ocrd_webapi.models.workspace import WorkspaceRsrc
-
-from ocrd_webapi.utils import (
+from ocrd_webapi.exceptions import (
     ResponseException,
-    safe_init_logging,
     WorkspaceException,
     WorkspaceNotValidException,
 )
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
+from ocrd_webapi.models.workspace import WorkspaceRsrc
+from ocrd_webapi.utils import safe_init_logging
 
 router = APIRouter(
     tags=["Workspace"],

@@ -2,14 +2,11 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
-
 from ocrd_webapi.models.database import (
     WorkflowJobDb,
     WorkspaceDb,
 )
-from ocrd_webapi.utils import (
-    safe_init_logging,
-)
+from ocrd_webapi.utils import safe_init_logging
 
 safe_init_logging()
 

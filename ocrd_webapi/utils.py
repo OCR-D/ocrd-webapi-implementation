@@ -1,69 +1,32 @@
 import os
 from pathlib import Path
 from typing import Union
-import zipfile
 import bagit
 import tempfile
+import zipfile
 
 from ocrd import Resolver
-from ocrd_utils import initLogging
-from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
-
+from ocrd_utils import initLogging
+from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd_webapi.constants import (
     SERVER_URL,
     WORKSPACES_DIR,
 )
+from ocrd_webapi.exceptions import (
+    WorkspaceNotValidException,
+)
 
 __all__ = [
-    "ResponseException",
     "extract_bag_dest",
     "extract_bag_info",
     "find_upwards",
     "read_bag_info_from_zip",
     "safe_init_logging",
-
     "to_workspace_url",
     "to_workspace_dir",
-    "WorkflowJobException",
-    "WorkspaceException",
-    "WorkspaceGoneException",
-    "WorkspaceNotValidException",
 ]
-
-
-# TODO: Exceptions would be better if separated in a file
-class ResponseException(Exception):
-    """
-    Exception to return a response
-    """
-
-    def __init__(self, status_code: int, body: dict):
-        self.status_code = status_code
-        self.body = body
-
-
-class WorkspaceException(Exception):
-    """
-    Exception to indicate something is wrong with the workspace
-    """
-    pass
-
-
-class WorkspaceNotValidException(WorkspaceException):
-    pass
-
-
-class WorkspaceGoneException(WorkspaceException):
-    pass
-
-
-class WorkflowJobException(Exception):
-    """
-    Exception to indicate something is wrong with a workflow-job
-    """
-    pass
 
 
 # TODO: Get rid of the rest of of to_* functions

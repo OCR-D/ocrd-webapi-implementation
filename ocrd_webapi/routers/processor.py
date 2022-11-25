@@ -8,17 +8,18 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger
-
 from ocrd_webapi.constants import (
     PROCESSOR_CONFIG_PATH,
     PROCESSOR_WORKSPACES_PATH,
     WORKSPACES_DIR,
 )
+from ocrd_webapi.exceptions import (
+    ResponseException,
+)
 from ocrd_webapi.models.base import ProcessorArgs
 from ocrd_webapi.models.processor import ProcessorJobRsrc
 from ocrd_webapi.utils import (
     find_upwards,
-    ResponseException,
     safe_init_logging,
     to_workspace_url,
 )

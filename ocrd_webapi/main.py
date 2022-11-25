@@ -4,24 +4,17 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from ocrd_utils import getLogger
-
-from ocrd_webapi.constants import (
-    DB_URL,
-    SERVER_URL,
-)
-from ocrd_webapi.database import (
-    initiate_database
-)
+from ocrd_webapi.constants import DB_URL, SERVER_URL
+from ocrd_webapi.database import initiate_database
+from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.routers import (
     discovery,
     processor,
     workflow,
     workspace,
 )
-from ocrd_webapi.utils import (
-    ResponseException,
-    safe_init_logging,
-)
+from ocrd_webapi.utils import safe_init_logging
+
 
 app = FastAPI(
     title="OCR-D Web API",

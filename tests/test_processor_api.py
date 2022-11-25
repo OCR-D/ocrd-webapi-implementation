@@ -4,6 +4,8 @@ import subprocess
 from time import sleep
 
 from ocrd_webapi import (
+    # TODO: this file should not reuse the constants directly
+    #  rather, an instance of the required resource manager
     constants,
 )
 from .utils_test import (

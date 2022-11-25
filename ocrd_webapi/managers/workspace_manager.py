@@ -1,17 +1,18 @@
 import os
 import uuid
 
-from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
 from ocrd_webapi import database
-from ocrd_webapi.models.database import WorkspaceDb
-
-from ocrd_webapi.utils import (
-    extract_bag_dest,
-    extract_bag_info,
+from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
+from ocrd_webapi.exceptions import (
     WorkspaceException,
     WorkspaceGoneException,
 )
 from ocrd_webapi.managers.resource_manager import ResourceManager
+from ocrd_webapi.models.database import WorkspaceDb
+from ocrd_webapi.utils import (
+    extract_bag_dest,
+    extract_bag_info,
+)
 
 
 class WorkspaceManager(ResourceManager):
