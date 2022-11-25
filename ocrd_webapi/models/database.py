@@ -5,7 +5,7 @@ from typing import Optional
 # NOTE: Database models must not reuse any
 # response models [discovery, processor, workflow, workspace]
 # Database models are supposed to be low level models
-class WorkspaceDb(Document):
+class WorkspaceDB(Document):
     """
     Model to store a workspace in the mongo-database.
 
@@ -31,7 +31,7 @@ class WorkspaceDb(Document):
         name = "workspace"
 
 
-class WorkflowJobDb(Document):
+class WorkflowJobDB(Document):
     """
     Model to store a Workflow-Job in the mongo-database.
 

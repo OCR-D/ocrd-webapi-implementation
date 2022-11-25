@@ -42,7 +42,8 @@ def test_run_processor(client, dummy_workspace_id):
     # Try several times because finishing execution needs some time
     # This would still fail if X amount of tries is still not enough
     for x in range(0, 500):
-        if client.get(f"processor/ocrd-dummy/{job_id}").json()['state'] in ['STOPPED', 'SUCCESS']:
+        job_state = client.get(f"processor/ocrd-dummy/{job_id}").json()['state']
+        if job_state in ['STOPPED', 'SUCCESS']:
             break
         sleep(0.3)
 

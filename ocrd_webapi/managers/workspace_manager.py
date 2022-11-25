@@ -7,7 +7,7 @@ from ocrd_webapi.exceptions import (
     WorkspaceGoneException,
 )
 from ocrd_webapi.managers.resource_manager import ResourceManager
-from ocrd_webapi.models.database import WorkspaceDb
+from ocrd_webapi.models.database import WorkspaceDB
 from ocrd_webapi.utils import (
     extract_bag_dest,
     extract_bag_info,
@@ -110,7 +110,7 @@ class WorkspaceManager(ResourceManager):
         """
         workspace_dir = self._to_resource_dir(workspace_id)
         if not os.path.isdir(workspace_dir):
-            ws = await WorkspaceDb.get(workspace_id)
+            ws = await WorkspaceDB.get(workspace_id)
             if ws and ws.deleted:
                 raise WorkspaceGoneException("workspace already deleted")
             raise WorkspaceException(f"workspace with id {workspace_id} not existing")

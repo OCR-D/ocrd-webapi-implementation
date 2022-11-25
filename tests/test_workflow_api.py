@@ -133,16 +133,16 @@ def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
     response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
     job_id = parse_resource_id(response)
 
-    state = 'NoState'
+    job_state = 'NoState'
     # try several times because finishing execution needs some time
     for x in range(0, 500):
-        response = client.get(f"workflow/{dummy_workflow_id}/{job_id}")
-        state = response.json()['state']
-        if state == 'STOPPED':
+        job_state = client.get(f"workflow/{dummy_workflow_id}/{job_id}").json()['state']
+        if job_state == 'STOPPED':
             break
         sleep(0.3)
 
-    assert state == 'STOPPED', f"expecting job.state to be set to stopped but is {state}"
+    assert job_state == 'STOPPED', \
+        f"expecting job.state to be set to stopped but is {job_state}"
 
 
 # TODO: Implement the test once there is an

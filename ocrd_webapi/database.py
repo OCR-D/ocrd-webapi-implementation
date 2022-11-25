@@ -3,8 +3,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
 from ocrd_webapi.models.database import (
-    WorkflowJobDb,
-    WorkspaceDb,
+    WorkflowJobDB,
+    WorkspaceDB,
 )
 from ocrd_webapi.utils import safe_init_logging
 
@@ -13,7 +13,7 @@ safe_init_logging()
 
 async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None):
     if doc_models is None:
-        doc_models = [WorkspaceDb, WorkflowJobDb]
+        doc_models = [WorkspaceDB, WorkflowJobDB]
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(
@@ -23,7 +23,7 @@ async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None)
 
 
 async def get_workspace(uid):
-    return await WorkspaceDb.get(uid)
+    return await WorkspaceDB.get(uid)
 
 
 async def save_workspace(uid: str, bag_info: dict):
@@ -43,7 +43,7 @@ async def save_workspace(uid: str, bag_info: dict):
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
-    workspace_db = WorkspaceDb(
+    workspace_db = WorkspaceDB(
         _id=uid,
         ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,
@@ -61,7 +61,7 @@ async def mark_deleted_workspace(uid):
     The api should keep track of deleted workspaces according to the specs. This is done with this
     function and the deleted-property
     """
-    ws = await WorkspaceDb.get(uid)
+    ws = await WorkspaceDB.get(uid)
     if ws:
         ws.deleted = True
         await ws.save()
@@ -70,7 +70,7 @@ async def mark_deleted_workspace(uid):
 
 
 async def get_workflow_job(uid):
-    return await WorkflowJobDb.get(uid)
+    return await WorkflowJobDB.get(uid)
 
 
 async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
@@ -83,7 +83,7 @@ async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
         workspace_id: id of the workspace the job runs on
         state: current state of the job
     """
-    job = WorkflowJobDb(
+    job = WorkflowJobDB(
         _id=uid,
         workflow_id=workflow_id,
         workspace_id=workspace_id,
@@ -96,7 +96,7 @@ async def set_workflow_job_state(uid, state):
     """
     set state of job to 'state'
     """
-    job = await WorkflowJobDb.get(uid)
+    job = await WorkflowJobDB.get(uid)
     if job:
         job.state = state
         await job.save()
