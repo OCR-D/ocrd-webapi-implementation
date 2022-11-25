@@ -48,4 +48,5 @@ def test_run_processor(client, dummy_workspace_id):
 
     # TODO: this is low level, must be performed by the resource manager
     path = os.path.join(WORKSPACES_DIR, dummy_workspace_id, new_file_grp)
-    assert os.path.exists(path), f"output_file_grp not created. expecting exists: '{path}'"
+    assert os.path.exists(path), \
+        f"output_file_grp not created. expecting exists: '{path}'"

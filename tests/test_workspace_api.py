@@ -28,18 +28,21 @@ def run_around_tests(mongo_client):
 
 # Helper assert functions
 def assert_workspace_dir(workspace_id):
-    assert exists(join(WORKSPACES_DIR, workspace_id)), "workspace-dir not existing"
+    assert exists(join(WORKSPACES_DIR, workspace_id)), \
+        "workspace-dir not existing"
 
 
 def assert_not_workspace_dir(workspace_id):
-    assert not exists(join(WORKSPACES_DIR, workspace_id)), "workspace-dir existing"
+    assert not exists(join(WORKSPACES_DIR, workspace_id)), \
+        "workspace-dir existing"
 
 
 def assert_workspaces_len(client, expected_len):
     response = client.get("/workspace")
     assert_status_code(response.status_code, expected_floor=2)
     response_len = len(response.json())
-    assert expected_len == response_len, "more workspaces than expected existing"
+    assert expected_len == response_len, \
+        "more workspaces than expected existing"
 
 
 # Test cases
@@ -51,9 +54,11 @@ def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, "workspace-entry was not created in mongodb"
+    assert workspace_from_db, \
+        "workspace-entry was not created in mongodb"
     db_id = workspace_from_db["_id"]
-    assert db_id == workspace_id, f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+    assert db_id == workspace_id, \
+        f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
 
 
 def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_workspace3):
@@ -65,9 +70,11 @@ def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_works
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, "workspace-entry was not created in mongodb"
+    assert workspace_from_db, \
+        "workspace-entry was not created in mongodb"
     db_id = workspace_from_db["_id"]
-    assert db_id == workspace_id, f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+    assert db_id == workspace_id, \
+        f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
 
 
 def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_workspace2):
@@ -79,9 +86,11 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, "workspace-entry was not created in mongodb"
+    assert workspace_from_db, \
+        "workspace-entry was not created in mongodb"
     db_id = workspace_from_db["_id"]
-    assert db_id == test_id, f"wrong workspace id. Expected: {test_id}, found {db_id}"
+    assert db_id == test_id, \
+        f"wrong workspace id. Expected: {test_id}, found {db_id}"
     ocrd_identifier1 = workspace_from_db["ocrd_identifier"]
 
     request2 = f"/workspace/{test_id}"
@@ -90,8 +99,11 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_mongo_coll.count_documents({}) == 1, "expect exactly 1 workspace in db"
+    assert workspace_mongo_coll.count_documents({}) == 1, \
+        "expect exactly 1 workspace in db"
     ocrd_identifier2 = workspace_from_db["ocrd_identifier"]
+    # TODO: Break this into a few asserts, each assert
+    #  testing only one specific concept
     assert ocrd_identifier1 and ocrd_identifier2 and ocrd_identifier1 != ocrd_identifier2, (
         "put_workspace didn't update the workspace in the database. ocrd_identifier1: "
         f"{ocrd_identifier1}. ocrd_identifier2: {ocrd_identifier2}"
@@ -100,7 +112,8 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
     mets_path = join(WORKSPACES_DIR, test_id, "mets.xml")
     with open(mets_path) as fin:
         workspace_2_id = 'example-workspace-2'
-        assert workspace_2_id in fin.read(), "expected string '%s' in metsfile" % workspace_2_id
+        assert workspace_2_id in fin.read(), \
+            "expected string '%s' in mets file" % workspace_2_id
 
 
 def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
@@ -119,8 +132,10 @@ def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
     workspace_mongo_coll.find_one()
     assert_not_workspace_dir(workspace_id)
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, "workspace-entry not existing but should still exist."
-    assert workspace_from_db["deleted"], "deleted-flag of workspace should be set to true"
+    assert workspace_from_db, \
+        "workspace-entry not existing but should still exist."
+    assert workspace_from_db["deleted"], \
+        "deleted-flag of workspace should be set to true"
 
 
 def test_delete_workspace_non_existing(client, workspace_mongo_coll, asset_workspace1):
@@ -145,4 +160,5 @@ def test_get_workspace(client, asset_workspace3):
 def test_get_workspace_non_existing(client):
     headers = {"accept": "application/vnd.ocrd+zip"}
     response = client.get(f"/workspace/non-existing-workspace-id", headers=headers)
-    assert response.status_code == 404, "expect 404 error code for non existing workspace"
+    assert response.status_code == 404, \
+        "expect 404 error code for non existing workspace"

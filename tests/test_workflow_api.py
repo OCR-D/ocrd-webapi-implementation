@@ -31,18 +31,21 @@ def run_around_tests(mongo_client):
 
 # Helper assert functions
 def assert_workflow_dir(workflow_id):
-    assert exists(join(WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
+    assert exists(join(WORKFLOWS_DIR, workflow_id)), \
+        "workflow-dir not existing"
 
 
 def assert_not_workflow_dir(workflow_id):
-    assert not exists(join(WORKFLOWS_DIR, workflow_id)), "workflow-dir existing"
+    assert not exists(join(WORKFLOWS_DIR, workflow_id)), \
+        "workflow-dir existing"
 
 
 def assert_workflows_len(expected_len, client):
     response = client.get("/workflow")
     assert_status_code(response.status_code, expected_floor=2)
     response_len = len(response.json())
-    assert expected_len == response_len, "more workflows than expected existing"
+    assert expected_len == response_len, \
+        "more workflows than expected existing"
 
 
 # Test cases
@@ -96,8 +99,10 @@ def test_get_workflow_script(client, auth, asset_workflow1):
 
     # It should be checked the following way
     # Not working currently:
-    # assert response.headers.get('content-type').find(".nf") > -1, "content-type missing '.nf'"
-    # assert response.headers.get('content-type').find("nextflow") > -1, "content-type missing 'nextflow'"
+    # assert response.headers.get('content-type').find(".nf") > -1, \
+    #    "content-type missing '.nf'"
+    # assert response.headers.get('content-type').find("nextflow") > -1, \
+    #    "content-type missing 'nextflow'"
 
 
 def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):

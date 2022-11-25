@@ -12,11 +12,13 @@ def to_asset_path(name):
 
 def assert_status_code(status_code, expected_floor):
     status_floor = status_code // 100
-    assert expected_floor == status_floor, f"Response status code expected:{expected_floor}xx, got: {status_code}."
+    assert expected_floor == status_floor, \
+        f"Response status code expected:{expected_floor}xx, got: {status_code}."
 
 
 def assert_resources_len(resource_router, resources_len, expected_len):
-    assert resources_len == expected_len, f"Amount of {resource_router} resources expected: {expected_len}, got: {resources_len}."
+    assert resources_len == expected_len, \
+        f"Amount of {resource_router} resources expected: {expected_len}, got: {resources_len}."
 
 
 def parse_resource_id(response):
