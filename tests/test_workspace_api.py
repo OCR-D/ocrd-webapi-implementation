@@ -5,11 +5,13 @@
   on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
   session-state maybe), but didn't try it yet
 """
-import ocrd_webapi.constants as constants
 import pytest
 from os.path import exists, join
-from .conftest import WORKSPACE_2_ID
 
+from ocrd_webapi.constants import (
+    MONGO_TESTDB,
+    WORKSPACES_DIR,
+)
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
@@ -19,18 +21,18 @@ from .utils_test import (
 @pytest.fixture(autouse=True)
 def run_around_tests(mongo_client):
     # Before each test (until yield):
-    mongo_client[constants.MONGO_TESTDB]["workspace"].delete_many({})
+    mongo_client[MONGO_TESTDB]["workspace"].delete_many({})
     yield
     # After each test:
 
 
 # Helper assert functions
 def assert_workspace_dir(workspace_id):
-    assert exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir not existing"
+    assert exists(join(WORKSPACES_DIR, workspace_id)), "workspace-dir not existing"
 
 
 def assert_not_workspace_dir(workspace_id):
-    assert not exists(join(constants.WORKSPACES_DIR, workspace_id)), "workspace-dir existing"
+    assert not exists(join(WORKSPACES_DIR, workspace_id)), "workspace-dir existing"
 
 
 def assert_workspaces_len(client, expected_len):
@@ -95,9 +97,10 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
         f"{ocrd_identifier1}. ocrd_identifier2: {ocrd_identifier2}"
     )
     # assert workspace updated correctly on disk
-    mets_path = join(constants.WORKSPACES_DIR, test_id, "mets.xml")
+    mets_path = join(WORKSPACES_DIR, test_id, "mets.xml")
     with open(mets_path) as fin:
-        assert WORKSPACE_2_ID in fin.read(), "expected string '%s' in metsfile" % WORKSPACE_2_ID
+        workspace_2_id = 'example-workspace-2'
+        assert workspace_2_id in fin.read(), "expected string '%s' in metsfile" % workspace_2_id
 
 
 def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):

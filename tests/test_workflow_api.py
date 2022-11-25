@@ -5,11 +5,14 @@
   on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
   session-state maybe), but didn't try it yet
 """
-import ocrd_webapi.constants as constants
 import pytest
 from os.path import exists, join
 from time import sleep
 
+from ocrd_webapi.constants import (
+    MONGO_TESTDB,
+    WORKFLOWS_DIR,
+)
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
@@ -21,18 +24,18 @@ from .utils_test import (
 @pytest.fixture(autouse=True)
 def run_around_tests(mongo_client):
     # Before each test (until yield):
-    mongo_client[constants.MONGO_TESTDB]["workflow"].delete_many({})
+    mongo_client[MONGO_TESTDB]["workflow"].delete_many({})
     yield
     # After each test:
 
 
 # Helper assert functions
 def assert_workflow_dir(workflow_id):
-    assert exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
+    assert exists(join(WORKFLOWS_DIR, workflow_id)), "workflow-dir not existing"
 
 
 def assert_not_workflow_dir(workflow_id):
-    assert not exists(join(constants.WORKFLOWS_DIR, workflow_id)), "workflow-dir existing"
+    assert not exists(join(WORKFLOWS_DIR, workflow_id)), "workflow-dir existing"
 
 
 def assert_workflows_len(expected_len, client):

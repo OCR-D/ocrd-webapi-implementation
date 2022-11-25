@@ -3,10 +3,10 @@ import pytest
 import subprocess
 from time import sleep
 
-from ocrd_webapi import (
+from ocrd_webapi.constants import (
     # TODO: this file should not reuse the constants directly
     #  rather, an instance of the required resource manager
-    constants,
+    WORKSPACES_DIR,
 )
 from .utils_test import (
     assert_status_code,
@@ -24,7 +24,7 @@ def do_around_tests():
     yield
     # constants.WORKSPACE_DIR - may not always be de default dir 
     # depending on the passed parameter to the WorkflowManager constructor.
-    subprocess.run(["docker", "run", "--rm", "-v", f"{constants.WORKSPACES_DIR}:/workspaces",
+    subprocess.run(["docker", "run", "--rm", "-v", f"{WORKSPACES_DIR}:/workspaces",
                     "alpine", "find", "/workspaces", "-mindepth", "1", "-delete"])
 
 
@@ -46,5 +46,6 @@ def test_run_processor(client, dummy_workspace_id):
             break
         sleep(0.3)
 
-    path = os.path.join(constants.WORKSPACES_DIR, dummy_workspace_id, new_file_grp)
+    # TODO: this is low level, must be performed by the resource manager
+    path = os.path.join(WORKSPACES_DIR, dummy_workspace_id, new_file_grp)
     assert os.path.exists(path), f"output_file_grp not created. expecting exists: '{path}'"
