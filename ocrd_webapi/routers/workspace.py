@@ -11,7 +11,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from ocrd_utils import getLogger
-from ocrd_webapi import database
+from ocrd_webapi import database as db
 from ocrd_webapi.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -120,7 +120,7 @@ async def delete_workspace(workspace_id: str):
     try:
         deleted_workspace_url = await workspace_manager.delete_workspace(workspace_id)
     except WorkspaceException:
-        if await database.get_workspace(workspace_id):
+        if await db.get_workspace(workspace_id):
             raise ResponseException(410, {})
         else:
             raise ResponseException(404, {})

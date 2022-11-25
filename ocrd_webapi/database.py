@@ -22,16 +22,16 @@ async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None)
     )
 
 
-async def get_workspace(uid):
-    return await WorkspaceDB.get(uid)
+async def get_workspace(workspace_id):
+    return await WorkspaceDB.get(workspace_id)
 
 
-async def save_workspace(uid: str, bag_info: dict):
+async def save_workspace(workspace_id: str, bag_info: dict):
     """
     save a workspace to the database. Can also be used to update a workspace
 
     Arguments:
-         uid: uid of the workspace which must be available on disk
+         workspace_id: uid of the workspace which must be available on disk
          bag_info: dict with key-value-pairs from bag-info.txt
     """
     bag_info = dict(bag_info)
@@ -44,7 +44,7 @@ async def save_workspace(uid: str, bag_info: dict):
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
     workspace_db = WorkspaceDB(
-        _id=uid,
+        _id=workspace_id,
         ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,
         bagit_profile_identifier=bagit_profile_identifier,
@@ -54,14 +54,14 @@ async def save_workspace(uid: str, bag_info: dict):
     await workspace_db.save()
 
 
-async def mark_deleted_workspace(uid):
+async def mark_deleted_workspace(workspace_id):
     """
     set 'WorkspaceDb.deleted' to True
 
     The api should keep track of deleted workspaces according to the specs. This is done with this
     function and the deleted-property
     """
-    ws = await WorkspaceDB.get(uid)
+    ws = await WorkspaceDB.get(workspace_id)
     if ws:
         ws.deleted = True
         await ws.save()
@@ -69,34 +69,34 @@ async def mark_deleted_workspace(uid):
         getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
 
 
-async def get_workflow_job(uid):
-    return await WorkflowJobDB.get(uid)
+async def get_workflow_job(job_id):
+    return await WorkflowJobDB.get(job_id)
 
 
-async def save_workflow_job(uid: str, workflow_id, workspace_id, state):
+async def save_workflow_job(job_id: str, workflow_id, workspace_id, job_state):
     """
     save a workflow_job to the database
 
     Arguments:
-        uid: id of the job
+        job_id: id of the workflow job
         workflow_id: id of the workflow the job is/was executing
         workspace_id: id of the workspace the job runs on
-        state: current state of the job
+        job_state: current state of the job
     """
     job = WorkflowJobDB(
-        _id=uid,
+        _id=job_id,
         workflow_id=workflow_id,
         workspace_id=workspace_id,
-        state=state
+        state=job_state
     )
     await job.save()
 
 
-async def set_workflow_job_state(uid, state):
+async def set_workflow_job_state(job_id, job_state):
     """
     set state of job to 'state'
     """
-    job = await WorkflowJobDB.get(uid)
+    job = await WorkflowJobDB.get(job_id)
     if job:
-        job.state = state
+        job.state = job_state
         await job.save()

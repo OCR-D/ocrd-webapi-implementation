@@ -16,7 +16,7 @@ from fastapi.security import (
 )
 
 from ocrd_utils import getLogger
-from ocrd_webapi import database
+from ocrd_webapi import database as db
 from ocrd_webapi.exceptions import (
     ResponseException,
 )
@@ -110,8 +110,8 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     workflow_id.
     """
     if workflow_manager.is_job_finished(workflow_id, job_id):
-        await database.set_workflow_job_state(job_id, 'STOPPED')
-    job = await database.get_workflow_job(job_id)
+        await db.set_workflow_job_state(job_id, 'STOPPED')
+    job = await db.get_workflow_job(job_id)
     # job is of type WorkflowJobDb
 
     if not job:

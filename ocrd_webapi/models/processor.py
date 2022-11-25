@@ -33,13 +33,13 @@ class ProcessorJobRsrc(Job):
     workspace: Optional[WorkspaceRsrc] = None
 
     @staticmethod
-    def create(job_url, processor_name, workspace_url, job_state: JobState):
+    def create(job_url, processor_name, workspace_url, job_state: JobState, description="Processor-Job"):
         processor_rsrc = ProcessorRsrc.create(processor_name)
         workspace_rsrc = WorkspaceRsrc.create(workspace_url)
         return ProcessorJobRsrc(
             id=job_url,
+            description=description,
+            state=job_state,
             processor=processor_rsrc,
             workspace=workspace_rsrc,
-            state=job_state,
-            description="Processor-Job"
         )
