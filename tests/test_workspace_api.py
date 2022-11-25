@@ -15,6 +15,8 @@ from ocrd_webapi.constants import (
 from .utils_test import (
     assert_status_code,
     parse_resource_id,
+    assert_db_entry_created,
+    assert_db_entry_deleted,
 )
 
 
@@ -53,12 +55,8 @@ def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
     assert_workspace_dir(workspace_id)
 
     # Database checks
-    workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, \
-        "workspace-entry was not created in mongodb"
-    db_id = workspace_from_db["_id"]
-    assert db_id == workspace_id, \
-        f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+    resource_from_db = workspace_mongo_coll.find_one()
+    assert_db_entry_created(resource_from_db, workspace_id)
 
 
 def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_workspace3):
@@ -69,12 +67,8 @@ def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_works
     assert_workspace_dir(workspace_id)
 
     # Database checks
-    workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, \
-        "workspace-entry was not created in mongodb"
-    db_id = workspace_from_db["_id"]
-    assert db_id == workspace_id, \
-        f"wrong workspace id. Expected: {workspace_id}, found {db_id}"
+    resource_from_db = workspace_mongo_coll.find_one()
+    assert_db_entry_created(resource_from_db, workspace_id)
 
 
 def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_workspace2):
@@ -86,11 +80,7 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, \
-        "workspace-entry was not created in mongodb"
-    db_id = workspace_from_db["_id"]
-    assert db_id == test_id, \
-        f"wrong workspace id. Expected: {test_id}, found {db_id}"
+    assert_db_entry_created(workspace_from_db, test_id)
     ocrd_identifier1 = workspace_from_db["ocrd_identifier"]
 
     request2 = f"/workspace/{test_id}"
@@ -102,13 +92,15 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
     assert workspace_mongo_coll.count_documents({}) == 1, \
         "expect exactly 1 workspace in db"
     ocrd_identifier2 = workspace_from_db["ocrd_identifier"]
-    # TODO: Break this into a few asserts, each assert
-    #  testing only one specific concept
-    assert ocrd_identifier1 and ocrd_identifier2 and ocrd_identifier1 != ocrd_identifier2, (
-        "put_workspace didn't update the workspace in the database. ocrd_identifier1: "
-        f"{ocrd_identifier1}. ocrd_identifier2: {ocrd_identifier2}"
-    )
+
+    assert ocrd_identifier1 and ocrd_identifier2, \
+        "Ocrd identifiers were not extracted successfully"
+
+    assert ocrd_identifier1 != ocrd_identifier2, \
+        f"Ocrd identifiers mismatch: {ocrd_identifier1} != {ocrd_identifier2}"
+
     # assert workspace updated correctly on disk
+    # TODO: Use resource manager instance to check this...
     mets_path = join(WORKSPACES_DIR, test_id, "mets.xml")
     with open(mets_path) as fin:
         workspace_2_id = 'example-workspace-2'
@@ -132,10 +124,7 @@ def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
     workspace_mongo_coll.find_one()
     assert_not_workspace_dir(workspace_id)
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_from_db, \
-        "workspace-entry not existing but should still exist."
-    assert workspace_from_db["deleted"], \
-        "deleted-flag of workspace should be set to true"
+    assert_db_entry_deleted(workspace_from_db)
 
 
 def test_delete_workspace_non_existing(client, workspace_mongo_coll, asset_workspace1):
@@ -145,6 +134,8 @@ def test_delete_workspace_non_existing(client, workspace_mongo_coll, asset_works
     assert_status_code(response.status_code, expected_floor=2)  # Deleted
     response = client.delete(f"/workspace/{workspace_id}")
     assert_status_code(response.status_code, expected_floor=4)  # Not available
+
+    # TODO: Do database checks
 
 
 def test_get_workspace(client, asset_workspace3):
@@ -156,9 +147,13 @@ def test_get_workspace(client, asset_workspace3):
     assert response.headers.get('content-type').find("zip") > -1, \
         "content-type should be something with 'zip'"
 
+    # TODO: Do database checks
+
 
 def test_get_workspace_non_existing(client):
     headers = {"accept": "application/vnd.ocrd+zip"}
     response = client.get(f"/workspace/non-existing-workspace-id", headers=headers)
     assert response.status_code == 404, \
         "expect 404 error code for non existing workspace"
+
+    # TODO: Do database checks

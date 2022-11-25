@@ -100,6 +100,14 @@ def _fixture_workspace_mongo_coll(mongo_client):
     workspace_coll.drop()
 
 
+@pytest.fixture(scope="session", name='workflow_mongo_coll')
+def _fixture_workflow_mongo_coll(mongo_client):
+    mydb = mongo_client[MONGO_TESTDB]
+    workflow_coll = mydb["workflow"]
+    yield workflow_coll
+    workflow_coll.drop()
+
+
 # Authentication and Managers
 # TODO: Managers are not utilized during the tests
 # TODO: Utilize them, once they are completely finalized

@@ -3,6 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
 from ocrd_webapi.models.database import (
+    WorkflowDB,
     WorkflowJobDB,
     WorkspaceDB,
 )
@@ -13,7 +14,7 @@ safe_init_logging()
 
 async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None):
     if doc_models is None:
-        doc_models = [WorkspaceDB, WorkflowJobDB]
+        doc_models = [WorkflowDB, WorkspaceDB, WorkflowJobDB]
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(
@@ -22,8 +23,20 @@ async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None)
     )
 
 
+async def get_workflow(workflow_id):
+    return await WorkflowDB.get(workflow_id)
+
+
 async def get_workspace(workspace_id):
     return await WorkspaceDB.get(workspace_id)
+
+
+async def save_workflow(workflow_id: str, content: str):
+    workflow_db = WorkflowDB(
+        _id=workflow_id,
+        content=content  # 16MB max, use GridFS to store bigger files
+    )
+    await workflow_db.save()
 
 
 async def save_workspace(workspace_id: str, bag_info: dict):
@@ -52,6 +65,15 @@ async def save_workspace(workspace_id: str, bag_info: dict):
         bag_info_adds=bag_info
     )
     await workspace_db.save()
+
+
+async def mark_deleted_workflow(workflow_id):
+    wf = await WorkflowDB.get(workflow_id)
+    if wf:
+        wf.deleted = True
+        await wf.save()
+    else:
+        getLogger("ocrd_webapi.database").warn("Trying to flag not existing workflow as deleted")
 
 
 async def mark_deleted_workspace(workspace_id):

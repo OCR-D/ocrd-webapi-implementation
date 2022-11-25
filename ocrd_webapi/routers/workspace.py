@@ -60,16 +60,18 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
     """
     if accept == "application/json":
         workspace_url = workspace_manager.get_workspace_url(workspace_id)
-        if not workspace_url:
-            raise ResponseException(404, {})
-        return WorkspaceRsrc.create(workspace_url=workspace_url)
+        if workspace_url:
+            return WorkspaceRsrc.create(workspace_url=workspace_url)
+
+        raise ResponseException(404, {})
     elif accept == "application/vnd.ocrd+zip":
         bag_path = await workspace_manager.get_workspace_bag(workspace_id)
-        if not bag_path:
-            raise ResponseException(404, {})
-        # Remove the produced bag after sending it in the response
-        background_tasks.add_task(os.unlink, bag_path)
-        return FileResponse(bag_path)
+        if bag_path:
+            # Remove the produced bag after sending it in the response
+            background_tasks.add_task(os.unlink, bag_path)
+            return FileResponse(bag_path)
+
+        raise ResponseException(404, {})
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -115,7 +117,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str):
 async def delete_workspace(workspace_id: str):
     """
     Delete a workspace
-    curl -v -X DELETE 'http://localhost:8000/workspace/put-workspace-id-here'
+    curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
     """
     try:
         deleted_workspace_url = await workspace_manager.delete_workspace(workspace_id)

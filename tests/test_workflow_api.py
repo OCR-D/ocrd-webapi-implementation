@@ -17,6 +17,7 @@ from .utils_test import (
     assert_status_code,
     parse_resource_id,
     parse_job_state,
+    assert_db_entry_created,
 )
 
 
@@ -50,12 +51,16 @@ def assert_workflows_len(expected_len, client):
 
 
 # Test cases
-def test_post_workflow_script(client, auth, asset_workflow1):
+def test_post_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1):
     # Post a new workflow script
     response = client.post("/workflow", files=asset_workflow1, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     workflow_id = parse_resource_id(response)
     assert_workflow_dir(workflow_id)
+
+    # Database checks
+    workflow_from_db = workflow_mongo_coll.find_one()
+    assert_db_entry_created(workflow_from_db, workflow_id)
 
 
 def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, asset_workflow3):
@@ -72,6 +77,8 @@ def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, ass
     workflow_id = parse_resource_id(response)
     assert_workflow_dir(workflow_id)
 
+    # TODO: Do database checks
+
 
 def test_put_workflow_script_non_existing(client, auth, asset_workflow1):
     # Put to a non-existing workflow_id
@@ -81,6 +88,8 @@ def test_put_workflow_script_non_existing(client, auth, asset_workflow1):
     assert_status_code(response.status_code, expected_floor=2)
     newly_created_workflow_id = parse_resource_id(response)
     assert_workflow_dir(newly_created_workflow_id)
+
+    # TODO: Do database checks
 
 
 def test_get_workflow_script(client, auth, asset_workflow1):
@@ -105,6 +114,8 @@ def test_get_workflow_script(client, auth, asset_workflow1):
     # assert response.headers.get('content-type').find("nextflow") > -1, \
     #    "content-type missing 'nextflow'"
 
+    # TODO: Do database checks
+
 
 def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):
     params = {"workspace_id": dummy_workspace_id}
@@ -112,6 +123,8 @@ def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):
     assert_status_code(response.status_code, expected_floor=2)
     job_id = parse_resource_id(response)
     assert job_id
+
+    # TODO: Do database checks
 
 
 def test_run_workflow_different_mets(client, dummy_workflow_id, asset_workspace3):
@@ -126,6 +139,7 @@ def test_run_workflow_different_mets(client, dummy_workflow_id, asset_workspace3
 
     # TODO: assert the workflow finished successfully. Currently mets.xml is not dynamic, so first
     # the possibility to provide a different-mets-name to run the workflow has to be implemented
+    # TODO: Do database checks
 
 
 # TODO: This should be better implemented...
@@ -145,6 +159,8 @@ def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
 
     assert job_state == 'STOPPED', \
         f"expecting job.state to be set to stopped but is {job_state}"
+
+    # TODO: Do database checks
 
 
 # TODO: Implement the test once there is an

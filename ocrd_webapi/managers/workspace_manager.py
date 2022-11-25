@@ -1,6 +1,6 @@
 import os
 
-from ocrd_webapi import database
+from ocrd_webapi import database as db
 from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
 from ocrd_webapi.exceptions import (
     WorkspaceException,
@@ -49,7 +49,7 @@ class WorkspaceManager(ResourceManager):
         bag_info = extract_bag_info(zip_dest, workspace_dir)
 
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
-        await database.save_workspace(workspace_id, bag_info)
+        await db.save_workspace(workspace_id, bag_info)
 
         os.remove(zip_dest)
 
@@ -93,7 +93,7 @@ class WorkspaceManager(ResourceManager):
         #       database.py to read it from mongodb
         #     - write tests for this cases
         if self._is_resource_dir_available(workspace_id):
-            workspace_db = await database.get_workspace(workspace_id)
+            workspace_db = await db.get_workspace(workspace_id)
             workspace_dir = self._to_resource_dir(workspace_id)
             # TODO: Get rid of this low level os.path access,
             #  should happen inside the Resource manager
@@ -117,6 +117,6 @@ class WorkspaceManager(ResourceManager):
 
         deleted_workspace_url = self._to_resource_url(workspace_id)
         self._delete_resource_dir(workspace_id)
-        await database.mark_deleted_workspace(workspace_id)
+        await db.mark_deleted_workspace(workspace_id)
 
         return deleted_workspace_url

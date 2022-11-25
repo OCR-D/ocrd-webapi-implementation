@@ -33,3 +33,18 @@ def parse_job_state(response):
         return response.json()['job_state'].split("/")[-1]
     except (AttributeError, KeyError):
         return None
+
+
+def assert_db_entry_created(resource_from_db, resource_id, db_key="_id"):
+    assert resource_from_db, \
+        "Resource entry was not created in mongodb"
+    db_id = resource_from_db[db_key]
+    assert db_id == resource_id, \
+        "Wrong resource id. Expected: {resource_id}, found {db_id}"
+
+
+def assert_db_entry_deleted(resource_from_db, db_key="deleted"):
+    assert resource_from_db, \
+        "Resource entry should exist, but does not"
+    assert resource_from_db[db_key], \
+        "Delete flag of the resource should be set to true"

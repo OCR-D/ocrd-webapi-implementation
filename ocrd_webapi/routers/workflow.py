@@ -84,14 +84,15 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     """
     if accept == "application/json":
         workflow_script_url = workflow_manager.get_workflow_url(workflow_id)
-        if not workflow_script_url:
-            raise ResponseException(404, {})
-        return WorkflowRsrc.create(workflow_url=workflow_script_url)
+        if workflow_script_url:
+            return WorkflowRsrc.create(workflow_url=workflow_script_url)
+        raise ResponseException(404, {})
     elif accept == "text/vnd.ocrd.workflow":
         workflow_script_path = workflow_manager.get_workflow_script(workflow_id)
-        if not workflow_script_path:
-            raise ResponseException(404, {})
-        return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
+        # TODO: Extract from the MongoDB and write tests about that case
+        if workflow_script_path:
+            return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
+        raise ResponseException(404, {})
     else:
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -116,7 +117,6 @@ async def get_workflow_job(workflow_id: str, job_id: str):
 
     if not wf_job_db:
         raise ResponseException(404, {})
-    # return job.to_rsrc()
 
     # TODO: this should not use a protected function, if a separate wrapper
     #  function is provided, this would duplicate some code...

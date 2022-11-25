@@ -1,6 +1,6 @@
 import os
 
-from ocrd_webapi import database
+from ocrd_webapi import database as db
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
 from ocrd_webapi.exceptions import (
     WorkflowJobException,
@@ -47,12 +47,12 @@ class WorkflowManager(ResourceManager):
         nf_script_dest = os.path.join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
 
-        # TODO:
-        # 1. Check if the uploaded file is in fact a Nextflow script
-        # 2. Validate the Nextflow script
+        # Fast prototype implementation
+        with open(nf_script_dest, encoding='utf8') as f:
+            file_content = f.read()
 
-        # 3. Provide a functionality to enable/disable writing to/reading from a DB
-        # await save_workflow(workflow_id, workflow_dir)
+        # TODO: Provide a functionality to enable/disable writing to/reading from a DB
+        await db.save_workflow(workflow_id, file_content)
 
         return self._to_resource_url(workflow_id)
 
@@ -83,7 +83,16 @@ class WorkflowManager(ResourceManager):
         nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
         if nf_script_path:
             return nf_script_path
+        return None
 
+    @staticmethod
+    async def get_workflow_script_db(workflow_id):
+        """
+        Get a workflow script available in mongo db as a Resource via its workflow_id
+        """
+        workflow_db = await db.get_workflow(workflow_id)
+        if workflow_db:
+            return workflow_db.content
         return None
 
     def create_workflow_execution_space(self, workflow_id):
@@ -113,7 +122,7 @@ class WorkflowManager(ResourceManager):
         self._nextflow_executor.execute_workflow(nf_script_path, workspace_dir, job_dir)
 
         status = 'RUNNING'
-        await database.save_workflow_job(job_id, workflow_id, workspace_id, status)
+        await db.save_workflow_job(job_id, workflow_id, workspace_id, status)
 
         parameters = []
         # Job URL
