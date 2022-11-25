@@ -12,7 +12,7 @@ class NextflowManager:
         # If installed, get the version
         self.log = getLogger('ocrd_webapi.nextflow_executor')
         self.nf_version = self.is_nf_available()
-        self.log.info(f"NextflowExecutor: Using Nextflow version: {self.nf_version}")
+        self.log.info(f"Installed Nextflow version: {self.nf_version}")
 
     def execute_workflow(self, nf_script_path, workspace_path, job_dir):
         nf_command = self.build_nf_command(nf_script_path, workspace_path)
