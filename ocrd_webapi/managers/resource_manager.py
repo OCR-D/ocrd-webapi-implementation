@@ -1,10 +1,10 @@
 import os
-import uuid
 from pathlib import Path
 import aiofiles
 import shutil
 
 from ocrd_utils import getLogger
+from ocrd_webapi.utils import generate_id
 
 
 # TODO: There is still some duplicate code in
@@ -76,7 +76,7 @@ class ResourceManager:
     def _create_resource_dir(self, resource_id):
         if resource_id is None:
             # assign a randomly generated resource id
-            resource_id = str(uuid.uuid4())
+            resource_id = generate_id()
 
         resource_dir = self._to_resource_dir(resource_id)
         if os.path.exists(resource_dir):

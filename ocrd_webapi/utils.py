@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union
 import bagit
 import tempfile
+import uuid
 import zipfile
 
 from ocrd import Resolver
@@ -22,6 +23,7 @@ __all__ = [
     "extract_bag_dest",
     "extract_bag_info",
     "find_upwards",
+    "generate_id",
     "read_bag_info_from_zip",
     "safe_init_logging",
     "to_workspace_url",
@@ -101,6 +103,16 @@ def extract_bag_dest(workspace_db, workspace_dir, bag_dest):
         ocrd_identifier=identifier,
         ocrd_mets=mets,
     )
+
+
+def generate_id(file_ext=None):
+    # TODO: We should consider using
+    #  uuid1 or uuid3 in the future
+    # Generate a random ID (uuid4)
+    generated_id = str(uuid.uuid4())
+    if file_ext:
+        generated_id += file_ext
+    return generated_id
 
 
 def read_bag_info_from_zip(path_to_zip) -> dict:

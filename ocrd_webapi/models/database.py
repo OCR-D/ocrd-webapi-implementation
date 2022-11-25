@@ -1,7 +1,5 @@
 from beanie import Document
-from pydantic import Field
 from typing import Optional
-from uuid import uuid4
 
 
 # NOTE: Database models must not reuse any
@@ -21,9 +19,7 @@ class WorkspaceDb(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
     """
-    # TODO: no id is currently generated anywhere, but this might not work if the latter is changed
-    # Why is this the case?
-    id: str = Field(default_factory=uuid4)
+    id: str
     ocrd_identifier: str
     bagit_profile_identifier: str
     ocrd_base_version_checksum: Optional[str]
@@ -45,7 +41,7 @@ class WorkflowJobDb(Document):
         workflow_id   id of the workflow the job is executing
         state         current state of the job
     """
-    id: str = Field(default_factory=uuid4)
+    id: str
     workspace_id: str
     workflow_id: str
     state: str

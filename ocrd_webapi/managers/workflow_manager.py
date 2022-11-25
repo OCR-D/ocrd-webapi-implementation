@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from ocrd_webapi import database
 from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
@@ -9,6 +8,7 @@ from ocrd_webapi.exceptions import (
 from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.managers.resource_manager import ResourceManager
 from ocrd_webapi.utils import (
+    generate_id,
     to_workspace_dir,
     to_workspace_url,
 )
@@ -87,7 +87,7 @@ class WorkflowManager(ResourceManager):
         return None
 
     def create_workflow_execution_space(self, workflow_id):
-        job_id = str(uuid.uuid4())
+        job_id = generate_id()
         workflow_dir = self._to_resource_dir(workflow_id)
         job_dir = os.path.join(workflow_dir, job_id)
         os.mkdir(job_dir)

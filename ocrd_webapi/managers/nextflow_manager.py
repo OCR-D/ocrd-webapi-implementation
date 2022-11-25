@@ -72,6 +72,8 @@ class NextflowManager:
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
+        # TODO: Not sure if this is too much to be handled in a single
+        #  try catch block structure.
         try:
             with open(nf_out, 'w+') as nf_out_file:
                 with open(nf_err, 'w+') as nf_err_file:

@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from ocrd_webapi import database
 from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
@@ -12,6 +11,7 @@ from ocrd_webapi.models.database import WorkspaceDb
 from ocrd_webapi.utils import (
     extract_bag_dest,
     extract_bag_info,
+    generate_id,
 )
 
 
@@ -97,7 +97,8 @@ class WorkspaceManager(ResourceManager):
             workspace_dir = self._to_resource_dir(workspace_id)
             # TODO: Get rid of this low level os.path access,
             #  should happen inside the Resource manager
-            bag_dest = os.path.join(self.__workspaces_dir, str(uuid.uuid4()) + ".zip")
+            generated_it = generate_id(file_ext=".zip")
+            bag_dest = os.path.join(self.__workspaces_dir, generated_it)
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
 
