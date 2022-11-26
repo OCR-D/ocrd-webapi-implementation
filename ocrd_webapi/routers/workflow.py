@@ -83,12 +83,12 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)):
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
     """
     if accept == "application/json":
-        workflow_script_url = workflow_manager.get_workflow_url(workflow_id)
+        workflow_script_url = workflow_manager.get_resource(workflow_id, local=False)
         if workflow_script_url:
             return WorkflowRsrc.create(workflow_url=workflow_script_url)
         raise ResponseException(404, {})
     elif accept == "text/vnd.ocrd.workflow":
-        workflow_script_path = workflow_manager.get_workflow_script(workflow_id)
+        workflow_script_path = workflow_manager.get_resource_file(workflow_id, file_ext=".nf")
         # TODO: Extract from the MongoDB and write tests about that case
         if workflow_script_path:
             return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
@@ -113,15 +113,14 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     if workflow_manager.is_job_finished(workflow_id, job_id):
         await db.set_workflow_job_state(job_id, 'STOPPED')
     wf_job_db = await db.get_workflow_job(job_id)
-    # job is of type WorkflowJobDb
 
     if not wf_job_db:
         raise ResponseException(404, {})
 
     # TODO: this should not use a protected function, if a separate wrapper
     #  function is provided, this would duplicate some code...
-    wf_job_url = workflow_manager._to_resource_job_url(wf_job_db.workflow_id, wf_job_db.id)
-    workflow_url = workflow_manager.get_workflow_url(wf_job_db.workflow_id)
+    wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
+    workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
     workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
     workspace_url = to_workspace_url(wf_job_db.workspace_id)
     workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)

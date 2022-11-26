@@ -59,7 +59,7 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
     `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     if accept == "application/json":
-        workspace_url = workspace_manager.get_workspace_url(workspace_id)
+        workspace_url = workspace_manager.get_resource(workspace_id, local=False)
         if workspace_url:
             return WorkspaceRsrc.create(workspace_url=workspace_url)
 

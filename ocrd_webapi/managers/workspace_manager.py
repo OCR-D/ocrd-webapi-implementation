@@ -23,13 +23,12 @@ class WorkspaceManager(ResourceManager):
                  logger_label='ocrd_webapi.workspace_manager'):
         super().__init__(workspaces_dir, resource_url, resource_router, logger_label)
         self.__workspaces_dir = workspaces_dir
-        self._initiate_resource_dir(self.__workspaces_dir)
 
     def get_workspaces(self):
         """
         Get a list of all available workspace urls.
         """
-        workspace_urls = self._get_all_resource_urls()
+        workspace_urls = self.get_all_resources(local=False)
         return workspace_urls
 
     async def create_workspace_from_zip(self, file, uid=None):
@@ -41,6 +40,7 @@ class WorkspaceManager(ResourceManager):
             uid (str): the uid is used as workspace-directory. If `None`, an uuid is created for
                 this. If corresponding dir already existing, None is returned
         """
+        # TODO: Separate the local storage from DB cases
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         # TODO: Get rid of this low level os.path access,
         #  should happen inside the Resource manager
@@ -52,8 +52,8 @@ class WorkspaceManager(ResourceManager):
         await db.save_workspace(workspace_id, bag_info)
 
         os.remove(zip_dest)
-
-        return self._to_resource_url(workspace_id)
+        workspace_url = self.get_resource(workspace_id, local=False)
+        return workspace_url
 
     async def update_workspace(self, file, workspace_id):
         """
@@ -64,15 +64,6 @@ class WorkspaceManager(ResourceManager):
         """
         self._delete_resource_dir(workspace_id)
         return await self.create_workspace_from_zip(file, workspace_id)
-
-    def get_workspace_url(self, workspace_id):
-        """
-        Get workspace available on disk as Resource via it's id
-        """
-        if self._is_resource_dir_available(workspace_id):
-            return self._to_resource_url(workspace_id)
-
-        return None
 
     # TODO: Refine this and get rid of the low level os.path bullshits
     async def get_workspace_bag(self, workspace_id):
@@ -88,17 +79,18 @@ class WorkspaceManager(ResourceManager):
         Returns:
             path to created bag
         """
+        # TODO: Separate the local storage from DB cases
         # TODO: workspace-bagging must be revised:
         #     - ocrd_identifier is stored in mongodb. use that for bagging. Write method in
         #       database.py to read it from mongodb
         #     - write tests for this cases
-        if self._is_resource_dir_available(workspace_id):
+        if self._has_dir(workspace_id):
             workspace_db = await db.get_workspace(workspace_id)
-            workspace_dir = self._to_resource_dir(workspace_id)
+            workspace_dir = self.get_resource(workspace_id, local=True)
             # TODO: Get rid of this low level os.path access,
             #  should happen inside the Resource manager
-            generated_it = generate_id(file_ext=".zip")
-            bag_dest = os.path.join(self.__workspaces_dir, generated_it)
+            generated_id = generate_id(file_ext=".zip")
+            bag_dest = os.path.join(self.__workspaces_dir, generated_id)
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
 
@@ -108,14 +100,15 @@ class WorkspaceManager(ResourceManager):
         """
         Delete a workspace
         """
-        workspace_dir = self._to_resource_dir(workspace_id)
-        if not os.path.isdir(workspace_dir):
+        # TODO: Separate the local storage from DB cases
+        workspace_dir = self.get_resource(workspace_id, local=True)
+        if not workspace_dir:
             ws = await WorkspaceDB.get(workspace_id)
             if ws and ws.deleted:
                 raise WorkspaceGoneException("workspace already deleted")
             raise WorkspaceException(f"workspace with id {workspace_id} not existing")
 
-        deleted_workspace_url = self._to_resource_url(workspace_id)
+        deleted_workspace_url = self.get_resource(workspace_id, local=False)
         self._delete_resource_dir(workspace_id)
         await db.mark_deleted_workspace(workspace_id)
 

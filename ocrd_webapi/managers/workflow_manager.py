@@ -23,13 +23,12 @@ class WorkflowManager(ResourceManager):
         super().__init__(workflows_dir, resource_url, resource_router, logger_label)
         self._nextflow_executor = NextflowManager()
         self.__workflows_dir = workflows_dir
-        self._initiate_resource_dir(self.__workflows_dir)
 
     def get_workflows(self):
         """
         Get a list of all available workflow urls.
         """
-        workflow_urls = self._get_all_resource_urls()
+        workflow_urls = self.get_all_resources(local=False)
         return workflow_urls
 
     async def create_workflow_space(self, file, uid=None):
@@ -54,7 +53,8 @@ class WorkflowManager(ResourceManager):
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
         await db.save_workflow(workflow_id, file_content)
 
-        return self._to_resource_url(workflow_id)
+        workflow_url = self.get_resource(workflow_id, local=False)
+        return workflow_url
 
     async def update_workflow_space(self, file, workflow_id):
         """
@@ -65,25 +65,6 @@ class WorkflowManager(ResourceManager):
         """
         self._delete_resource_dir(workflow_id)
         return await self.create_workflow_space(file, workflow_id)
-
-    def get_workflow_url(self, workflow_id):
-        """
-        Get workflow available on disk as Resource via it's id
-        """
-        if self._is_resource_dir_available(workflow_id):
-            return self._to_resource_url(workflow_id)
-
-        return None
-
-    # TODO: Simplify this...
-    def get_workflow_script(self, workflow_id):
-        """
-        Get a workflow script available on disk as a Resource via its workflow_id
-        """
-        nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
-        if nf_script_path:
-            return nf_script_path
-        return None
 
     @staticmethod
     async def get_workflow_script_db(workflow_id):
@@ -97,10 +78,8 @@ class WorkflowManager(ResourceManager):
 
     def create_workflow_execution_space(self, workflow_id):
         job_id = generate_id()
-        workflow_dir = self._to_resource_dir(workflow_id)
-        job_dir = os.path.join(workflow_dir, job_id)
+        job_dir = self.get_resource_job(workflow_id, job_id, local=True)
         os.mkdir(job_dir)
-
         return job_id, job_dir
 
     async def start_nf_workflow(self, workflow_id, workspace_id):
@@ -109,13 +88,13 @@ class WorkflowManager(ResourceManager):
         #       name of the mets if it is not mets.xml.        
 
         # nf_script is the path to the Nextflow script inside workflow_id
-        nf_script_path = self._is_resource_file_available(workflow_id, file_ext='.nf')
+        nf_script_path = self.get_resource_file(workflow_id, file_ext='.nf')
         workspace_dir = to_workspace_dir(workspace_id)
 
         # TODO: These checks must happen inside the Resource Manager, not here
-        if not os.path.exists(nf_script_path):
+        if not nf_script_path:
             raise WorkflowJobException(f"Workflow not existing. Id: {workflow_id}")
-        if not os.path.exists(workspace_dir):
+        if not workspace_dir:
             raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
@@ -126,10 +105,10 @@ class WorkflowManager(ResourceManager):
 
         parameters = []
         # Job URL
-        parameters.append(self._to_resource_job_url(workflow_id, job_id))
+        parameters.append(self.get_resource_job(workflow_id, job_id, local=False))
         parameters.append(status)
         # Workflow URL
-        parameters.append(self._to_resource_url(workflow_id))
+        parameters.append(self.get_resource(workflow_id, local=False))
         # Workspace URL
         parameters.append(to_workspace_url(workspace_id))
 
@@ -146,7 +125,7 @@ class WorkflowManager(ResourceManager):
             false: file doesn't exist
             None: workflow_id or job_id (path to file) don't exist
         """
-        job_dir = self._to_resource_job_dir(workflow_id, job_id)
-        if not os.path.exists(job_dir):
-            return None
-        return os.path.exists(os.path.join(job_dir, "report.html"))
+        job_dir = self.get_resource_job(workflow_id, job_id, local=True)
+        if job_dir:
+            return self._nextflow_executor.is_nf_report(job_dir)
+        return None

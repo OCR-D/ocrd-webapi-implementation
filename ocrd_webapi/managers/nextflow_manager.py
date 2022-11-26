@@ -1,3 +1,4 @@
+import os
 import shlex
 import subprocess
 from re import search as regex_search
@@ -16,7 +17,6 @@ class NextflowManager:
 
     def execute_workflow(self, nf_script_path, workspace_path, job_dir):
         nf_command = self.build_nf_command(nf_script_path, workspace_path)
-
         try:
             self._start_nf_process(nf_command, job_dir)
         except Exception as error:
@@ -43,12 +43,12 @@ class NextflowManager:
             self.log.exception("Failed to detect Nextflow version")
             return None
 
-        nf_version = self.parse_nf_version(ver_process.stdout)
+        nf_version = self.__parse_nf_version(ver_process.stdout)
 
         return nf_version
 
     @staticmethod
-    def parse_nf_version(version_string):
+    def __parse_nf_version(version_string):
         regex_pattern = r"nextflow version\s*([\d.]+)"
         nf_version = regex_search(regex_pattern, version_string).group(1)
 
@@ -58,13 +58,12 @@ class NextflowManager:
         return None
 
     @staticmethod
-    def build_nf_command(nf_script_path, workspace_path):
+    def build_nf_command(nf_script_path, workspace_path, workspace_mets="mets.xml"):
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --workspace {workspace_path}/"
-        nf_command += f" --mets {workspace_path}/mets.xml"
+        nf_command += f" --mets {workspace_path}/{workspace_mets}"
         nf_command += " -with-report"
-
         return nf_command
 
     def _start_nf_process(self, nf_command, job_dir):
@@ -89,3 +88,10 @@ class NextflowManager:
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
             self.log.exception(f"Nextflow process failed to start: {error}")
+
+    @staticmethod
+    def is_nf_report(location_dir, report="report.html"):
+        report_path = os.path.join(location_dir, report)
+        if os.path.exists(report_path):
+            return report_path
+        return None
