@@ -114,8 +114,7 @@ async def run_processor(processor: str, p_args: ProcessorArgs):
     with open("/home/mm/Desktop/json.txt", "a") as file1:
         file1.write(json.dumps(x))
         file1.write('\n')
-    # TODO: Why this "state" cannot be changed to "job_state"
-    #  although it's "job_state" in all other places??
+    # "_id" and "state" are coming from the Processing Server part
     job_id, job_state = x["_id"], x["state"]
 
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
