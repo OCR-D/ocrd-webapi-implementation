@@ -6,8 +6,8 @@ help:
 	@echo "  Targets"
 	@echo "    venv           Create virtual-environment for the project"
 	@echo "    start          Start MongoDB Docker + WebAPI Server"
-		@echo "    start-mongo    Start MongoDB Docker
-		@echo "    start-server   Start the WebAPI Server
+	@echo "    start-mongo    Start MongoDB Docker"
+	@echo "    start-server   Start the WebAPI Server"
 	@echo "    test           Run all available tests"
 	@echo ""
 	@echo "  Variables"

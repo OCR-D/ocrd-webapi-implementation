@@ -1,4 +1,5 @@
 import httpx
+import json
 import os
 import re
 import sys
@@ -110,6 +111,11 @@ async def run_processor(processor: str, p_args: ProcessorArgs):
         log.error(f"error delegating processor-request. Response({r.status_code}): {r.text}")
         raise ResponseException(500, {"error": "delegating processor-request failed"})
     x = r.json()
+    with open("/home/mm/Desktop/json.txt", "a") as file1:
+        file1.write(json.dumps(x))
+        file1.write('\n')
+    # TODO: Why this "state" cannot be changed to "job_state"
+    #  although it's "job_state" in all other places??
     job_id, job_state = x["_id"], x["state"]
 
     return ProcessorJobRsrc.create(job_id, processor, workspace_id, job_state)
