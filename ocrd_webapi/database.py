@@ -2,6 +2,7 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
+from ocrd_webapi.constants import DB_NAME
 from ocrd_webapi.models.database import (
     WorkflowDB,
     WorkflowJobDB,
@@ -12,7 +13,7 @@ from ocrd_webapi.utils import safe_init_logging
 safe_init_logging()
 
 
-async def initiate_database(db_url: str, db_name='ocrd-webapi', doc_models=None):
+async def initiate_database(db_url: str, db_name=DB_NAME, doc_models=None):
     if doc_models is None:
         doc_models = [WorkflowDB, WorkspaceDB, WorkflowJobDB]
     client = AsyncIOMotorClient(db_url)

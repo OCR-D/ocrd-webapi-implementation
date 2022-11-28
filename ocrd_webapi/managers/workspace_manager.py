@@ -16,6 +16,8 @@ from ocrd_webapi.utils import (
 
 
 class WorkspaceManager(ResourceManager):
+    # Warning: Don't change these defaults
+    # till everything is configured properly
     def __init__(self,
                  workspaces_dir=WORKSPACES_DIR,
                  resource_url=SERVER_URL,

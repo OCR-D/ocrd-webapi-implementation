@@ -4,6 +4,7 @@ load_dotenv()
 
 __all__ = [
     'BASE_DIR',
+    'DB_NAME',
     'DB_URL',
     'JOB_DIR',
     'MONGO_TESTDB',
@@ -16,7 +17,9 @@ __all__ = [
 
 # variables for local testing are read from .env in base-dir with `load_dotenv()`
 SERVER_URL: str = os.getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")
+DB_NAME: str = os.getenv("OCRD_WEBAPI_DB_NAME", "ocrd-webapi-db")
 DB_URL: str = os.getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
+# Note: changing this fails some tests
 MONGO_TESTDB = "test-ocrd-webapi"
 
 BASE_DIR: str = os.getenv("OCRD_WEBAPI_STORAGE_DIR", "/tmp/ocrd-webapi-data")

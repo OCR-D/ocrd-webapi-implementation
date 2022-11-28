@@ -4,11 +4,17 @@ module for implementing the discovery section of the api
 import os
 import psutil
 from fastapi import APIRouter
+from ocrd_utils import getLogger
 from ocrd_webapi.models.discovery import DiscoveryResponse
+from ocrd_webapi.utils import (
+    safe_init_logging,
+)
 
 router = APIRouter(
     tags=["Discovery"],
 )
+safe_init_logging()
+log = getLogger('ocrd_webapi.workflow')
 
 
 class Discovery:
@@ -23,7 +29,17 @@ class Discovery:
         res = DiscoveryResponse()
         res.ram = psutil.virtual_memory().total / (1024.0 ** 3)
         res.cpu_cores = os.cpu_count()
+        # TODO: Whether cuda is available or not
         res.has_cuda = False
-        res.has_ocrd_all = True
-        res.has_docker = True
+        res.cuda_version = "Default: Cuda not available"
+        # TODO: Whether ocrd-all (maximum) image is available or not
+        res.has_ocrd_all = False
+        res.ocrd_all_version = "Default: OCR-D not available"
+        # TODO: Whether docker is installed or not
+        res.has_docker = False
         return res
+
+
+@router.get("/discovery", responses={"200": {"model": DiscoveryResponse}})
+async def discovery():
+    return Discovery.discovery()

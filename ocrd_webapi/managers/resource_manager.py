@@ -8,6 +8,8 @@ from ocrd_webapi.utils import generate_id
 
 
 class ResourceManager:
+    # Warning: Don't change the defaults
+    # till everything is configured properly
     def __init__(self, resource_dir, resource_url, resource_router, logger_label):
         self.log = getLogger(logger_label)
         self._resource_dir = resource_dir  # Base directory of this manager

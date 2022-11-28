@@ -15,6 +15,8 @@ from ocrd_webapi.utils import (
 
 
 class WorkflowManager(ResourceManager):
+    # Warning: Don't change these defaults
+    # till everything is configured properly
     def __init__(self,
                  workflows_dir=WORKFLOWS_DIR,
                  resource_url=SERVER_URL,
