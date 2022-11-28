@@ -4,17 +4,11 @@ module for implementing the discovery section of the api
 import os
 import psutil
 from fastapi import APIRouter
-from ocrd_utils import getLogger
 from ocrd_webapi.models.discovery import DiscoveryResponse
-from ocrd_webapi.utils import (
-    safe_init_logging,
-)
 
 router = APIRouter(
     tags=["Discovery"],
 )
-safe_init_logging()
-log = getLogger('ocrd_webapi.workflow')
 
 
 class Discovery:
