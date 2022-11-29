@@ -5,14 +5,12 @@ import bagit
 import tempfile
 import uuid
 import zipfile
-import requests
 
 from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
 from ocrd_utils import (
     initLogging,
-    pushd_popd
 )
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd_webapi.constants import (
@@ -24,7 +22,6 @@ from ocrd_webapi.exceptions import (
 
 __all__ = [
     "bagit_from_url",
-    "bagit_from_url2",
     "extract_bag_dest",
     "extract_bag_info",
     "find_upwards",
