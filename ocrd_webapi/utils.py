@@ -5,11 +5,16 @@ import bagit
 import tempfile
 import uuid
 import zipfile
+import requests
+from uuid import uuid4
 
 from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
-from ocrd_utils import initLogging
+from ocrd_utils import (
+    initLogging,
+    pushd_popd
+)
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd_webapi.constants import (
     SERVER_URL,
@@ -144,3 +149,43 @@ def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
 
     fullpath = cwd / filename
     return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)
+
+
+def bagit_from_url(mets_url, file_grp=["DEFAULT"], ocrd_identifier=None) -> str:
+    """
+    Create OCR-D-ZIPFILE from a mets-URL.
+
+    Downloads the mets from the url, donwloads files for provided filegrps and creates a OCRD-ZIP
+    that
+
+    Args:
+        mets_url:                   url to to a metsfile
+        file_grp (optional):        filegroups to download
+        ocrd_identifier (optional): Value for key 'Ocrd-Identifier' in bag-info.txt of created bag
+
+    Returns:
+        path to the created bag in temporary directory
+    """
+    if not ocrd_identifier:
+        ocrd_identifier = f"ocrd-{uuid4()}"
+
+    folder = tempfile.mkdtemp()
+    dest = os.path.join(folder, f"{ocrd_identifier}.zip")
+    with pushd_popd(folder):
+        # download mets
+        with requests.get(mets_url, stream=True) as response:
+            response.raise_for_status()
+            with open("mets.xml", 'wb') as fout:
+                for chunk in response.iter_content(chunk_size=8192):
+                    fout.write(chunk)
+        resolver = Resolver()
+        workspace = Workspace(resolver, ".")
+        # remove unneeded file-grps from workspace:
+        remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
+        for g in remove_groups:
+            workspace.remove_file_group(g, recursive=True, force=True)
+
+        workspace.save_mets()
+        # bagger automatically downlads the files/groups
+        WorkspaceBagger(resolver).bag(workspace, dest=dest, ocrd_identifier=ocrd_identifier)
+        return dest
