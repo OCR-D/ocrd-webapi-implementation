@@ -87,14 +87,14 @@ async def post_workspace(workspace: UploadFile):
     curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F workspace=@things/example_ws.ocrd.zip  # noqa
     """
     try:
-        workspace_url = await workspace_manager.create_workspace_from_zip(workspace)
+        ws_url, ws_id = await workspace_manager.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception:
         log.exception("unexpected error in post_workspace")
         raise ResponseException(500, {"error": "internal server error"})
 
-    return WorkspaceRsrc.create(workspace_url=workspace_url)
+    return WorkspaceRsrc.create(workspace_url=ws_url)
 
 
 @router.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})

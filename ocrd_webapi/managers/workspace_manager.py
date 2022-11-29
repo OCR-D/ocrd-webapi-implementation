@@ -55,7 +55,7 @@ class WorkspaceManager(ResourceManager):
 
         os.remove(zip_dest)
         workspace_url = self.get_resource(workspace_id, local=False)
-        return workspace_url
+        return workspace_url, workspace_id
 
     async def update_workspace(self, file, workspace_id):
         """
@@ -65,7 +65,8 @@ class WorkspaceManager(ResourceManager):
         :py:func:`ocrd_webapi.workspace_manager.WorkspaceManager.create_workspace_from_zip
         """
         self._delete_resource_dir(workspace_id)
-        return await self.create_workspace_from_zip(file, workspace_id)
+        ws_url, ws_id = await self.create_workspace_from_zip(file, workspace_id)
+        return ws_url
 
     # TODO: Refine this and get rid of the low level os.path bullshits
     async def get_workspace_bag(self, workspace_id):
