@@ -9,6 +9,7 @@ help:
 	@echo "    start-mongo    Start MongoDB Docker"
 	@echo "    start-server   Start the WebAPI Server"
 	@echo "    test           Run all available tests"
+	@ech  "    test-dev       Run only api tests (faster)"
 	@echo ""
 	@echo "  Variables"
 	@echo "    PYTHON         Default '$(PYTHON)'."
@@ -31,3 +32,6 @@ start-server:
 
 test:
 	pytest tests
+
+test-dev:
+	pytest tests/*_api.py
