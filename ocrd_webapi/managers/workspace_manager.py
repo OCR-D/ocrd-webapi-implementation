@@ -33,12 +33,13 @@ class WorkspaceManager(ResourceManager):
         workspace_urls = self.get_all_resources(local=False)
         return workspace_urls
 
-    async def create_workspace_from_zip(self, file, uid=None):
+    async def create_workspace_from_zip(self, file, uid=None, file_stream=True):
         """
         create a workspace from an ocrd-zipfile
 
         Args:
             file: ocrd-zip of workspace
+            file_stream: Whether the received file is UploadFile type
             uid (str): the uid is used as workspace-directory. If `None`, an uuid is created for
                 this. If corresponding dir already existing, None is returned
         """
@@ -47,7 +48,11 @@ class WorkspaceManager(ResourceManager):
         # TODO: Get rid of this low level os.path access,
         #  should happen inside the Resource manager
         zip_dest = os.path.join(self.__workspaces_dir, workspace_id + ".zip")
-        await self._receive_resource(file, zip_dest)
+        if file_stream:
+            await self._receive_resource(file=file, resource_dest=zip_dest)
+        else:
+            await self._receive_resource2(file_path=file, resource_dest=zip_dest)
+
         bag_info = extract_bag_info(zip_dest, workspace_dir)
 
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
@@ -65,7 +70,7 @@ class WorkspaceManager(ResourceManager):
         :py:func:`ocrd_webapi.workspace_manager.WorkspaceManager.create_workspace_from_zip
         """
         self._delete_resource_dir(workspace_id)
-        ws_url, ws_id = await self.create_workspace_from_zip(file, workspace_id)
+        ws_url, ws_id = await self.create_workspace_from_zip(file=file, uid=workspace_id)
         return ws_url
 
     # TODO: Refine this and get rid of the low level os.path bullshits

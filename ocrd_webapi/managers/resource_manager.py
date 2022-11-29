@@ -117,3 +117,12 @@ class ResourceManager:
             while content:
                 await fpt.write(content)
                 content = await file.read(1024)
+
+    @staticmethod
+    async def _receive_resource2(file_path, resource_dest):
+        with open(file_path, "rb") as fin:
+            with open(resource_dest, "wb") as fout:
+                content = fin.read(1024)
+                while content:
+                    fout.write(content)
+                    content = fin.read(1024)
