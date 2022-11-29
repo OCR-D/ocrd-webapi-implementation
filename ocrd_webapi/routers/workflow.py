@@ -122,9 +122,6 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
     workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
     workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
-    # TODO: Bad temporal solution -> Workflow manager represents itself as a Workspace manager
-    # workspace_url = workflow_manager.get_workspace_resource(wf_job_db.workspace_id, local=False)
-    # workspace_url = to_workspace_url(wf_job_db.workspace_id)
     workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
     workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)
     job_state = wf_job_db.job_state
