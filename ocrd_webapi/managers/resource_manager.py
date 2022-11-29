@@ -14,9 +14,9 @@ class ResourceManager:
         self.log = getLogger(logger_label)
         self._resource_dir = resource_dir  # Base directory of this manager
         self._resource_url = resource_url  # Server URL
-        self.resource_router = resource_router  # Routing key of this manager
+        self._resource_router = resource_router  # Routing key of this manager
 
-        log_msg = f"{self.resource_router}s base directory: {self._resource_dir}"
+        log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
         if not os.path.exists(self._resource_dir):
             Path(self._resource_dir).mkdir(parents=True, exist_ok=True)
             self.log.info(f"Created non-existing {log_msg}")
@@ -85,7 +85,7 @@ class ResourceManager:
         """
         if local:
             return os.path.join(self._resource_dir, resource_id)
-        return f"{self._resource_url}/{self.resource_router}/{resource_id}"
+        return f"{self._resource_url}/{self._resource_router}/{resource_id}"
 
     def _to_resource_job(self, resource_id, job_id, local):
         if self._has_dir(resource_id):
