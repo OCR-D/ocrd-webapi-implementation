@@ -128,6 +128,7 @@ def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
     return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)
 
 
+# TODO: Provide separate functions for the steps below
 def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None, ocrd_identifier=None):
     """
     Create OCRD-ZIP from a mets-URL.
@@ -140,7 +141,7 @@ def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None,
         mets_url:                   url to a mets file
         mets_basename: (optional):  under which name is the downloaded mets saved
         dest: (optional):           parent directory of the mets file and the OCRD-ZIP file
-        file_grp (optional):        file groups to download
+        file_grp (optional):        file groups to download, downloads everything if not set
         ocrd_identifier (optional): Value for key 'Ocrd-Identifier' in bag-info.txt of created bag
 
     Returns:
@@ -148,8 +149,6 @@ def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None,
     """
     if dest is None:
         dest = "/tmp/ocrd_webapi_bags"
-    if file_grp is None:
-        file_grp = ["DEFAULT"]
     if ocrd_identifier is None:
         ocrd_identifier = f"ocrd-{generate_id()}"
 
@@ -163,11 +162,12 @@ def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None,
                                             mets_basename=mets_basename,
                                             download=False)
 
-    # Remove unnecessary file groups from the mets file to reduce the size
-    remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
-    for g in remove_groups:
-        workspace.remove_file_group(g, recursive=True, force=True)
-    workspace.save_mets()
+    if file_grp:
+        # Remove unnecessary file groups from the mets file to reduce the size
+        remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
+        for g in remove_groups:
+            workspace.remove_file_group(g, recursive=True, force=True)
+        workspace.save_mets()
 
     # The ocrd workspace bagger automatically downloads the files/groups
     WorkspaceBagger(resolver).bag(workspace, dest=bag_dest, ocrd_identifier=ocrd_identifier)
