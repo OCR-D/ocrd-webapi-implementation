@@ -115,3 +115,13 @@ class WorkspaceManager(ResourceManager):
         await db.mark_deleted_workspace(workspace_id)
 
         return deleted_workspace_url
+
+    @staticmethod
+    # TODO: Consider static singleton implementation
+    # 1. This is needed inside the Workflow router where we
+    # avoid giving access to the full WorkspaceManager
+    # 2. Probably making the managers to be
+    # static singletons is the right approach here
+    def static_get_resource(resource_id, local):
+        workspace_manager = WorkspaceManager()
+        return workspace_manager.get_resource(resource_id, local)

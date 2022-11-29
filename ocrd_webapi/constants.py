@@ -25,6 +25,8 @@ MONGO_TESTDB = "test-ocrd-webapi"
 BASE_DIR: str = os.getenv("OCRD_WEBAPI_STORAGE_DIR", "/tmp/ocrd-webapi-data")
 # TODO: `JOB_DIR` is not used anywhere, reconsider this decision
 JOB_DIR: str = os.path.join(BASE_DIR, "jobs")
+# Warning: Don't change these 2 defaults
+# till everything is configured properly
 WORKFLOWS_DIR: str = os.path.join(BASE_DIR, "workflows")
 WORKSPACES_DIR: str = os.path.join(BASE_DIR, "workspaces")
 

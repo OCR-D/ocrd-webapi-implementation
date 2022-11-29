@@ -17,12 +17,12 @@ from ocrd_webapi.constants import (
 from ocrd_webapi.exceptions import (
     ResponseException,
 )
+from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import ProcessorArgs
 from ocrd_webapi.models.processor import ProcessorJobRsrc
 from ocrd_webapi.utils import (
     find_upwards,
     safe_init_logging,
-    to_workspace_url,
 )
 
 router = APIRouter(
@@ -140,7 +140,7 @@ async def get_processor_job(processor: str, job_id: str):
     job_info = r.json()
     processor_id = processor
     workspace_id = re.match(r".*[/]([^/]+)/[^/]+$", job_info['path']).group(1)
-    workspace_url = to_workspace_url(workspace_id)
+    workspace_url = WorkspaceManager.static_get_resource(workspace_id, local=False)
     job_state = job_info['state']
     # job_url = to_processor_job_url(job_id) from utils.py
     # TODO: job_url must be sent here, not job_id

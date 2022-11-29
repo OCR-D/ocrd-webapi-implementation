@@ -7,11 +7,8 @@ from ocrd_webapi.exceptions import (
 )
 from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.managers.resource_manager import ResourceManager
-from ocrd_webapi.utils import (
-    generate_id,
-    to_workspace_dir,
-    to_workspace_url,
-)
+from ocrd_webapi.managers.workspace_manager import WorkspaceManager
+from ocrd_webapi.utils import generate_id
 
 
 class WorkflowManager(ResourceManager):
@@ -91,7 +88,7 @@ class WorkflowManager(ResourceManager):
 
         # nf_script is the path to the Nextflow script inside workflow_id
         nf_script_path = self.get_resource_file(workflow_id, file_ext='.nf')
-        workspace_dir = to_workspace_dir(workspace_id)
+        workspace_dir = WorkspaceManager.static_get_resource(workspace_id, local=True)
 
         # TODO: These checks must happen inside the Resource Manager, not here
         if not nf_script_path:
@@ -112,7 +109,7 @@ class WorkflowManager(ResourceManager):
         # Workflow URL
         parameters.append(self.get_resource(workflow_id, local=False))
         # Workspace URL
-        parameters.append(to_workspace_url(workspace_id))
+        parameters.append(WorkspaceManager.static_get_resource(workspace_id, local=False))
 
         return parameters
 

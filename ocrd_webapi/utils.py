@@ -18,7 +18,6 @@ from ocrd_utils import (
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
 from ocrd_webapi.constants import (
     SERVER_URL,
-    WORKSPACES_DIR,
 )
 from ocrd_webapi.exceptions import (
     WorkspaceNotValidException,
@@ -31,27 +30,7 @@ __all__ = [
     "generate_id",
     "read_bag_info_from_zip",
     "safe_init_logging",
-    "to_workspace_url",
-    "to_workspace_dir",
 ]
-
-
-# TODO: Get rid of the rest of of to_* functions
-#  once there is a proper implementation
-def to_workspace_url(workspace_id: str) -> str:
-    """
-    create the url where workspace is available e.g. http://localhost:8000/workspace/{workspace_id}
-
-    does not verify that the workspace_id exists
-    """
-    return f"{SERVER_URL}/workspace/{workspace_id}"
-
-
-def to_workspace_dir(workspace_id: str) -> str:
-    """
-    return path to workspace with id `workspace_id`. No check if existing
-    """
-    return os.path.join(WORKSPACES_DIR, workspace_id)
 
 
 # TODO: This is not used anymore, keeping still around for reference
@@ -151,21 +130,23 @@ def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
     return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)
 
 
-def bagit_from_url(mets_url, file_grp=["DEFAULT"], ocrd_identifier=None) -> str:
+def bagit_from_url(mets_url, file_grp=None, ocrd_identifier=None) -> str:
     """
     Create OCR-D-ZIPFILE from a mets-URL.
 
-    Downloads the mets from the url, donwloads files for provided filegrps and creates a OCRD-ZIP
+    Downloads the mets from the url, downloads files for provided file grps and creates a OCRD-ZIP
     that
 
     Args:
-        mets_url:                   url to to a metsfile
-        file_grp (optional):        filegroups to download
+        mets_url:                   url to a mets file
+        file_grp (optional):        file groups to download
         ocrd_identifier (optional): Value for key 'Ocrd-Identifier' in bag-info.txt of created bag
 
     Returns:
         path to the created bag in temporary directory
     """
+    if file_grp is None:
+        file_grp = ["DEFAULT"]
     if not ocrd_identifier:
         ocrd_identifier = f"ocrd-{uuid4()}"
 
