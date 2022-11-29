@@ -6,7 +6,6 @@ import tempfile
 import uuid
 import zipfile
 import requests
-from uuid import uuid4
 
 from ocrd import Resolver
 from ocrd.workspace import Workspace
@@ -24,6 +23,8 @@ from ocrd_webapi.exceptions import (
 )
 
 __all__ = [
+    "bagit_from_url",
+    "bagit_from_url2",
     "extract_bag_dest",
     "extract_bag_info",
     "find_upwards",
@@ -130,43 +131,48 @@ def find_upwards(filename, cwd: Path = None) -> Union[Path, None]:
     return fullpath if fullpath.exists() else find_upwards(filename, cwd.parent)
 
 
-def bagit_from_url(mets_url, file_grp=None, ocrd_identifier=None) -> str:
+def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None, ocrd_identifier=None):
     """
-    Create OCR-D-ZIPFILE from a mets-URL.
+    Create OCRD-ZIP from a mets-URL.
 
-    Downloads the mets from the url, downloads files for provided file grps and creates a OCRD-ZIP
-    that
+    1. Downloads the mets file from the mets_url
+    2. Downloads all files for the provided file_grp/s
+    3. Creates an OCRD-ZIP
 
     Args:
         mets_url:                   url to a mets file
+        mets_basename: (optional):  under which name is the downloaded mets saved
+        dest: (optional):           parent directory of the mets file and the OCRD-ZIP file
         file_grp (optional):        file groups to download
         ocrd_identifier (optional): Value for key 'Ocrd-Identifier' in bag-info.txt of created bag
 
     Returns:
-        path to the created bag in temporary directory
+        Path of the created zip bag
     """
+    if dest is None:
+        dest = "/tmp/ocrd_webapi_bags"
     if file_grp is None:
         file_grp = ["DEFAULT"]
-    if not ocrd_identifier:
-        ocrd_identifier = f"ocrd-{uuid4()}"
+    if ocrd_identifier is None:
+        ocrd_identifier = f"ocrd-{generate_id()}"
 
-    folder = tempfile.mkdtemp()
-    dest = os.path.join(folder, f"{ocrd_identifier}.zip")
-    with pushd_popd(folder):
-        # download mets
-        with requests.get(mets_url, stream=True) as response:
-            response.raise_for_status()
-            with open("mets.xml", 'wb') as fout:
-                for chunk in response.iter_content(chunk_size=8192):
-                    fout.write(chunk)
-        resolver = Resolver()
-        workspace = Workspace(resolver, ".")
-        # remove unneeded file-grps from workspace:
-        remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
-        for g in remove_groups:
-            workspace.remove_file_group(g, recursive=True, force=True)
+    bag_dest = os.path.join(dest, f"{ocrd_identifier}.zip")
+    resolver = Resolver()
+    # Create an OCR-D Workspace from a mets URL
+    # without downloading the files referenced in the mets file
+    workspace = resolver.workspace_from_url(mets_url,
+                                            dest,
+                                            clobber_mets=False,
+                                            mets_basename=mets_basename,
+                                            download=False)
 
-        workspace.save_mets()
-        # bagger automatically downlads the files/groups
-        WorkspaceBagger(resolver).bag(workspace, dest=dest, ocrd_identifier=ocrd_identifier)
-        return dest
+    # Remove unnecessary file groups from the mets file to reduce the size
+    remove_groups = [x for x in workspace.mets.file_groups if x not in file_grp]
+    for g in remove_groups:
+        workspace.remove_file_group(g, recursive=True, force=True)
+    workspace.save_mets()
+
+    # The ocrd workspace bagger automatically downloads the files/groups
+    WorkspaceBagger(resolver).bag(workspace, dest=bag_dest, ocrd_identifier=ocrd_identifier)
+
+    return bag_dest
