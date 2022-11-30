@@ -33,6 +33,12 @@ class WorkspaceManager(ResourceManager):
         workspace_urls = self.get_all_resources(local=False)
         return workspace_urls
 
+    async def create_workspace_from_mets_dir(self, mets_dir, uid=None):
+        workspace_id, workspace_dir = self._create_resource_dir(uid)
+        os.symlink(mets_dir, workspace_dir)
+        workspace_url = self.get_resource(workspace_id, local=False)
+        return workspace_url, workspace_id
+
     async def create_workspace_from_zip(self, file, uid=None, file_stream=True):
         """
         create a workspace from an ocrd-zipfile
@@ -48,9 +54,12 @@ class WorkspaceManager(ResourceManager):
         # TODO: Get rid of this low level os.path access,
         #  should happen inside the Resource manager
         zip_dest = os.path.join(self.__workspaces_dir, workspace_id + ".zip")
+        # TODO: Must be a more optimal way to achieve this
         if file_stream:
+            # Handles the UploadFile type file
             await self._receive_resource(file=file, resource_dest=zip_dest)
         else:
+            # Handles the file paths
             await self._receive_resource2(file_path=file, resource_dest=zip_dest)
 
         bag_info = extract_bag_info(zip_dest, workspace_dir)
