@@ -1,19 +1,20 @@
-aiofiles
+aiofiles>=0.8.0
 asgiref>=3.5.2 # Seems not needed, should be verified
-beanie
-fastapi
-httpx
+beanie==1.11.7
+fastapi>=0.78.0
+httpx>=0.23.0
 iniconfig>=1.1.1 # Seems not needed, should be verified
 ocrd
 pika>=1.2.0
 psutil
 py>=1.11.0 # Seems not needed, should be verified
-pytest
+pytest>=7.1.2
 pytest-asyncio>=0.18.3
 pytest-docker>=1.0.0
 pytest-env>=0.6.2
 pytest-pudb>=0.7.0 # Seems not needed, should be verified
-python-dotenv
+python-dotenv>=0.20.0
 python-multipart>=0.0.5
 tomli>=2.0.0
 uvicorn>=0.17.6
+
