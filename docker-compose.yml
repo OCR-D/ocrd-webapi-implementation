@@ -1,6 +1,30 @@
-version: "3"
+version: '3.8'
 
 services:
+  webapi-rabbit-mq:
+    image: rabbit-mq
+    container_name: ocrd-webapi-rabbit-mq
+    hostname: rabbit-mq-host
+    build:
+      context: ./ocrd_webapi/rabbitmq
+      dockerfile: ./Dockerfile-RabbitMQ
+    environment:
+      - 'OCRD_WEBAPI_RABBIT_MQ_HOST=${OCRD_WEBAPI_RABBIT_MQ_HOST}'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/
+    networks:
+      - ocrd-webapi
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
+      interval: 120s
+      timeout: 30s
+      retries: 5
+
   webapi:
     build: .
     container_name: ocrd-webapi
@@ -13,6 +37,8 @@ services:
       - 'OCRD_PROCESSOR_CONFIG_PATH=${OCRD_PROCESSOR_CONFIG_PATH}'
     ports:
       - "${OCRD_WEBAPI_PORT}:8000"
+    networks:
+      - ocrd-webapi
     volumes:
       - "${OCRD_WEBAPI_DATADIR_HOST}/webapi-data:${OCRD_WEBAPI_STORAGE_DIR}"
       - ./things/processor_config_docker.yml:/processor_config.yml
@@ -22,6 +48,8 @@ services:
     container_name: ocrd-mongodb
     ports:
       - "${OCRD_WEBAPI_MONGO_PORT}:27017"
+    networks:
+      - ocrd-webapi
     volumes:
       - "${OCRD_WEBAPI_DATADIR_HOST}/mongo-data:/data/db"
 
@@ -101,3 +129,10 @@ services:
       - "olena-binarize"
       - "--address"
       - "0.0.0.0:5050:${OCRD_WEBAPI_DB_URL}"
+
+networks:
+  ocrd-webapi:
+    name: ocrd-webapi
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450

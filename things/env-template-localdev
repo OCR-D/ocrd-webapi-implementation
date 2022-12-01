@@ -22,3 +22,8 @@ OCRD_PROCESSOR_CONFIG_PATH=processor_config.yml
 # uploading workflows is restricted. Leave empty to disable uploading workflows
 OCRD_WEBAPI_USERNAME=test
 OCRD_WEBAPI_PASSWORD=test
+
+# gets replaced with `rabbit-mq-host` when the RabbitMQ runs inside a docker container
+OCRD_WEBAPI_RABBIT_MQ_HOST=localhost
+OCRD_WEBAPI_RABBIT_MQ_PORT=5672
+OCRD_WEBAPI_RABBIT_MQ_MANAGEMENT_PORT=15672

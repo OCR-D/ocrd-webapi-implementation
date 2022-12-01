@@ -1,0 +1,7 @@
+# "rabbit-mq-host" when Dockerized
+rabbit_mq_host = "localhost"
+rabbit_mq_port = 5672
+
+default_exchange_name = "webapi_default_exchanger"
+default_exchange_type = "direct"
+default_queue = "default-ocrd-webapi-queue"
