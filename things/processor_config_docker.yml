@@ -1,5 +1,0 @@
-ocrd-dummy:               http://ocrd-dummy:5050
-ocrd-cis-ocropy-binarize: http://ocrd-cis-ocropy-binarize:5050
-ocrd-eynollah-segment:    http://ocrd-eynollah-segment:5050
-ocrd-calamari-recognize:  http://ocrd-calamari-recognize:5050
-ocrd-olena-binarize:      http://ocrd-olena-binarize:5050

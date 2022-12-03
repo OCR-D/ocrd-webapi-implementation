@@ -2,7 +2,6 @@ import os
 import shutil
 import pytest
 import requests
-from pathlib import Path
 from pymongo import MongoClient
 
 from fastapi.testclient import TestClient
@@ -22,22 +21,6 @@ from .utils_test import (
     parse_resource_id,
 )
 
-"""
-Ignore - left for reference
-
-TEST_WS_DIR = str("/tmp/ocrd_webapi_test/workspaces")
-TEST_WF_DIR = str("/tmp/ocrd_webapi_test/workflows")
-
-def pytest_sessionstart(session):
-    Path(TEST_WS_DIR).mkdir(parents=True, exist_ok=True)
-    Path(TEST_WF_DIR).mkdir(parents=True, exist_ok=True)
-
-def pytest_sessionfinish(session, exitstatus):
-    if exitstatus == 0:
-        shutil.rmtree(TEST_WS_DIR)
-        shutil.rmtree(TEST_WF_DIR)
-"""
-
 
 @pytest.fixture(scope='session')
 def client(start_docker):
@@ -47,6 +30,7 @@ def client(start_docker):
 
 @pytest.fixture(scope="session")
 def start_docker(docker_ip, docker_services, do_before_all_tests):
+    # This returns 6701, the port configured inside tests/docker-compose.yml
     port = docker_services.port_for("mongo", 27017)
     url = f"http://{docker_ip}:{port}"
     docker_services.wait_until_responsive(
@@ -88,12 +72,19 @@ def docker_compose_project_name(docker_compose_project_name):
 # Fixtures related to the Mongo DB
 @pytest.fixture(scope="session", name='mongo_client')
 def _fixture_mongo_client(start_docker):
+    # The value of the DB_URL here comes from the pyproject.toml file
+    # -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi
+    # Not obvious and happens in a wacky way.
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
 
 @pytest.fixture(scope="session", name='workspace_mongo_coll')
 def _fixture_workspace_mongo_coll(mongo_client):
+    # Again, the MONGO_TESTDB has to match exactly
+    # test-ocrd-webapi, the suffix of
+    # OCRD_WEB_API_DB_URL inside pyproject.toml file
+    # This is again not straightforward to be understood
     mydb = mongo_client[MONGO_TESTDB]
     workspace_coll = mydb["workspace"]
     yield workspace_coll

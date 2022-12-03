@@ -33,7 +33,7 @@ app = FastAPI(
     ],
 )
 app.include_router(discovery.router)
-app.include_router(processor.router)
+# app.include_router(processor.router)
 app.include_router(workflow.router)
 app.include_router(workspace.router)
 

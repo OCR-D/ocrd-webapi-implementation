@@ -27,8 +27,10 @@ Implementation of [OCR-D](https://ocr-d.de/en/) [webAPI](https://github.com/OCR-
 
 ## Run in Docker
 ### clone
-`git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
-`cd ocrd-webapi-implementation`
+```bash
+git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
+cd ocrd-webapi-implementation`
+```
 
 ### install nextflow
 - necessarry if workflows should be run
@@ -42,18 +44,25 @@ docker-compose --env-file things/env-template-docker up -d
 ```
 
 ### test if running
-- `curl localhost:5050`
-- `curl localhost:5050/workspaces`
-
+```bash
+curl localhost:5050
+curl localhost:5050/workspaces
+```
 
 ## Run locally for development
 ### clone
-`git clone https://github.com/OCR-D/ocrd-webapi-implementation.git`
-`cd ocrd-webapi-implementation`
+```bash
+git clone https://github.com/OCR-D/ocrd-webapi-implementation.git
+cd ocrd-webapi-implementation
+```
+
 
 ### Create virtual environment and start it
-`make venv`
-`. venv/bin/activate`
+```bash
+make venv
+. venv/bin/activate
+```
+
 - TODO: this does not work if python3.7 is not present as on my own machine. How to get a python
   3.7 on any linux distro?
 
