@@ -4,7 +4,7 @@ services:
   webapi-rabbit-mq:
     image: rabbitmq
     container_name: ocrd-rabbitmq
-    hostname: rabbit-mq-host
+    # hostname: rabbit-mq-host
     build:
       context: ./ocrd_webapi/rabbitmq
       dockerfile: ./Dockerfile-RabbitMQ

@@ -2,7 +2,6 @@ __all__ = [
   "Consumer",
   "MessageExchanger",
   "Producer",
-
 ]
 
 from .consumer import Consumer

@@ -23,13 +23,6 @@ dependencies = {file = ["requirements.txt"]}
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 norecursedirs = "tests/utils"
-# for this to work pytest-env has to be installed
-env = [
-	"OCRD_WEBAPI_STORAGE_DIR = /tmp/ocrd_webapi_test",
-	"OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi",
-	"OCRD_WEBAPI_USERNAME = test",
-	"OCRD_WEBAPI_PASSWORD = test",
-]
 
 [flake8]
 max-line-length = 100

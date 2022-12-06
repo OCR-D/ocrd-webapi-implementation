@@ -2,6 +2,7 @@
 rabbit_mq_host = "localhost"
 rabbit_mq_port = 5672
 
-default_exchange_name = "webapi_default_exchanger"
+default_exchange_name = "ocrd-webapi-default-exchanger"
 default_exchange_type = "direct"
-default_queue = "default-ocrd-webapi-queue"
+default_queue = "ocrd-webapi-default-queue"
+default_router = "ocrd-webapi-default-router"

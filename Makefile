@@ -10,32 +10,39 @@ help:
 	@echo "    start-rabbitmq Start RabbitMQ Docker container"
 	@echo "    start-server   Start the WebAPI Server"
 	@echo "    test           Run all available tests"
-	@echo "    test-api       Run only api tests (faster)"
+	@echo "    test-api       Run only API tests (faster)"
+	@echo "    test-rabbitmq  Run only RabbitMQ tests (faster)"
 	@echo ""
 	@echo "  Variables"
 	@echo "    PYTHON         Default '$(PYTHON)'."
 	@echo "    REQS           Default '$(REQUIREMENTSTXT)'."
 
-
 venv:
 	$(PYTHON) -m venv webapi-venv
 	webapi-venv/bin/pip install -r $(REQUIREMENTSTXT)
 
-start:
-	docker-compose --env-file things/env-template-localdev up -d mongo
-		uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload
+start: start-mongo start-rabbitmq start-server
 
 start-mongo:
-		docker-compose --env-file things/env-template-localdev up -d mongo
+	docker-compose --env-file things/env-template-localdev up -d mongo
 
 start-rabbitmq:
-		docker-compose --env-file things/env-template-localdev up -d webapi-rabbit-mq
+	docker-compose --env-file things/env-template-localdev up -d webapi-rabbit-mq
 
 start-server:
-		uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload
+	uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload
 
-test:
-	pytest tests
+test: test-api test-rabbitmq test-utils
 
 test-api:
-	pytest tests/*_api.py
+	OCRD_WEBAPI_STORAGE_DIR='/tmp/ocrd_webapi_test' \
+	OCRD_WEBAPI_DB_URL='mongodb://localhost:6701/test-ocrd-webapi' \
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
+	pytest tests/_api.py
+
+test-rabbitmq:
+	pytest tests/*rabbit*.py
+
+test-utils:
+	pytest tests/*utils*.py

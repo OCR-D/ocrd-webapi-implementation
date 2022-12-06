@@ -11,6 +11,18 @@
       "password": "admin",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
+    },
+    {
+      "name": "default-consumer",
+      "password": "default-consumer",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    },
+    {
+      "name": "default-publisher",
+      "password": "default-publisher",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
     }
   ],
   "vhosts": [
@@ -28,6 +40,20 @@
     },
     {
       "user": "admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "default-consumer",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "default-publisher",
       "vhost": "/",
       "configure": ".*",
       "write": ".*",
