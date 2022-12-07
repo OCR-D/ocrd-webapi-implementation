@@ -35,7 +35,6 @@ class RMQConsumer(RMQConnector):
             try:
                 self._connection = self._open_connection()
                 self._connection.ioloop.start()
-                self.start_consuming()
             except KeyboardInterrupt:
                 self.stop()
                 break

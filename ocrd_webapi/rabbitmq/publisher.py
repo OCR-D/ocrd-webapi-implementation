@@ -130,8 +130,8 @@ class RMQPublisher(RMQConnector):
 
 
 def main():
-    username = "default-producer"
-    password = "default-producer"
+    username = "default-publisher"
+    password = "default-publisher"
     host = "localhost"
     port = "5672"
     # The default virtual host /

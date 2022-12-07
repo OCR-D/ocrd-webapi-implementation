@@ -103,10 +103,7 @@ class RMQConnector:
         self._channel = channel
         self._logger.info('Adding on close callback of channel')
         self._channel.add_on_close_callback(self._on_channel_closed)
-        self._set_qos()
         self._declare_exchange_agent()
-        # Publisher/Consumer has to overwrite this method
-        self._start_own()
 
     def _on_channel_closed(self, channel, reason):
         self._logger.warning(f'Channel {channel} was closed. Reason: {reason}')
@@ -160,6 +157,7 @@ class RMQConnector:
 
     def _on_queue_bound(self, frame):
         self._logger.debug(f'Queue bounded successfully: {frame}')
+        self._set_qos()
 
     def _set_qos(self, callback=None):
         """
@@ -177,6 +175,8 @@ class RMQConnector:
     def _on_basic_qos_ok(self, frame):
         self._logger.info(f'QOS set to: {self._prefetch_count}')
         self._logger.debug(f'QOS set in frame: {frame}')
+        # Publisher/Consumer has to overwrite this method
+        self._start_own()
 
     # Both the Publisher and Consumer
     # must overwrite this method
