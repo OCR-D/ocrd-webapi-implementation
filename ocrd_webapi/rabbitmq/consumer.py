@@ -124,6 +124,8 @@ class RMQConsumer(RMQConnector):
 
 
 def main():
+    # Configured with definitions.json when building the RabbitMQ image
+    # Check Dockerfile-RabbitMQ
     username = "default-consumer"
     password = "default-consumer"
     host = "localhost"
@@ -143,4 +145,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # RabbitMQ Server must be running before starting the example
+    # I.e., make start-rabbitmq
     main()
