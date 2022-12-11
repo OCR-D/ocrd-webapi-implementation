@@ -7,91 +7,98 @@ RabbitMQ documentation.
 import json
 import logging
 import pika
+import time
 
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_ROUTER,
     LOG_FORMAT,
-    LOG_LEVEL
+    LOG_LEVEL,
+    RABBIT_MQ_HOST as HOST,
+    RABBIT_MQ_PORT as PORT,
+    RABBIT_MQ_VHOST as VHOST,
 )
 from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, url, logger=None):
+    def __init__(self, host=HOST, port=PORT, vhost=VHOST, logger=None):
         if logger is None:
             logger = logging.getLogger(__name__)
         logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
-        super().__init__(url, logger)
-        self._message_counter = None
-        self._acked_counter = None
-        self._nacked_counter = None
-        self._deliveries = None
+        super().__init__(logger=logger, host=host, port=port, vhost=vhost)
+
+        self._message_counter = 0
+        self._deliveries = {}
+        self._acked_counter = 0
+        self._nacked_counter = 0
         self._running = True
 
-    def example_run(self):
-        while self._running:
-            self._connection = None
-            self._deliveries = {}
-            self._acked_counter = 0
-            self._nacked_counter = 0
-            self._message_counter = 0
-
-            try:
-                self._connection = self._open_connection()
-                self._connection.ioloop.start()
-            except KeyboardInterrupt:
-                self.stop()
-                if self._connection is not None:
-                    if not self._connection.is_closed:
-                        self._connection.ioloop.start()
-
-        self._logger.info('Publisher has stopped')
-
-    def stop(self):
-        self._logger.info('Stopping the publisher')
-        self._running = False
-        self._close_channel()
-        # TODO: We may not want to close the connection here
-        #  consider different scenarios
-        self._close_connection()
-
-    def publish_message(self):
-        if self._channel is None or not self._channel.is_open:
-            return
-
-        app_id = 'webapi-publisher'
-        content_type = 'application/json'
-        headers = {'Header1': 'Value1',
-                   'Header2': 'Value2',
-                   'Header3': 'Value3'
-                   }
-
-        properties = pika.BasicProperties(
-            app_id=app_id,
-            content_type=content_type,
-            headers=headers
+    def authenticate_and_connect(self, username, password):
+        credentials = pika.credentials.PlainCredentials(
+            username,
+            password
         )
+        self._connection = RMQConnector.open_blocking_connection(
+            host=self._host,
+            port=self._port,
+            vhost=self._vhost,
+            credentials=credentials,
+        )
+        self._channel = RMQConnector.open_blocking_channel(self._connection)
 
-        message = f'Example message #{self._message_counter}'
-        self._channel.basic_publish(
-            DEFAULT_EXCHANGER_NAME,
-            DEFAULT_ROUTER,
-            json.dumps(message, ensure_ascii=False),
-            properties
+    def setup_defaults(self):
+        RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
+
+    def example_run(self):
+        while True:
+            try:
+                messages = 1
+                message = f"#{messages}"
+                self.publish_to_queue(queue_name=DEFAULT_ROUTER, message=message)
+                messages += 1
+                time.sleep(2)
+            except KeyboardInterrupt:
+                self._logger.info("Keyboard interruption detected. Closing down peacefully.")
+                exit(0)
+            # TODO: Clean leftovers here and inform the RabbitMQ
+            #  server about the disconnection of the publisher
+            # TODO: Implement the reconnect mechanism
+            except Exception:
+                reconnect_delay = 10
+                self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
+                time.sleep(reconnect_delay)
+
+    def publish_to_queue(self, queue_name: str, message: str, properties=None):
+        if properties is None:
+            headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
+            properties = pika.BasicProperties(
+                app_id='webapi-processing-broker',
+                content_type='application/json',
+                headers=headers
+            )
+
+        # Note: There is no way to publish to a queue directly.
+        # Publishing happens through an exchange agent with
+        # a routing key - specified when binding the queue to the exchange
+        RMQConnector.basic_publish(
+            self._channel,
+            exchange_name=DEFAULT_EXCHANGER_NAME,
+            # The routing key and the queue name must match!
+            routing_key=queue_name,
+            message_body=json.dumps(message, ensure_ascii=False),
+            properties=properties
         )
 
         self._message_counter += 1
         self._deliveries[self._message_counter] = True
         self._logger.info(f'Published message #{self._message_counter}')
 
-    def _enable_delivery_confirmations(self, callback=None):
-        self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
-        if callback is None:
-            callback = self._on_delivery_confirmation
-        self._channel.confirm_delivery(callback)
+    def enable_delivery_confirmations(self):
+        self._logger.info('Enabling delivery confirmations (Confirm.Select RPC)')
+        RMQConnector.confirm_delivery(channel=self._channel)
 
-    def _on_delivery_confirmation(self, frame):
+    def __on_delivery_confirmation(self, frame):
         confirmation_type = frame.method.NAME.split('.')[1].lower()
         delivery_tag: int = frame.method.delivery_tag
         ack_multiple = frame.method.multiple
@@ -121,32 +128,19 @@ class RMQPublisher(RMQConnector):
             '%i were acked and %i were nacked', self._message_counter,
             len(self._deliveries), self._acked_counter, self._nacked_counter)
 
-    def _start_own(self):
-        self._enable_delivery_confirmations()
-        messages = 5
-        while messages > 0:
-            self.publish_message()
-            messages -= 1
-
 
 def main():
+    # Connect to localhost:5672 by
+    # using the virtual host "/" (%2F)
+    publisher = RMQPublisher(host="localhost", port=5672, vhost="/")
     # Configured with definitions.json when building the RabbitMQ image
     # Check Dockerfile-RabbitMQ
-    username = "default-publisher"
-    password = "default-publisher"
-    host = "localhost"
-    port = "5672"
-    # The default virtual host /
-    vhost = "%2F"
-    connection_attempts = 3
-    heartbeat = 3600
-    amqp = f"amqp://{username}:{password}@{host}:{port}/{vhost}"
-    amqp_parameters = f"connection_attempts={connection_attempts}&heartbeat={heartbeat}"
-    amqp_url = f"{amqp}?{amqp_parameters}"
-
-    # Connect to localhost:5672 with username and
-    # password by using the virtual host "/" (%2F)
-    publisher = RMQPublisher(amqp_url)
+    publisher.authenticate_and_connect(
+        username="default-publisher",
+        password="default-publisher"
+    )
+    publisher.setup_defaults()
+    publisher.enable_delivery_confirmations()
     publisher.example_run()
 
 

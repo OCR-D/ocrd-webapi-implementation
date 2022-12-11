@@ -9,6 +9,7 @@ __all__ = [
     "DEFAULT_ROUTER",
     "RABBIT_MQ_HOST",
     "RABBIT_MQ_PORT",
+    "RABBIT_MQ_VHOST",
     "RECONNECT_WAIT",
     "RECONNECT_TRIES",
     "PREFETCH_COUNT",
@@ -29,6 +30,7 @@ DEFAULT_ROUTER: str = TOML_CONFIG["default_router"]
 # "rabbit-mq-host" when Dockerized
 RABBIT_MQ_HOST: str = TOML_CONFIG["rabbit_mq_host"]
 RABBIT_MQ_PORT: int = TOML_CONFIG["rabbit_mq_port"]
+RABBIT_MQ_VHOST: str = TOML_CONFIG["rabbit_mq_vhost"]
 
 # Wait seconds before next reconnect try
 RECONNECT_WAIT = 5
