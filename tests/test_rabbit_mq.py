@@ -35,7 +35,7 @@ def test_consume_2_messages_from_rabbitmq(rabbitmq_consumer):
         auto_ack=True
     )
     assert method_frame.delivery_tag == 1
-    assert method_frame.message_count == 1
+    assert method_frame.message_count == 1  # messages left in the queue
     assert method_frame.redelivered is False
     assert method_frame.exchange == RABBITMQ_TEST_DEFAULT
     assert method_frame.routing_key == RABBITMQ_TEST_DEFAULT
@@ -47,8 +47,8 @@ def test_consume_2_messages_from_rabbitmq(rabbitmq_consumer):
         queue_name=RABBITMQ_TEST_DEFAULT,
         auto_ack=True
     )
-    assert method_frame.delivery_tag == 1
-    assert method_frame.message_count == 1
+    assert method_frame.delivery_tag == 2
+    assert method_frame.message_count == 0  # messages left in the queue
     assert method_frame.redelivered is False
     assert method_frame.exchange == RABBITMQ_TEST_DEFAULT
     assert method_frame.routing_key == RABBITMQ_TEST_DEFAULT
