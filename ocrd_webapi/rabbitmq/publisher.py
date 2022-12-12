@@ -28,11 +28,11 @@ class RMQPublisher(RMQConnector):
         logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
-        self._message_counter = 0
-        self._deliveries = {}
-        self._acked_counter = 0
-        self._nacked_counter = 0
-        self._running = True
+        self.message_counter = 0
+        self.deliveries = {}
+        self.acked_counter = 0
+        self.nacked_counter = 0
+        self.running = True
 
     def authenticate_and_connect(self, username, password):
         credentials = pika.credentials.PlainCredentials(
@@ -69,7 +69,9 @@ class RMQPublisher(RMQConnector):
                 self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
                 time.sleep(reconnect_delay)
 
-    def publish_to_queue(self, queue_name: str, message: str, properties=None):
+    def publish_to_queue(self, queue_name: str, message: str, exchange_name=None, properties=None):
+        if exchange_name is None:
+            exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
             headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
             properties = pika.BasicProperties(
@@ -83,16 +85,16 @@ class RMQPublisher(RMQConnector):
         # a routing key - specified when binding the queue to the exchange
         RMQConnector.basic_publish(
             self._channel,
-            exchange_name=DEFAULT_EXCHANGER_NAME,
+            exchange_name=exchange_name,
             # The routing key and the queue name must match!
             routing_key=queue_name,
             message_body=json.dumps(message, ensure_ascii=False),
             properties=properties
         )
 
-        self._message_counter += 1
-        self._deliveries[self._message_counter] = True
-        self._logger.info(f'Published message #{self._message_counter}')
+        self.message_counter += 1
+        self.deliveries[self.message_counter] = True
+        self._logger.info(f'Published message #{self.message_counter}')
 
     def enable_delivery_confirmations(self):
         self._logger.info('Enabling delivery confirmations (Confirm.Select RPC)')
@@ -108,25 +110,25 @@ class RMQPublisher(RMQConnector):
                           f'(multiple: {ack_multiple})')
 
         if confirmation_type == 'ack':
-            self._acked_counter += 1
+            self.acked_counter += 1
         elif confirmation_type == 'nack':
-            self._nacked_counter += 1
+            self.nacked_counter += 1
 
-        del self._deliveries[delivery_tag]
+        del self.deliveries[delivery_tag]
 
         if ack_multiple:
-            for tmp_tag in list(self._deliveries.keys()):
+            for tmp_tag in list(self.deliveries.keys()):
                 if tmp_tag <= delivery_tag:
-                    self._acked_counter += 1
-                    del self._deliveries[tmp_tag]
+                    self.acked_counter += 1
+                    del self.deliveries[tmp_tag]
 
         # TODO: Check here for stale entries inside the _deliveries
         #  and attempt to re-delivery with max amount of tries (not defined yet)
 
         self._logger.info(
             'Published %i messages, %i have yet to be confirmed, '
-            '%i were acked and %i were nacked', self._message_counter,
-            len(self._deliveries), self._acked_counter, self._nacked_counter)
+            '%i were acked and %i were nacked', self.message_counter,
+            len(self.deliveries), self.acked_counter, self.nacked_counter)
 
 
 def main():

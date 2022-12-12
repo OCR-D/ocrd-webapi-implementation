@@ -26,12 +26,12 @@ class RMQConsumer(RMQConnector):
         logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
-        self._consumer_tag = None
-        self._consuming = False
-        self._was_consuming = False
-        self._closing = False
+        self.consumer_tag = None
+        self.consuming = False
+        self.was_consuming = False
+        self.closing = False
 
-        self._reconnect_delay = 0
+        self.reconnect_delay = 0
 
     def authenticate_and_connect(self, username, password):
         credentials = pika.credentials.PlainCredentials(
@@ -52,7 +52,7 @@ class RMQConsumer(RMQConnector):
     def example_run(self):
         self.configure_consuming()
         try:
-            self._channel.start_consuming()
+            self.start_consuming()
         except KeyboardInterrupt:
             self._logger.info("Keyboard interruption detected. Closing down peacefully.")
             exit(0)
@@ -64,18 +64,35 @@ class RMQConsumer(RMQConnector):
             self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
             time.sleep(reconnect_delay)
 
+    def get_one_message(self, queue_name, auto_ack=False):
+        message = None
+        if self._channel and self._channel.is_open:
+            message = self._channel.basic_get(
+                queue=queue_name,
+                auto_ack=auto_ack
+            )
+        return message
+
     def configure_consuming(self, queue_name=None):
         self._logger.info('Issuing consumer related RPC commands')
         self._logger.info('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
         if queue_name is None:
             queue_name = DEFAULT_QUEUE
-        self._consumer_tag = self._channel.basic_consume(
+        self.consumer_tag = self._channel.basic_consume(
             queue_name,
             self.__on_message_received
         )
-        self._was_consuming = True
-        self._consuming = True
+        self.was_consuming = True
+        self.consuming = True
+
+    def start_consuming(self):
+        if self._channel and self._channel.is_open:
+            self._channel.start_consuming()
+
+    def get_waiting_message_count(self):
+        if self._channel and self._channel.is_open:
+            return self._channel.get_waiting_message_count()
 
     def __on_consumer_cancelled(self, frame):
         self._logger.info(f'The consumer was cancelled remotely in frame: {frame}')

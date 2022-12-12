@@ -272,6 +272,7 @@ class RMQConnector:
 
     @staticmethod
     def basic_consume(channel):
+        # TODO: provide a general consume method here as well
         pass
 
     @staticmethod

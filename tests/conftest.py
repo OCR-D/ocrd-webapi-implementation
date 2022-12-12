@@ -1,5 +1,7 @@
 import os
 import shutil
+
+import pika.credentials
 import pytest
 import requests
 from pymongo import MongoClient
@@ -21,15 +23,21 @@ from .utils_test import (
     parse_resource_id,
 )
 
+from ocrd_webapi.rabbitmq.connector import RMQConnector
+from ocrd_webapi.rabbitmq.publisher import RMQPublisher
+from ocrd_webapi.rabbitmq.consumer import RMQConsumer
+
+RABBITMQ_TEST_DEFAULT = "ocrd-webapi-test-default"
+
 
 @pytest.fixture(scope='session')
-def client(start_docker):
+def client(start_mongo_docker):
     with TestClient(app) as c:
         yield c
 
 
 @pytest.fixture(scope="session")
-def start_docker(docker_ip, docker_services, do_before_all_tests):
+def start_mongo_docker(docker_ip, docker_services, do_before_all_tests):
     # This returns 6701, the port configured inside tests/docker-compose.yml
     port = docker_services.port_for("mongo", 27017)
     url = f"http://{docker_ip}:{port}"
@@ -71,7 +79,7 @@ def docker_compose_project_name(docker_compose_project_name):
 
 # Fixtures related to the Mongo DB
 @pytest.fixture(scope="session", name='mongo_client')
-def _fixture_mongo_client(start_docker):
+def _fixture_mongo_client(start_mongo_docker):
     # The value of the DB_URL here comes from the pyproject.toml file
     # -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi
     # Not obvious and happens in a wacky way.
@@ -169,3 +177,54 @@ def _fixture_dummy_workspace(asset_workspace1, client):
     response = client.post("/workspace", files=asset_workspace1)
     assert_status_code(response.status_code, expected_floor=2)
     yield parse_resource_id(response)  # returns dummy_workspace_id
+
+
+# NOTE: RabbitMQ docker container must be running before starting the tests
+# TODO: Start the container if not running -> stop it after tests
+@pytest.fixture(scope="session", name='rabbitmq_defaults')
+def _fixture_configure_exchange_and_queue():
+    credentials = pika.credentials.PlainCredentials("test-session", "test-session")
+    temp_connection = RMQConnector.open_blocking_connection(
+        credentials=credentials,
+        host="localhost",
+        port=5672,
+        vhost="test"
+    )
+    temp_channel = RMQConnector.open_blocking_channel(temp_connection)
+    RMQConnector.exchange_declare(
+        channel=temp_channel,
+        exchange_name=RABBITMQ_TEST_DEFAULT,
+        exchange_type="direct",
+        durable=False
+    )
+    RMQConnector.queue_declare(
+        channel=temp_channel,
+        queue_name=RABBITMQ_TEST_DEFAULT,
+        durable=False
+    )
+    RMQConnector.queue_bind(
+        channel=temp_channel,
+        exchange_name=RABBITMQ_TEST_DEFAULT,
+        queue_name=RABBITMQ_TEST_DEFAULT,
+        routing_key=RABBITMQ_TEST_DEFAULT
+    )
+    # Clean all messages inside if any from previous tests
+    RMQConnector.queue_purge(
+        channel=temp_channel,
+        queue_name=RABBITMQ_TEST_DEFAULT
+    )
+
+
+@pytest.fixture(name='rabbitmq_publisher')
+def _fixture_rabbitmq_publisher(rabbitmq_defaults):
+    publisher = RMQPublisher(host="localhost", port=5672, vhost="test")
+    publisher.authenticate_and_connect("test-session", "test-session")
+    publisher.enable_delivery_confirmations()
+    yield publisher
+
+
+@pytest.fixture(name='rabbitmq_consumer')
+def _fixture_rabbitmq_consumer(rabbitmq_defaults):
+    consumer = RMQConsumer(host="localhost", port=5672, vhost="test")
+    consumer.authenticate_and_connect("test-session", "test-session")
+    yield consumer
