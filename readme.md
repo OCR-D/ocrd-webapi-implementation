@@ -145,6 +145,43 @@ OCRD_WEBAPI_DB_URL:
 Important: This is the url where the webapi expects the mongdb to run
 
 OCRD_WEBAPI_STORAGE_DIR:
-Important: Here the webapi stores its workspaces etc. Additionally this is used in docker-compose.
+Important: Here the webapi stores its workspaces etc. Additionally, this is used in docker-compose.
 This is the container-part of a volume mount so that from the host-machine it is possible to access
 the data stored with the webapi
+
+## RabbitMQ Library usage example:
+
+Steps to follow:
+1. Start the rabbitmq docker container:
+```commandline
+make start-rabbitmq
+```
+2. Publisher:
+```bash
+publisher = RMQPublisher(host="localhost", port=5672, vhost="/")
+# The credentials are configured inside definitions.json
+# when building the RabbitMQ docker image
+publisher.authenticate_and_connect(
+	username="default-publisher",
+	password="default-publisher"
+)
+publisher.create_queue(queue_name="queue_name")
+publisher.enable_delivery_confirmations()
+# The message must be a string currently
+# Call this method to publish a message
+publisher.publish_to_queue(queue_name="queue_name", message="message")
+```
+3. Consumer:
+```bash
+consumer = RMQConsumer(host="localhost", port=5672, vhost="/")
+# The credentials are configured inside definitions.json
+# when building the RabbitMQ docker image
+consumer.authenticate_and_connect(
+	username="default-consumer",
+	password="default-consumer"
+)
+# The callback method is called every time a message is consumed
+consumer.configure_consuming(queue_name="queue_name", callback_method=funcPtr)
+# Blocks here and listens for messages coming from the specified queue
+consumer.start_consuming()  
+```
