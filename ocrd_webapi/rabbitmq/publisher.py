@@ -69,6 +69,29 @@ class RMQPublisher(RMQConnector):
                 self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
                 time.sleep(reconnect_delay)
 
+    def create_queue(self, queue_name, exchange_name=None, exchange_type=None):
+        if exchange_name is None:
+            exchange_name = DEFAULT_EXCHANGER_NAME
+        if exchange_type is None:
+            exchange_type = "direct"
+
+        RMQConnector.exchange_declare(
+            channel=self._channel,
+            exchange_name=exchange_name,
+            exchange_type=exchange_type
+        )
+        RMQConnector.queue_declare(
+            channel=self._channel,
+            queue_name=queue_name
+        )
+        RMQConnector.queue_bind(
+            channel=self._channel,
+            queue_name=queue_name,
+            exchange_name=exchange_name,
+            # the routing key matches the queue name
+            routing_key=queue_name
+        )
+
     def publish_to_queue(self, queue_name: str, message: str, exchange_name=None, properties=None):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
@@ -100,6 +123,8 @@ class RMQPublisher(RMQConnector):
         self._logger.info('Enabling delivery confirmations (Confirm.Select RPC)')
         RMQConnector.confirm_delivery(channel=self._channel)
 
+    # TODO: Find a way to use this callback method,
+    #  seems not possible with Blocking Connections
     def __on_delivery_confirmation(self, frame):
         confirmation_type = frame.method.NAME.split('.')[1].lower()
         delivery_tag: int = frame.method.delivery_tag

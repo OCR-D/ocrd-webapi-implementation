@@ -73,15 +73,17 @@ class RMQConsumer(RMQConnector):
             )
         return message
 
-    def configure_consuming(self, queue_name=None):
+    def configure_consuming(self, queue_name=None, callback_method=None):
         self._logger.info('Issuing consumer related RPC commands')
         self._logger.info('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
         if queue_name is None:
             queue_name = DEFAULT_QUEUE
+        if callback_method is None:
+            callback_method = self.__on_message_received
         self.consumer_tag = self._channel.basic_consume(
             queue_name,
-            self.__on_message_received
+            callback_method
         )
         self.was_consuming = True
         self.consuming = True
