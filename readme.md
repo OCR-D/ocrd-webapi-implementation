@@ -167,7 +167,7 @@ publisher.authenticate_and_connect(
 )
 publisher.create_queue(queue_name="queue_name")
 publisher.enable_delivery_confirmations()
-# The message must be a string currently
+# The message type is bytes
 # Call this method to publish a message
 publisher.publish_to_queue(queue_name="queue_name", message="message")
 ```
