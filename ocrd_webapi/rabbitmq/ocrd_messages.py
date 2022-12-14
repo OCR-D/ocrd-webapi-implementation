@@ -1,46 +1,57 @@
 # Check here for more details: Message structure #139
+from datetime import datetime
+from typing import Any, Dict, List
 
-class OcrdRequestMessage:
+
+class OcrdProcessingMessage:
     def __init__(
             self,
-            processor_name,
-            job_id,
-            workspace,
-            input_file_grp,
-            output_file_grp,
-            page_id,
-            should_overwrite,
-            processor_parameters,
-            level_of_log,
-            profiling_path,
-            result_queue_name
+            job_id: str = None,
+            processor_name: str = None,
+            created_time: int = None,
+            path_to_mets: str = None,
+            workspace_id: str = None,
+            input_file_grps: List[str] = None,
+            output_file_grps: List[str] = None,
+            page_id: str = None,
+            parameters: Dict[str, Any] = None,
+            result_queue_name: str = None,
     ):
-        # "ocrd-.*"
-        self.processor_name = processor_name
-        # uuid
-        self.job_id = job_id
-        # uuid or absolute path
-        self.workspace = workspace
-        # "OCR-D-.*"
-        self.input_file_grp = input_file_grp
-        # "OCR-D-.*"
-        self.output_file_grp = output_file_grp
+        if not job_id:
+            raise ValueError(f"job_id must be set")
+        if not processor_name:
+            raise ValueError(f"processor_name must be set")
+        if not created_time:
+            # We should not raise a ValueError but just calculate it
+            created_time = int(datetime.utcnow().timestamp())
+        if not input_file_grps or len(input_file_grps) == 0:
+            raise ValueError(f"input_file_grps must be set and contain at least 1 element")
+        if not (workspace_id or path_to_mets):
+            raise ValueError(f"Either `workspace_id` or `path_to_mets` must be set")
+
+        self.job_id = job_id  # uuid
+        self.processor_name = processor_name  # "ocrd-.*"
+        # Either of these two below
+        self.workspace_id = workspace_id  # uuid
+        self.path_to_mets = path_to_mets  # absolute path
+        self.input_file_grps = input_file_grps
+        self.output_file_grps = output_file_grps
         # e.g., "PHYS_0005..PHYS_0010" will process only pages between 5-10
         self.page_id = page_id
-        # Should overwrite mets file if files exist
-        self.overwrite = should_overwrite
-        # Dictionary with parameter keys and values
-        self.processor_parameters = processor_parameters
-        # e.g., "INFO"
-        self.log_level = level_of_log,
-        # e.g., "./logs/resource-usage.txt"
-        self.save_profiling_to = profiling_path
         # e.g., "ocrd-cis-ocropy-binarize-result"
         self.result_queue = result_queue_name
+        # processor parameters
+        self.parameters = parameters
+        self.created_time = created_time
+
+    # TODO: Implement the validator checks, e.g.,
+    #  if the processor name matches the expected regex
 
 
-class OcrdResponseMessage:
-    def __init__(self, job_id, status, path_to_mets):
+class OcrdResultMessage:
+    def __init__(self, job_id: str, status: str, workspace_id: str, path_to_mets: str):
         self.job_id = job_id
         self.status = status
-        self.workspace = path_to_mets
+        # Either of these two below
+        self.workspace_id = workspace_id
+        self.path_to_mets = path_to_mets

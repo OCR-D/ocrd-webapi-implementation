@@ -280,7 +280,7 @@ class RMQConnector:
             channel,
             exchange_name: str,
             routing_key: str,
-            message_body: str,
+            message_body: bytes,
             properties: pika.BasicProperties
     ):
         if channel and channel.is_open:

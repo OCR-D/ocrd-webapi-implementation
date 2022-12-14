@@ -92,7 +92,7 @@ class RMQPublisher(RMQConnector):
             routing_key=queue_name
         )
 
-    def publish_to_queue(self, queue_name: str, message: str, exchange_name=None, properties=None):
+    def publish_to_queue(self, queue_name: str, message: bytes, exchange_name=None, properties=None):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
@@ -111,7 +111,7 @@ class RMQPublisher(RMQConnector):
             exchange_name=exchange_name,
             # The routing key and the queue name must match!
             routing_key=queue_name,
-            message_body=json.dumps(message, ensure_ascii=False),
+            message_body=message,
             properties=properties
         )
 
