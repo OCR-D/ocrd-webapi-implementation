@@ -1,6 +1,5 @@
-from typing import Union
-
-from beanie import init_beanie
+from typing import List, Union
+from beanie import init_beanie, Document
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from ocrd_utils import getLogger
@@ -18,7 +17,7 @@ safe_init_logging()
 async def initiate_database(
         db_url: str,
         db_name: str = None,
-        doc_models: list = None
+        doc_models: List[Document] = None
 ):
     if db_name is None:
         db_name = DB_NAME

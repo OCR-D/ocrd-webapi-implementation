@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, constr
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 
 class Resource(BaseModel):
