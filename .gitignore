@@ -7,3 +7,5 @@ build/
 
 .env
 .flake8
+ocrd.log
+
