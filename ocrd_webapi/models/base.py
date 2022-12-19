@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 
 class Resource(BaseModel):
-    id: str = Field(..., alias='@id', description='URL of this thing')
+    resource_url: str = Field(..., description='URL of this thing')
     description: Union[str, None] = Field(None, description='Description of the thing')
 
     class Config:
@@ -16,7 +16,7 @@ class JobState(BaseModel):
 
 class Job(Resource):
     # Local variables:
-    # id: (str)          - inherited from Resource
+    # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
     job_state: Optional[JobState] = None
 

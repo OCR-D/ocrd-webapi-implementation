@@ -6,31 +6,35 @@ from ocrd_webapi.models.workspace import WorkspaceRsrc
 
 class WorkflowRsrc(Resource):
     # Local variables:
-    # id: (str)          - inherited from Resource
+    # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
 
     @staticmethod
-    def create(workflow_url, description="Workflow"):
-        return WorkflowRsrc(id=workflow_url, description=description)
+    def create(workflow_url, description=None):
+        if not description:
+            description = "Workflow"
+        return WorkflowRsrc(resource_url=workflow_url, description=description)
 
 
 class WorkflowJobRsrc(Job):
     # Local variables:
-    # id: (str)          - inherited from Resource -> Job
+    # resource_url: (str) - inherited from Resource -> Job
     # description: (str) - inherited from Resource -> Job
     # job_state: (JobState)  - inherited from Job
-    workflow: Optional[WorkflowRsrc]
-    workspace: Optional[WorkspaceRsrc]
+    workflow_rsrc: Optional[WorkflowRsrc]
+    workspace_rsrc: Optional[WorkspaceRsrc]
 
     @staticmethod
-    def create(job_url, workflow_url, workspace_url, job_state: JobState, description="Workflow-Job"):
+    def create(job_url, workflow_url, workspace_url, job_state: JobState, description=None):
+        if not description:
+            description = "Workflow-Job"
         workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
         workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)
 
         return WorkflowJobRsrc(
-            id=job_url,
+            resource_url=job_url,
             description=description,
             job_state=job_state,
-            workflow=workflow_rsrc,
-            workspace=workspace_rsrc,
+            workflow_rsrc=workflow_rsrc,
+            workspace_rsrc=workspace_rsrc,
             )
