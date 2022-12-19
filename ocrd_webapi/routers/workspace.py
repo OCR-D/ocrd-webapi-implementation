@@ -1,4 +1,5 @@
 import os
+from typing import List, Union
 
 from fastapi import (
     APIRouter,
@@ -30,7 +31,7 @@ workspace_manager = WorkspaceManager()
 
 # TODO: Refine all the exceptions...
 @router.get("/workspace")
-async def list_workspaces():
+async def list_workspaces() -> List[WorkspaceRsrc]:
     """
     Get a list of existing workspace urls
 
@@ -44,7 +45,11 @@ async def list_workspaces():
 
 
 @router.get("/workspace/{workspace_id}")
-async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, accept: str = Header(...)):
+async def get_workspace(
+        background_tasks: BackgroundTasks,
+        workspace_id: str,
+        accept: str = Header(...)
+) -> Union[WorkspaceRsrc, FileResponse, ResponseException]:
     """
     Get an existing workspace
 
@@ -58,28 +63,34 @@ async def get_workspace(background_tasks: BackgroundTasks, workspace_id: str, ac
     `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     if accept == "application/json":
-        workspace_url = workspace_manager.get_resource(workspace_id, local=False)
+        workspace_url = workspace_manager.get_resource(
+            workspace_id,
+            local=False
+        )
         if workspace_url:
             return WorkspaceRsrc.create(workspace_url=workspace_url)
-
         raise ResponseException(404, {})
-    elif accept == "application/vnd.ocrd+zip":
-        bag_path = await workspace_manager.get_workspace_bag(workspace_id)
+    if accept == "application/vnd.ocrd+zip":
+        bag_path = await workspace_manager.get_workspace_bag(
+            workspace_id
+        )
         if bag_path:
             # Remove the produced bag after sending it in the response
             background_tasks.add_task(os.unlink, bag_path)
             return FileResponse(bag_path)
-
         raise ResponseException(404, {})
-    else:
-        raise HTTPException(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            "Unsupported media, expected application/json or application/vnd.ocrd+zip",
-        )
+    raise HTTPException(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        "Unsupported media, expected application/json \
+        or application/vnd.ocrd+zip",
+    )
 
 
-@router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(workspace: UploadFile):
+@router.post("/workspace",
+             responses={"201": {"model": WorkspaceRsrc}})
+async def post_workspace(
+        workspace: UploadFile
+) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Create a new workspace
 
@@ -96,13 +107,20 @@ async def post_workspace(workspace: UploadFile):
     return WorkspaceRsrc.create(workspace_url=ws_url)
 
 
-@router.put("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def put_workspace(workspace: UploadFile, workspace_id: str):
+@router.put("/workspace/{workspace_id}",
+            responses={"201": {"model": WorkspaceRsrc}})
+async def put_workspace(
+        workspace: UploadFile,
+        workspace_id: str
+) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Update or create a workspace
     """
     try:
-        updated_workspace_url = await workspace_manager.update_workspace(workspace, workspace_id)
+        updated_workspace_url = await workspace_manager.update_workspace(
+            file=workspace,
+            workspace_id=workspace_id
+        )
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception:
@@ -112,14 +130,19 @@ async def put_workspace(workspace: UploadFile, workspace_id: str):
     return WorkspaceRsrc.create(workspace_url=updated_workspace_url)
 
 
-@router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def delete_workspace(workspace_id: str):
+@router.delete("/workspace/{workspace_id}",
+               responses={"200": {"model": WorkspaceRsrc}})
+async def delete_workspace(
+        workspace_id: str
+) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
     """
     try:
-        deleted_workspace_url = await workspace_manager.delete_workspace(workspace_id)
+        deleted_workspace_url = await workspace_manager.delete_workspace(
+            workspace_id
+        )
     except WorkspaceGoneException:
         raise ResponseException(410, {})
     except WorkspaceException:

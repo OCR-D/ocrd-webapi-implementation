@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from typing import List, Union, Tuple
+
 import aiofiles
 import shutil
 
@@ -10,7 +12,13 @@ from ocrd_webapi.utils import generate_id
 class ResourceManager:
     # Warning: Don't change the defaults
     # till everything is configured properly
-    def __init__(self, resource_dir, resource_url, resource_router, logger_label):
+    def __init__(
+            self,
+            resource_dir: str,
+            resource_url: str,
+            resource_router: str,
+            logger_label: str
+    ):
         self.log = getLogger(logger_label)
         self._resource_dir = resource_dir  # Base directory of this manager
         self._resource_url = resource_url  # Server URL
@@ -23,7 +31,10 @@ class ResourceManager:
         else:
             self.log.info(f"Using the existing {log_msg}")
 
-    def get_all_resources(self, local):
+    def get_all_resources(
+            self,
+            local: bool
+    ) -> List[str]:
         resources = []
         for res in os.scandir(self._resource_dir):
             if res.is_dir():
@@ -34,7 +45,11 @@ class ResourceManager:
                     resources.append(url)
         return resources
 
-    def get_resource(self, resource_id, local):
+    def get_resource(
+            self,
+            resource_id: str,
+            local: bool
+    ) -> Union[str, None]:
         """
         Returns the local path of the dir or
         the URL of the `resource_id`
@@ -47,17 +62,29 @@ class ResourceManager:
             return url
         return None
 
-    def get_resource_job(self, resource_id, job_id, local):
+    def get_resource_job(
+            self,
+            resource_id: str,
+            job_id: str,
+            local: bool
+    ) -> Union[str, None]:
         # Wrapper, in case the underlying
         # implementation has to change
         return self._to_resource_job(resource_id, job_id, local)
 
-    def get_resource_file(self, resource_id, file_ext=None):
+    def get_resource_file(
+            self,
+            resource_id: str,
+            file_ext=None
+    ) -> Union[str, None]:
         # Wrapper, in case the underlying
         # implementation has to change
         return self._has_file(resource_id, file_ext=file_ext)
 
-    def _has_dir(self, resource_id):
+    def _has_dir(
+            self,
+            resource_id: str
+    ) -> Union[str, None]:
         """
         Returns the local path of the dir
         identified with `resource_id` or None
@@ -67,7 +94,11 @@ class ResourceManager:
             return resource_dir
         return None
 
-    def _has_file(self, resource_id, file_ext=None):
+    def _has_file(
+            self,
+            resource_id: str,
+            file_ext=None
+    ) -> Union[str, None]:
         """
         Returns the local path of the file identified
         with `resource_id` or None
@@ -78,7 +109,11 @@ class ResourceManager:
                 return os.path.join(resource_dir, file)
         return None
 
-    def _to_resource(self, resource_id, local):
+    def _to_resource(
+            self,
+            resource_id: str,
+            local: bool
+    ) -> str:
         """
         Returns the built local path or URL of the
         `resource_id` without any checks
@@ -87,7 +122,12 @@ class ResourceManager:
             return os.path.join(self._resource_dir, resource_id)
         return f"{self._resource_url}/{self._resource_router}/{resource_id}"
 
-    def _to_resource_job(self, resource_id, job_id, local):
+    def _to_resource_job(
+            self,
+            resource_id: str,
+            job_id: str,
+            local: bool
+    ) -> Union[str, None]:
         if self._has_dir(resource_id):
             resource_base = self._to_resource(resource_id, local)
             if local:
@@ -95,7 +135,10 @@ class ResourceManager:
             return resource_base + f'/{job_id}'
         return None
 
-    def _create_resource_dir(self, resource_id):
+    def _create_resource_dir(
+            self,
+            resource_id: str
+    ) -> Tuple[str, str]:
         if resource_id is None:
             resource_id = generate_id()
         resource_dir = self._to_resource(resource_id, local=True)
@@ -104,14 +147,22 @@ class ResourceManager:
             # TODO: Raise an Exception here
         return resource_id, resource_dir
 
-    def _delete_resource_dir(self, resource_id):
+    def _delete_resource_dir(
+            self,
+            resource_id: str
+    ) -> Tuple[str, str]:
         resource_dir = self._to_resource(resource_id, local=True)
         if os.path.isdir(resource_dir):
             shutil.rmtree(resource_dir)
         return resource_id, resource_dir
 
+    # TODO: Get rid of the duplication by
+    #  implementing a single method
     @staticmethod
-    async def _receive_resource(file, resource_dest):
+    async def _receive_resource(
+            file,
+            resource_dest
+    ):
         async with aiofiles.open(resource_dest, "wb") as fpt:
             content = await file.read(1024)
             while content:
@@ -119,7 +170,10 @@ class ResourceManager:
                 content = await file.read(1024)
 
     @staticmethod
-    async def _receive_resource2(file_path, resource_dest):
+    async def _receive_resource2(
+            file_path,
+            resource_dest
+    ):
         with open(file_path, "rb") as fin:
             with open(resource_dest, "wb") as fout:
                 content = fin.read(1024)

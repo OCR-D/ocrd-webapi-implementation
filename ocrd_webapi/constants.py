@@ -25,7 +25,7 @@ DB_URL: str = os.getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
 # TODO: This is also confusing. This value has to match exactly with the
 #  value inside pyproject.toml -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi
 #  Moreover, test related constants should not be here but rather somewhere under tests/
-MONGO_TESTDB = "test-ocrd-webapi"
+MONGO_TESTDB: str = "test-ocrd-webapi"
 
 BASE_DIR: str = os.getenv("OCRD_WEBAPI_STORAGE_DIR", "/tmp/ocrd-webapi-data")
 # TODO: `JOB_DIR` is not used anywhere, reconsider this decision.

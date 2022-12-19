@@ -55,7 +55,7 @@ def safe_init_logging() -> None:
         initLogging()
 
 
-def extract_bag_info(zip_dest, workspace_dir):
+def extract_bag_info(zip_dest, workspace_dir) -> dict:
     try:
         resolver = Resolver()
         valid_report = OcrdZipValidator(resolver, zip_dest).validate()
@@ -75,7 +75,7 @@ def extract_bag_info(zip_dest, workspace_dir):
     return bag_info
 
 
-def extract_bag_dest(workspace_db, workspace_dir, bag_dest):
+def extract_bag_dest(workspace_db, workspace_dir, bag_dest) -> None:
     mets = workspace_db.ocrd_mets or "mets.xml"
     identifier = workspace_db.ocrd_identifier
     resolver = Resolver()

@@ -4,10 +4,17 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 
-import json
-import logging
-import pika
-import time
+from logging import (
+    basicConfig,
+    getLogger
+)
+from time import sleep
+from typing import Any, Optional
+
+from pika import (
+    BasicProperties,
+    PlainCredentials
+)
 
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_EXCHANGER_NAME,
@@ -22,10 +29,16 @@ from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host=HOST, port=PORT, vhost=VHOST, logger=None):
+    def __init__(
+            self,
+            host: str = HOST,
+            port: int = PORT,
+            vhost: str = VHOST,
+            logger=None
+    ):
         if logger is None:
-            logger = logging.getLogger(__name__)
-        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+            logger = getLogger(__name__)
+        basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.message_counter = 0
@@ -34,10 +47,11 @@ class RMQPublisher(RMQConnector):
         self.nacked_counter = 0
         self.running = True
 
-    def authenticate_and_connect(self, username, password):
-        credentials = pika.credentials.PlainCredentials(
-            username,
-            password
+    def authenticate_and_connect(self, username: str, password: str):
+        credentials = PlainCredentials(
+            username=username,
+            password=password,
+            erase_on_connect=False  # Delete credentials once connected
         )
         self._connection = RMQConnector.open_blocking_connection(
             host=self._host,
@@ -57,7 +71,7 @@ class RMQPublisher(RMQConnector):
                 message = f"#{messages}"
                 self.publish_to_queue(queue_name=DEFAULT_ROUTER, message=message)
                 messages += 1
-                time.sleep(2)
+                sleep(2)
             except KeyboardInterrupt:
                 self._logger.info("Keyboard interruption detected. Closing down peacefully.")
                 exit(0)
@@ -67,9 +81,14 @@ class RMQPublisher(RMQConnector):
             except Exception:
                 reconnect_delay = 10
                 self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
-                time.sleep(reconnect_delay)
+                sleep(reconnect_delay)
 
-    def create_queue(self, queue_name, exchange_name=None, exchange_type=None):
+    def create_queue(
+            self,
+            queue_name: str,
+            exchange_name: Optional[str] = None,
+            exchange_type: Optional[str] = None
+    ):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if exchange_type is None:
@@ -92,12 +111,17 @@ class RMQPublisher(RMQConnector):
             routing_key=queue_name
         )
 
-    def publish_to_queue(self, queue_name: str, message: bytes, exchange_name=None, properties=None):
+    def publish_to_queue(
+            self,
+            queue_name: str,
+            message: Any,
+            exchange_name: Optional[str] = None,
+            properties: Optional[Any] = None):
         if exchange_name is None:
             exchange_name = DEFAULT_EXCHANGER_NAME
         if properties is None:
             headers = {'OCR-D WebApi Header': 'OCR-D WebApi Value'}
-            properties = pika.BasicProperties(
+            properties = BasicProperties(
                 app_id='webapi-processing-broker',
                 content_type='application/json',
                 headers=headers

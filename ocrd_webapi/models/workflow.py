@@ -10,10 +10,13 @@ class WorkflowRsrc(Resource):
     # description: (str) - inherited from Resource
 
     @staticmethod
-    def create(workflow_url, description=None):
+    def create(workflow_url: str, description: str = None):
         if not description:
             description = "Workflow"
-        return WorkflowRsrc(resource_url=workflow_url, description=description)
+        return WorkflowRsrc(
+            resource_url=workflow_url,
+            description=description
+        )
 
 
 class WorkflowJobRsrc(Job):
@@ -25,7 +28,11 @@ class WorkflowJobRsrc(Job):
     workspace_rsrc: Optional[WorkspaceRsrc]
 
     @staticmethod
-    def create(job_url, workflow_url, workspace_url, job_state: JobState, description=None):
+    def create(job_url: str,
+               workflow_url: str,
+               workspace_url: str,
+               job_state: JobState,
+               description: str = None):
         if not description:
             description = "Workflow-Job"
         workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
@@ -37,4 +44,4 @@ class WorkflowJobRsrc(Job):
             job_state=job_state,
             workflow_rsrc=workflow_rsrc,
             workspace_rsrc=workspace_rsrc,
-            )
+        )

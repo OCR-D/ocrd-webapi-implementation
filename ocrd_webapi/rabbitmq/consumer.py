@@ -4,9 +4,16 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 
-import logging
-import pika
-import time
+from logging import (
+    basicConfig,
+    getLogger
+)
+from time import sleep
+from typing import Any, Union
+
+from pika import (
+    PlainCredentials
+)
 
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_QUEUE,
@@ -20,10 +27,16 @@ from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):
-    def __init__(self, host=HOST, port=PORT, vhost=VHOST, logger=None):
+    def __init__(
+            self,
+            host: str = HOST,
+            port: int = PORT,
+            vhost: str = VHOST,
+            logger=None
+    ):
         if logger is None:
-            logger = logging.getLogger(__name__)
-        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+            logger = getLogger(__name__)
+        basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None
@@ -33,10 +46,11 @@ class RMQConsumer(RMQConnector):
 
         self.reconnect_delay = 0
 
-    def authenticate_and_connect(self, username, password):
-        credentials = pika.credentials.PlainCredentials(
-            username,
-            password
+    def authenticate_and_connect(self, username: str, password: str):
+        credentials = PlainCredentials(
+            username=username,
+            password=password,
+            erase_on_connect=False  # Delete credentials once connected
         )
         self._connection = RMQConnector.open_blocking_connection(
             host=self._host,
@@ -62,9 +76,13 @@ class RMQConsumer(RMQConnector):
         except Exception:
             reconnect_delay = 10
             self._logger.info(f'Reconnecting after {reconnect_delay} seconds')
-            time.sleep(reconnect_delay)
+            sleep(reconnect_delay)
 
-    def get_one_message(self, queue_name, auto_ack=False):
+    def get_one_message(
+            self,
+            queue_name: str,
+            auto_ack: bool = False
+    ) -> Union[Any, None]:
         message = None
         if self._channel and self._channel.is_open:
             message = self._channel.basic_get(
@@ -73,7 +91,11 @@ class RMQConsumer(RMQConnector):
             )
         return message
 
-    def configure_consuming(self, queue_name=None, callback_method=None):
+    def configure_consuming(
+            self,
+            queue_name: str = None,
+            callback_method: Any = None
+    ):
         self._logger.info('Issuing consumer related RPC commands')
         self._logger.info('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
@@ -96,12 +118,18 @@ class RMQConsumer(RMQConnector):
         if self._channel and self._channel.is_open:
             return self._channel.get_waiting_message_count()
 
-    def __on_consumer_cancelled(self, frame):
+    def __on_consumer_cancelled(self, frame: Any):
         self._logger.info(f'The consumer was cancelled remotely in frame: {frame}')
         if self._channel:
             self._channel.close()
 
-    def __on_message_received(self, channel, basic_deliver, properties, body):
+    def __on_message_received(
+            self,
+            channel,
+            basic_deliver,
+            properties,
+            body
+    ):
         tag = basic_deliver.delivery_tag
         app_id = properties.app_id
         message = body.decode()

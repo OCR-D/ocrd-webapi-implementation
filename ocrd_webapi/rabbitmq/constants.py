@@ -33,13 +33,13 @@ RABBIT_MQ_PORT: int = TOML_CONFIG["rabbit_mq_port"]
 RABBIT_MQ_VHOST: str = TOML_CONFIG["rabbit_mq_vhost"]
 
 # Wait seconds before next reconnect try
-RECONNECT_WAIT = 5
+RECONNECT_WAIT: int = 5
 # Reconnect tries before timeout
-RECONNECT_TRIES = 3
+RECONNECT_TRIES: int = 3
 # QOS, i.e., how many messages to consume in a single go
 # Check here: https://www.rabbitmq.com/consumer-prefetch.html
-PREFETCH_COUNT = 1
+PREFETCH_COUNT: int = 1
 
 # TODO: Integrate the OCR-D Logger once the logging in OCR-D is improved/optimized
-LOG_FORMAT = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL = logging.INFO
+LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
+LOG_LEVEL: int = logging.INFO

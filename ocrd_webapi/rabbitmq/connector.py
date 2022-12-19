@@ -3,8 +3,14 @@ The source code in this file is adapted by reusing
 some part of the source code from the official
 RabbitMQ documentation.
 """
+from typing import Any, Optional
 
-import pika
+from pika import (
+    BasicProperties,
+    BlockingConnection,
+    ConnectionParameters,
+    PlainCredentials,
+)
 
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_EXCHANGER_NAME,
@@ -19,7 +25,13 @@ from ocrd_webapi.rabbitmq.constants import (
 
 
 class RMQConnector:
-    def __init__(self, logger, host=HOST, port=PORT, vhost=VHOST):
+    def __init__(
+            self,
+            logger,
+            host: str = HOST,
+            port: int = PORT,
+            vhost: str = VHOST
+    ):
         self._logger = logger
         self._host = host
         self._port = port
@@ -61,9 +73,14 @@ class RMQConnector:
 
     # Connection related methods
     @staticmethod
-    def open_blocking_connection(credentials, host=HOST, port=PORT, vhost=VHOST):
-        blocking_connection = pika.BlockingConnection(
-            parameters=pika.ConnectionParameters(
+    def open_blocking_connection(
+            credentials: PlainCredentials,
+            host: str = HOST,
+            port: int = PORT,
+            vhost: str = VHOST
+    ) -> BlockingConnection:
+        blocking_connection = BlockingConnection(
+            parameters=ConnectionParameters(
                 host=host,
                 port=port,
                 virtual_host=vhost,
@@ -84,7 +101,7 @@ class RMQConnector:
             destination_exchange: str,
             source_exchange: str,
             routing_key: str,
-            parameters=None
+            parameters: Optional[Any] = None
     ):
         if parameters is None:
             parameters = {}
@@ -101,11 +118,11 @@ class RMQConnector:
             channel,
             exchange_name: str,
             exchange_type: str,
-            passive=False,
-            durable=False,
-            auto_delete=False,
-            internal=False,
-            arguments=None
+            passive: bool = False,
+            durable: bool = False,
+            auto_delete: bool = False,
+            internal: bool = False,
+            arguments: Optional[Any] = None
     ):
         if arguments is None:
             arguments = {}
@@ -130,7 +147,7 @@ class RMQConnector:
     def exchange_delete(
             channel,
             exchange_name: str,
-            if_unused=False,
+            if_unused: bool = False,
     ):
         if channel and channel.is_open:
             channel.exchange_delete(
@@ -145,7 +162,7 @@ class RMQConnector:
             destination_exchange: str,
             source_exchange: str,
             routing_key: str,
-            arguments=None
+            arguments: Optional[Any] = None
 
     ):
         if arguments is None:
@@ -164,7 +181,7 @@ class RMQConnector:
             queue_name: str,
             exchange_name: str,
             routing_key: str,
-            arguments=None
+            arguments: Optional[Any] = None
     ):
         if arguments is None:
             arguments = {}
@@ -180,11 +197,11 @@ class RMQConnector:
     def queue_declare(
             channel,
             queue_name: str,
-            passive=False,
-            durable=False,
-            exclusive=False,
-            auto_delete=False,
-            arguments=None
+            passive: bool = False,
+            durable: bool = False,
+            exclusive: bool = False,
+            auto_delete: bool = False,
+            arguments: Optional[Any] = None
     ):
         if arguments is None:
             arguments = {}
@@ -209,8 +226,8 @@ class RMQConnector:
     def queue_delete(
             channel,
             queue_name: str,
-            if_unused=False,
-            if_empty=False
+            if_unused: bool = False,
+            if_empty: bool = False
     ):
         if channel and channel.is_open:
             channel.queue_delete(
@@ -237,7 +254,7 @@ class RMQConnector:
             queue_name: str,
             exchange_name: str,
             routing_key: str,
-            arguments=None
+            arguments: Optional[Any] = None
     ):
         if arguments is None:
             arguments = {}
@@ -254,7 +271,7 @@ class RMQConnector:
             channel,
             prefetch_size: int = 0,
             prefetch_count: int = PREFETCH_COUNT,
-            global_qos=False
+            global_qos: bool = False
     ):
         if channel and channel.is_open:
             channel.basic_qos(
@@ -281,7 +298,7 @@ class RMQConnector:
             exchange_name: str,
             routing_key: str,
             message_body: bytes,
-            properties: pika.BasicProperties
+            properties: BasicProperties
     ):
         if channel and channel.is_open:
             channel.basic_publish(

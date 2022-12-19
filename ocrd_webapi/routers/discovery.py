@@ -35,5 +35,5 @@ class Discovery:
 
 
 @router.get("/discovery", responses={"200": {"model": DiscoveryResponse}})
-async def discovery():
+async def discovery() -> DiscoveryResponse:
     return Discovery.discovery()

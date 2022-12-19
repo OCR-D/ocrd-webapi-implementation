@@ -1,3 +1,5 @@
+from typing import Union
+
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -13,9 +15,19 @@ from ocrd_webapi.utils import safe_init_logging
 safe_init_logging()
 
 
-async def initiate_database(db_url: str, db_name=DB_NAME, doc_models=None):
+async def initiate_database(
+        db_url: str,
+        db_name: str = None,
+        doc_models: list = None
+):
+    if db_name is None:
+        db_name = DB_NAME
     if doc_models is None:
-        doc_models = [WorkflowDB, WorkspaceDB, WorkflowJobDB]
+        doc_models = [
+            WorkflowDB,
+            WorkspaceDB,
+            WorkflowJobDB
+        ]
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(
@@ -24,22 +36,72 @@ async def initiate_database(db_url: str, db_name=DB_NAME, doc_models=None):
     )
 
 
-async def get_workflow(workflow_id):
+async def get_workflow(
+        workflow_id
+) -> Union[WorkflowDB, None]:
     return await WorkflowDB.get(workflow_id)
 
 
-async def get_workspace(workspace_id):
+async def get_workflow_job(
+        job_id
+) -> Union[WorkflowJobDB, None]:
+    return await WorkflowJobDB.get(job_id)
+
+
+async def get_workspace(
+        workspace_id
+) -> Union[WorkspaceDB, None]:
     return await WorkspaceDB.get(workspace_id)
 
 
-async def save_workflow(workflow_id: str):
+async def mark_deleted_workflow(
+        workflow_id
+) -> bool:
+    wf = await WorkflowDB.get(workflow_id)
+    if wf:
+        wf.deleted = True
+        await wf.save()
+        return True
+    getLogger("ocrd_webapi.database").warn(
+        "Trying to flag not existing workflow as deleted"
+    )
+    return False
+
+
+async def mark_deleted_workspace(
+        workspace_id
+) -> bool:
+    """
+    set 'WorkspaceDb.deleted' to True
+
+    The api should keep track of deleted workspaces according to the specs.
+    This is done with this function and the deleted-property
+    """
+    ws = await WorkspaceDB.get(workspace_id)
+    if ws:
+        ws.deleted = True
+        await ws.save()
+        return True
+    getLogger("ocrd_webapi.database").warn(
+        "Trying to flag not existing workspace as deleted"
+    )
+    return False
+
+
+async def save_workflow(
+        workflow_id: str
+) -> Union[WorkflowDB, None]:
     workflow_db = WorkflowDB(
         _id=workflow_id
     )
     await workflow_db.save()
+    return workflow_db
 
 
-async def save_workspace(workspace_id: str, bag_info: dict):
+async def save_workspace(
+        workspace_id: str,
+        bag_info: dict
+) -> Union[WorkspaceDB, None]:
     """
     save a workspace to the database. Can also be used to update a workspace
 
@@ -65,37 +127,15 @@ async def save_workspace(workspace_id: str, bag_info: dict):
         bag_info_adds=bag_info
     )
     await workspace_db.save()
+    return workspace_db
 
 
-async def mark_deleted_workflow(workflow_id):
-    wf = await WorkflowDB.get(workflow_id)
-    if wf:
-        wf.deleted = True
-        await wf.save()
-    else:
-        getLogger("ocrd_webapi.database").warn("Trying to flag not existing workflow as deleted")
-
-
-async def mark_deleted_workspace(workspace_id):
-    """
-    set 'WorkspaceDb.deleted' to True
-
-    The api should keep track of deleted workspaces according to the specs. This is done with this
-    function and the deleted-property
-    """
-    ws = await WorkspaceDB.get(workspace_id)
-    if ws:
-        ws.deleted = True
-        await ws.save()
-    else:
-        getLogger("ocrd_webapi.database").warn("Trying to flag not existing workspace as deleted")
-
-
-async def get_workflow_job(job_id):
-    return await WorkflowJobDB.get(job_id)
-
-
-async def save_workflow_job(job_id: str, workflow_id, workspace_id, job_state):
+async def save_workflow_job(
+        job_id: str,
+        workflow_id: str,
+        workspace_id: str,
+        job_state: str
+) -> Union[WorkflowJobDB, None]:
     """
     save a workflow_job to the database
 
@@ -105,16 +145,20 @@ async def save_workflow_job(job_id: str, workflow_id, workspace_id, job_state):
         workspace_id: id of the workspace the job runs on
         job_state: current state of the job
     """
-    job = WorkflowJobDB(
+    workflow_job = WorkflowJobDB(
         _id=job_id,
         workflow_id=workflow_id,
         workspace_id=workspace_id,
         job_state=job_state
     )
-    await job.save()
+    await workflow_job.save()
+    return workflow_job
 
 
-async def set_workflow_job_state(job_id, job_state):
+async def set_workflow_job_state(
+        job_id,
+        job_state: str
+) -> bool:
     """
     set state of job to 'state'
     """
@@ -122,3 +166,8 @@ async def set_workflow_job_state(job_id, job_state):
     if job:
         job.job_state = job_state
         await job.save()
+        return True
+    getLogger("ocrd_webapi.database").warn(
+        "Trying to set a state to a non-existing workflow job"
+    )
+    return False

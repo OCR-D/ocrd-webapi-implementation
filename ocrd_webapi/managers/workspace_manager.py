@@ -1,4 +1,5 @@
 import os
+from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
 from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
@@ -7,7 +8,6 @@ from ocrd_webapi.exceptions import (
     WorkspaceGoneException,
 )
 from ocrd_webapi.managers.resource_manager import ResourceManager
-from ocrd_webapi.models.database import WorkspaceDB
 from ocrd_webapi.utils import (
     extract_bag_dest,
     extract_bag_info,
@@ -18,28 +18,39 @@ from ocrd_webapi.utils import (
 class WorkspaceManager(ResourceManager):
     # Warning: Don't change these defaults
     # till everything is configured properly
-    def __init__(self,
-                 workspaces_dir=WORKSPACES_DIR,
-                 resource_url=SERVER_URL,
-                 resource_router='workspace',
-                 logger_label='ocrd_webapi.workspace_manager'):
+    def __init__(
+            self,
+            workspaces_dir: str = WORKSPACES_DIR,
+            resource_url: str = SERVER_URL,
+            resource_router: str = 'workspace',
+            logger_label: str = 'ocrd_webapi.workspace_manager'
+    ):
         super().__init__(workspaces_dir, resource_url, resource_router, logger_label)
         self.__workspaces_dir = workspaces_dir
 
-    def get_workspaces(self):
+    def get_workspaces(self) -> List[str]:
         """
         Get a list of all available workspace urls.
         """
         workspace_urls = self.get_all_resources(local=False)
         return workspace_urls
 
-    async def create_workspace_from_mets_dir(self, mets_dir, uid=None):
+    async def create_workspace_from_mets_dir(
+            self,
+            mets_dir: str,
+            uid: str = None
+    ) -> Tuple[Union[str, None], str]:
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         os.symlink(mets_dir, workspace_dir)
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
-    async def create_workspace_from_zip(self, file, uid=None, file_stream=True):
+    async def create_workspace_from_zip(
+            self,
+            file,
+            uid: str = None,
+            file_stream: bool = True
+    ) -> Tuple[Union[str, None], str]:
         """
         create a workspace from an ocrd-zipfile
 
@@ -71,7 +82,11 @@ class WorkspaceManager(ResourceManager):
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
-    async def update_workspace(self, file, workspace_id):
+    async def update_workspace(
+            self,
+            file,
+            workspace_id: str
+    ) -> Union[str, None]:
         """
         Update a workspace
 
@@ -83,7 +98,10 @@ class WorkspaceManager(ResourceManager):
         return ws_url
 
     # TODO: Refine this and get rid of the low level os.path bullshits
-    async def get_workspace_bag(self, workspace_id):
+    async def get_workspace_bag(
+            self,
+            workspace_id: str
+    ) -> Union[str, None]:
         """
         Create workspace bag.
 
@@ -113,14 +131,17 @@ class WorkspaceManager(ResourceManager):
 
         return None
 
-    async def delete_workspace(self, workspace_id):
+    async def delete_workspace(
+            self,
+            workspace_id: str
+    ) -> Union[str, None]:
         """
         Delete a workspace
         """
         # TODO: Separate the local storage from DB cases
         workspace_dir = self.get_resource(workspace_id, local=True)
         if not workspace_dir:
-            ws = await WorkspaceDB.get(workspace_id)
+            ws = await db.get_workspace(workspace_id)
             if ws and ws.deleted:
                 raise WorkspaceGoneException("workspace already deleted")
             raise WorkspaceException(f"workspace with id {workspace_id} not existing")
@@ -137,6 +158,12 @@ class WorkspaceManager(ResourceManager):
     # avoid giving access to the full WorkspaceManager
     # 2. Probably making the managers to be
     # static singletons is the right approach here
-    def static_get_resource(resource_id, local):
+    def static_get_resource(
+            resource_id: str,
+            local: bool
+    ) -> Union[str, None]:
         workspace_manager = WorkspaceManager()
-        return workspace_manager.get_resource(resource_id, local)
+        return workspace_manager.get_resource(
+            resource_id=resource_id,
+            local=local
+        )

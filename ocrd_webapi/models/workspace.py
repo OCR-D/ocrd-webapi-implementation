@@ -7,7 +7,10 @@ class WorkspaceRsrc(Resource):
     # description: (str) - inherited from Resource
 
     @staticmethod
-    def create(workspace_url, description=None):
+    def create(workspace_url: str, description: str = None):
         if not description:
             description = "Workspace"
-        return WorkspaceRsrc(resource_url=workspace_url, description=description)
+        return WorkspaceRsrc(
+            resource_url=workspace_url,
+            description=description
+        )

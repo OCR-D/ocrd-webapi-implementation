@@ -2,6 +2,7 @@ import os
 import shlex
 import subprocess
 from re import search as regex_search
+from typing import Union
 
 from ocrd_utils import getLogger
 
@@ -15,15 +16,20 @@ class NextflowManager:
         self.nf_version = self.is_nf_available()
         self.log.info(f"Installed Nextflow version: {self.nf_version}")
 
-    def execute_workflow(self, nf_script_path, workspace_path, job_dir):
+    def execute_workflow(
+            self,
+            nf_script_path: str,
+            workspace_path: str,
+            job_dir: str
+    ) -> Union[bool, Exception]:
         nf_command = self.build_nf_command(nf_script_path, workspace_path)
         try:
-            self._start_nf_process(nf_command, job_dir)
+            return self._start_nf_process(nf_command, job_dir)
         except Exception as error:
             self.log.exception(f"start_nf_workflow: \n{error}")
             raise error
 
-    def is_nf_available(self):
+    def is_nf_available(self) -> Union[str, None]:
         # The path to Nextflow must be in $PATH
         # Otherwise, the full path must be provided
 
@@ -48,17 +54,23 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def __parse_nf_version(version_string):
+    def __parse_nf_version(
+            version_string: str
+    ) -> Union[str, None]:
         regex_pattern = r"nextflow version\s*([\d.]+)"
         nf_version = regex_search(regex_pattern, version_string).group(1)
-
         if nf_version:
             return nf_version
-
         return None
 
     @staticmethod
-    def build_nf_command(nf_script_path, workspace_path, workspace_mets="mets.xml"):
+    def build_nf_command(
+            nf_script_path: str,
+            workspace_path: str,
+            workspace_mets: str = None
+    ) -> str:
+        if workspace_mets is None:
+            workspace_mets = "mets.xml"
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --workspace {workspace_path}/"
@@ -66,7 +78,11 @@ class NextflowManager:
         nf_command += " -with-report"
         return nf_command
 
-    def _start_nf_process(self, nf_command, job_dir):
+    def _start_nf_process(
+            self,
+            nf_command: str,
+            job_dir: str
+    ) -> Union[bool, Exception]:
         # Must be refined
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
@@ -89,9 +105,16 @@ class NextflowManager:
         except Exception as error:
             self.log.exception(f"Nextflow process failed to start: {error}")
 
+        return True
+
     @staticmethod
-    def is_nf_report(location_dir, report="report.html"):
-        report_path = os.path.join(location_dir, report)
+    def is_nf_report(
+            location_dir: str,
+            report_name: str = None
+    ) -> Union[str, None]:
+        if report_name is None:
+            report_name = "report.html"
+        report_path = os.path.join(location_dir, report_name)
         if os.path.exists(report_path):
             return report_path
         return None
