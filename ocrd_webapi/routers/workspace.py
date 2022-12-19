@@ -39,7 +39,7 @@ async def list_workspaces():
     workspace_urls = workspace_manager.get_workspaces()
     response = []
     for ws_url in workspace_urls:
-        response.append(WorkspaceRsrc(id=ws_url))
+        response.append(WorkspaceRsrc.create(workspace_url=ws_url))
     return response
 
 

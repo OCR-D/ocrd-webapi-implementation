@@ -23,7 +23,6 @@ from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import WorkflowArgs
 from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
-from ocrd_webapi.models.workspace import WorkspaceRsrc
 from ocrd_webapi.utils import (
     safe_init_logging,
 )
