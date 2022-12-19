@@ -117,14 +117,12 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     #  function is provided, this would duplicate some code...
     wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
     workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
-    workflow_rsrc = WorkflowRsrc.create(workflow_url=workflow_url)
     workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
-    workspace_rsrc = WorkspaceRsrc.create(workspace_url=workspace_url)
     job_state = wf_job_db.job_state
 
     return WorkflowJobRsrc.create(job_url=wf_job_url,
-                                  workflow_rsrc=workflow_rsrc,
-                                  workspace_rsrc=workspace_rsrc,
+                                  workflow_url=workflow_url,
+                                  workspace_url=workspace_url,
                                   job_state=job_state)
 
 
@@ -166,13 +164,11 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs):
     job_status = parameters[1]
     workflow_url = parameters[2]
     workspace_url = parameters[3]
-    workflow_rsrc = WorkflowRsrc(id=workflow_url)
-    workspace_rsrc = WorkspaceRsrc(id=workspace_url)
 
     return WorkflowJobRsrc.create(job_url=job_url,
                                   job_state=job_status,
-                                  workflow_rsrc=workflow_rsrc,
-                                  workspace_rsrc=workspace_rsrc)
+                                  workflow_url=workflow_url,
+                                  workspace_url=workspace_url)
 
 
 @router.put("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
