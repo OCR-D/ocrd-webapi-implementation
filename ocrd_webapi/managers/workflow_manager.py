@@ -113,7 +113,14 @@ class WorkflowManager(ResourceManager):
 
         return parameters
 
-    def is_job_finished(self, workflow_id, job_id):
+    async def get_workflow_job(self, workflow_id, job_id):
+        # We do not need the result,
+        # perform check to set a new job status if required
+        await self.is_job_finished(workflow_id, job_id)
+        wf_job_db = await db.get_workflow_job(job_id)
+        return wf_job_db
+
+    async def is_job_finished(self, workflow_id, job_id):
         """
         Tests if the file `WORKFLOW_DIR/{workflow_id}/{job_id}/report.html` exists.
 
@@ -125,6 +132,7 @@ class WorkflowManager(ResourceManager):
             None: workflow_id or job_id (path to file) don't exist
         """
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
-        if job_dir:
-            return self._nextflow_executor.is_nf_report(job_dir)
-        return None
+        if job_dir and self._nextflow_executor.is_nf_report(job_dir):
+            await db.set_workflow_job_state(job_id, 'STOPPED')
+            return True
+        return False

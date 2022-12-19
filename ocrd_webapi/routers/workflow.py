@@ -16,7 +16,6 @@ from fastapi.security import (
 )
 
 from ocrd_utils import getLogger
-from ocrd_webapi import database as db
 from ocrd_webapi.exceptions import (
     ResponseException,
 )
@@ -110,10 +109,7 @@ async def get_workflow_job(workflow_id: str, job_id: str):
     in other implementations for example if a job_id is only unique in conjunction with a
     workflow_id.
     """
-    if workflow_manager.is_job_finished(workflow_id, job_id):
-        await db.set_workflow_job_state(job_id, 'STOPPED')
-    wf_job_db = await db.get_workflow_job(job_id)
-
+    wf_job_db = await workflow_manager.get_workflow_job(workflow_id, job_id)
     if not wf_job_db:
         raise ResponseException(404, {})
 
