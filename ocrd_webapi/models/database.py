@@ -36,7 +36,6 @@ class WorkflowDB(Document):
     Model to store a workflow in the mongo-database.
     """
     id: str
-    content: str
     deleted: bool = False
 
     class Collection:

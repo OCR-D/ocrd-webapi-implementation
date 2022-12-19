@@ -32,10 +32,9 @@ async def get_workspace(workspace_id):
     return await WorkspaceDB.get(workspace_id)
 
 
-async def save_workflow(workflow_id: str, content: str):
+async def save_workflow(workflow_id: str):
     workflow_db = WorkflowDB(
-        _id=workflow_id,
-        content=content  # 16MB max, use GridFS to store bigger files
+        _id=workflow_id
     )
     await workflow_db.save()
 

@@ -44,13 +44,7 @@ class WorkflowManager(ResourceManager):
         os.mkdir(workflow_dir)
         nf_script_dest = os.path.join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
-
-        # Fast prototype implementation
-        with open(nf_script_dest, encoding='utf8') as f:
-            file_content = f.read()
-
-        # TODO: Provide a functionality to enable/disable writing to/reading from a DB
-        await db.save_workflow(workflow_id, file_content)
+        await db.save_workflow(workflow_id)
 
         workflow_url = self.get_resource(workflow_id, local=False)
         return workflow_url
@@ -64,16 +58,6 @@ class WorkflowManager(ResourceManager):
         """
         self._delete_resource_dir(workflow_id)
         return await self.create_workflow_space(file, workflow_id)
-
-    @staticmethod
-    async def get_workflow_script_db(workflow_id):
-        """
-        Get a workflow script available in mongo db as a Resource via its workflow_id
-        """
-        workflow_db = await db.get_workflow(workflow_id)
-        if workflow_db:
-            return workflow_db.content
-        return None
 
     def create_workflow_execution_space(self, workflow_id):
         job_id = generate_id()
