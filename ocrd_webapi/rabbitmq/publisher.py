@@ -4,10 +4,7 @@ some part of the source code from the official
 RabbitMQ documentation.
 """
 
-from logging import (
-    basicConfig,
-    getLogger
-)
+import logging
 from time import sleep
 from typing import Any, Optional
 
@@ -37,8 +34,8 @@ class RMQPublisher(RMQConnector):
             logger=None
     ):
         if logger is None:
-            logger = getLogger(__name__)
-        basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+            logger = logging.getLogger("OCRD-WebAPI-RMQPublisher")
+        logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.message_counter = 0
