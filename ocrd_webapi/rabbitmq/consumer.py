@@ -96,8 +96,8 @@ class RMQConsumer(RMQConnector):
             queue_name: str = None,
             callback_method: Any = None
     ):
-        self._logger.info('Issuing consumer related RPC commands')
-        self._logger.info('Adding consumer cancellation callback')
+        self._logger.debug('Issuing consumer related RPC commands')
+        self._logger.debug('Adding consumer cancellation callback')
         self._channel.add_on_cancel_callback(self.__on_consumer_cancelled)
         if queue_name is None:
             queue_name = DEFAULT_QUEUE
@@ -119,7 +119,7 @@ class RMQConsumer(RMQConnector):
             return self._channel.get_waiting_message_count()
 
     def __on_consumer_cancelled(self, frame: Any):
-        self._logger.info(f'The consumer was cancelled remotely in frame: {frame}')
+        self._logger.warning(f'The consumer was cancelled remotely in frame: {frame}')
         if self._channel:
             self._channel.close()
 
@@ -133,12 +133,12 @@ class RMQConsumer(RMQConnector):
         tag = basic_deliver.delivery_tag
         app_id = properties.app_id
         message = body.decode()
-        self._logger.info(f'Received message #{tag} from {app_id}: {message}')
+        self._logger.debug(f'Received message #{tag} from {app_id}: {message}')
         self._logger.debug(f'Received message on channel: {channel}')
         self.__ack_message(tag)
 
     def __ack_message(self, delivery_tag):
-        self._logger.info(f'Acknowledging message {delivery_tag}')
+        self._logger.debug(f'Acknowledging message {delivery_tag}')
         self._channel.basic_ack(delivery_tag)
 
 

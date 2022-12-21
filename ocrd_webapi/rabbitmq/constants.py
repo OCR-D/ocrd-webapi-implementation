@@ -42,4 +42,4 @@ PREFETCH_COUNT: int = 1
 
 # TODO: Integrate the OCR-D Logger once the logging in OCR-D is improved/optimized
 LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: int = logging.INFO
+LOG_LEVEL: int = logging.WARNING

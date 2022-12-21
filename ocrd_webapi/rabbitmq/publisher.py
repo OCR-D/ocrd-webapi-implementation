@@ -144,7 +144,7 @@ class RMQPublisher(RMQConnector):
         self._logger.info(f'Published message #{self.message_counter}')
 
     def enable_delivery_confirmations(self):
-        self._logger.info('Enabling delivery confirmations (Confirm.Select RPC)')
+        self._logger.debug('Enabling delivery confirmations (Confirm.Select RPC)')
         RMQConnector.confirm_delivery(channel=self._channel)
 
     # TODO: Find a way to use this callback method,
@@ -154,7 +154,7 @@ class RMQPublisher(RMQConnector):
         delivery_tag: int = frame.method.delivery_tag
         ack_multiple = frame.method.multiple
 
-        self._logger.info(f'Received: {confirmation_type} '
+        self._logger.debug(f'Received: {confirmation_type} '
                           f'for tag: {delivery_tag} '
                           f'(multiple: {ack_multiple})')
 
@@ -174,7 +174,7 @@ class RMQPublisher(RMQConnector):
         # TODO: Check here for stale entries inside the _deliveries
         #  and attempt to re-delivery with max amount of tries (not defined yet)
 
-        self._logger.info(
+        self._logger.debug(
             'Published %i messages, %i have yet to be confirmed, '
             '%i were acked and %i were nacked', self.message_counter,
             len(self.deliveries), self.acked_counter, self.nacked_counter)
