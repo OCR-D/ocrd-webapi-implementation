@@ -84,7 +84,9 @@ class RMQConnector:
                 host=host,
                 port=port,
                 virtual_host=vhost,
-                credentials=credentials
+                credentials=credentials,
+                # TODO: The heartbeat should not be disabled (0)!
+                heartbeat=0
             ),
         )
         return blocking_connection
