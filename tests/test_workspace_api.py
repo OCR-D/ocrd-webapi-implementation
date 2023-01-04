@@ -9,8 +9,9 @@ import pytest
 from os.path import exists, join
 
 from ocrd_webapi.constants import (
+    BASE_DIR,
+    WORKSPACES_ROUTER,
     MONGO_TESTDB,
-    WORKSPACES_DIR,
 )
 from .utils_test import (
     assert_status_code,
@@ -18,6 +19,9 @@ from .utils_test import (
     assert_db_entry_created,
     assert_db_entry_deleted,
 )
+
+# TODO: Utilize the Workspace manager instead of this
+WORKSPACES_DIR = join(BASE_DIR, WORKSPACES_ROUTER)
 
 
 @pytest.fixture(autouse=True)

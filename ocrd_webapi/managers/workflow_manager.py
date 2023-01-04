@@ -2,7 +2,7 @@ import os
 from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
-from ocrd_webapi.constants import SERVER_URL, WORKFLOWS_DIR
+from ocrd_webapi.constants import WORKFLOWS_ROUTER
 from ocrd_webapi.exceptions import (
     WorkflowJobException,
 )
@@ -19,14 +19,14 @@ class WorkflowManager(ResourceManager):
     # till everything is configured properly
     def __init__(
             self,
-            workflows_dir: str = WORKFLOWS_DIR,
-            resource_url: str = SERVER_URL,
-            resource_router: str = 'workflow',
+            resource_router: str = WORKFLOWS_ROUTER,
             logger_label: str = 'ocrd_webapi.workflow_manager'
     ):
-        super().__init__(workflows_dir, resource_url, resource_router, logger_label)
+        super().__init__(
+            logger_label=logger_label,
+            resource_router=resource_router
+        )
         self._nextflow_executor = NextflowManager()
-        self.__workflows_dir = workflows_dir
 
     def get_workflows(self) -> List[str]:
         """

@@ -2,7 +2,7 @@ import os
 from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
-from ocrd_webapi.constants import SERVER_URL, WORKSPACES_DIR
+from ocrd_webapi.constants import WORKSPACES_ROUTER
 from ocrd_webapi.exceptions import (
     WorkspaceException,
     WorkspaceGoneException,
@@ -20,13 +20,13 @@ class WorkspaceManager(ResourceManager):
     # till everything is configured properly
     def __init__(
             self,
-            workspaces_dir: str = WORKSPACES_DIR,
-            resource_url: str = SERVER_URL,
-            resource_router: str = 'workspace',
+            resource_router: str = WORKSPACES_ROUTER,
             logger_label: str = 'ocrd_webapi.workspace_manager'
     ):
-        super().__init__(workspaces_dir, resource_url, resource_router, logger_label)
-        self.__workspaces_dir = workspaces_dir
+        super().__init__(
+            logger_label=logger_label,
+            resource_router=resource_router
+        )
 
     def get_workspaces(self) -> List[str]:
         """
@@ -64,7 +64,7 @@ class WorkspaceManager(ResourceManager):
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         # TODO: Get rid of this low level os.path access,
         #  should happen inside the Resource manager
-        zip_dest = os.path.join(self.__workspaces_dir, workspace_id + ".zip")
+        zip_dest = os.path.join(self._resource_dir, workspace_id + ".zip")
         # TODO: Must be a more optimal way to achieve this
         if file_stream:
             # Handles the UploadFile type file
@@ -105,9 +105,9 @@ class WorkspaceManager(ResourceManager):
         """
         Create workspace bag.
 
-        The resulting zip is stored in the workspaces_dir (`self.__workspaces_dir`). The Workspace
-        could have been changed so recreation of bag-files is necessary. Simply zipping
-        is not sufficient.
+        The resulting zip is stored in the workspaces' directory (`self._resource_dir`).
+        The Workspace could have been changed so recreation of bag-files is necessary.
+        Simply zipping is not sufficient.
 
         Args:
              workspace_id (str): id of workspace to bag
@@ -125,10 +125,9 @@ class WorkspaceManager(ResourceManager):
             # TODO: Get rid of this low level os.path access,
             #  should happen inside the Resource manager
             generated_id = generate_id(file_ext=".zip")
-            bag_dest = os.path.join(self.__workspaces_dir, generated_id)
+            bag_dest = os.path.join(self._resource_dir, generated_id)
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
-
         return None
 
     async def delete_workspace(

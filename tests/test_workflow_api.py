@@ -10,8 +10,9 @@ from os.path import exists, join
 from time import sleep
 
 from ocrd_webapi.constants import (
+    BASE_DIR,
+    WORKFLOWS_ROUTER,
     MONGO_TESTDB,
-    WORKFLOWS_DIR,
 )
 from .utils_test import (
     assert_status_code,
@@ -19,6 +20,9 @@ from .utils_test import (
     parse_job_state,
     assert_db_entry_created,
 )
+
+# TODO: Utilize the Workflow manager instead of this
+WORKFLOWS_DIR = join(BASE_DIR, WORKFLOWS_ROUTER)
 
 
 # TODO: Database part for Workflows is missing

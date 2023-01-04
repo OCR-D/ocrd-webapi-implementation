@@ -9,10 +9,11 @@ from pymongo import MongoClient
 from fastapi.testclient import TestClient
 
 from ocrd_webapi.constants import (
+    BASE_DIR,
+    WORKFLOWS_ROUTER,
+    WORKSPACES_ROUTER,
     DB_URL,
     MONGO_TESTDB,
-    WORKFLOWS_DIR,
-    WORKSPACES_DIR,
 )
 from ocrd_webapi.main import app
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
@@ -28,6 +29,13 @@ from ocrd_webapi.rabbitmq.publisher import RMQPublisher
 from ocrd_webapi.rabbitmq.consumer import RMQConsumer
 
 RABBITMQ_TEST_DEFAULT = "ocrd-webapi-test-default"
+
+
+# TODO: Utilize the Workflow manager instead of this
+WORKFLOWS_DIR = os.path.join(BASE_DIR, WORKFLOWS_ROUTER)
+
+# TODO: Utilize the Workspace manager instead of this
+WORKSPACES_DIR = os.path.join(BASE_DIR, WORKSPACES_ROUTER)
 
 
 @pytest.fixture(scope='session')
