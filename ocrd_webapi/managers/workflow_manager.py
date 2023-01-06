@@ -68,7 +68,7 @@ class WorkflowManager(ResourceManager):
 
     def create_workflow_execution_space(
             self,
-            workflow_id
+            workflow_id: str
     ) -> Tuple[str, Union[str, None]]:
         job_id = generate_id()
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
@@ -80,8 +80,9 @@ class WorkflowManager(ResourceManager):
     #  refactor it
     async def start_nf_workflow(
             self,
-            workflow_id,
-            workspace_id
+            workflow_id: str,
+            workspace_id: str,
+            workflow_params: dict
     ) -> Union[List[Union[str, JobState, None]], WorkflowJobException]:
         # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongodb
         #       (ocrd_webapi.models.WorkspaceDb.ocrd_mets). Try to make it possible to tell nextflow the
@@ -98,7 +99,12 @@ class WorkflowManager(ResourceManager):
             raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
-        NextflowManager.execute_workflow(nf_script_path, workspace_dir, job_dir)
+        NextflowManager.execute_workflow(
+            nf_script_path,
+            workspace_dir,
+            job_dir,
+            workflow_params
+        )
 
         workflow_job_status = 'RUNNING'
         await db.save_workflow_job(
@@ -135,8 +141,8 @@ class WorkflowManager(ResourceManager):
 
     async def is_job_finished(
             self,
-            workflow_id,
-            job_id
+            workflow_id: str,
+            job_id: str
     ) -> bool:
         """
         Tests if the file `report.html` exists inside the workflow job directory.

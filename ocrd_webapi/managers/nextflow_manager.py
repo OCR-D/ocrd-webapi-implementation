@@ -16,9 +16,26 @@ class NextflowManager:
     def execute_workflow(
             nf_script_path: str,
             workspace_path: str,
-            job_dir: str
+            job_dir: str,
+            workflow_params: dict
     ) -> Union[bool, Exception]:
-        nf_command = NextflowManager.build_nf_command(nf_script_path, workspace_path)
+
+        # Gets the values from the dictionary, if missing assign defaults
+        if workflow_params:
+            workspace_mets = workflow_params.get('mets', 'mets.xml')
+            input_group = workflow_params.get('input_group', 'OCR-D-IMG')
+        else:
+            workspace_mets = 'mets.xml'
+            input_group = 'input_group'
+
+        # TODO: Parse the rest of the possible workflow params
+        # TODO: Use workflow_params to enable more flexible workflows
+        nf_command = NextflowManager.build_nf_command(
+            nf_script_path=nf_script_path,
+            workspace_path=workspace_path,
+            workspace_mets=workspace_mets,
+            input_group=input_group
+        )
         try:
             return NextflowManager.start_nf_process(nf_command, job_dir)
         except Exception as error:
@@ -60,13 +77,17 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, workspace_path: str, workspace_mets: str = None) -> str:
-        if workspace_mets is None:
-            workspace_mets = "mets.xml"
+    def build_nf_command(
+            nf_script_path: str,
+            workspace_path: str,
+            workspace_mets: str,
+            input_group: str
+    ) -> str:
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --workspace {workspace_path}/"
         nf_command += f" --mets {workspace_path}/{workspace_mets}"
+        nf_command += f" --input_group {input_group}"
         nf_command += " -with-report"
         return nf_command
 

@@ -5,6 +5,7 @@ nextflow.enable.dsl = 2
 // pipeline parameters
 params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
+params.input_group = "OCR-D-IMG"
 
 process ocrd_dummy {
 	maxForks 1
@@ -25,5 +26,6 @@ process ocrd_dummy {
 
 workflow {
 	main:
-		ocrd_dummy(params.mets, "OCR-D-IMG", "OCR-D-DUMMY")
+		ocrd_dummy(params.mets, params.input_group, "OCR-D-DUMMY")
 }
+

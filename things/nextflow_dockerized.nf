@@ -2,6 +2,7 @@ nextflow.enable.dsl = 2
 
 params.workspace_path = "$projectDir/ocrd-workspace/"
 params.mets_path = "$projectDir/ocrd-workspace/mets.xml"
+params.input_group = "OCR-D-IMG"
 params.docker_pwd = "/ocrd-workspace"
 params.docker_volume = "$params.workspace_path:$params.docker_pwd"
 params.docker_models_dir = "/usr/local/share/ocrd-resources"
@@ -148,7 +149,7 @@ process ocrd_calamari_recognize_7 {
 
 workflow {
   main:
-    ocrd_cis_ocropy_binarize_0(params.mets_path, "OCR-D-IMG", "OCR-D-BIN")
+    ocrd_cis_ocropy_binarize_0(params.mets_path, params.input_group, "OCR-D-BIN")
     ocrd_anybaseocr_crop_1(ocrd_cis_ocropy_binarize_0.out, "OCR-D-BIN", "OCR-D-CROP")
     ocrd_skimage_binarize_2(ocrd_anybaseocr_crop_1.out, "OCR-D-CROP", "OCR-D-BIN2")
     ocrd_skimage_denoise_3(ocrd_skimage_binarize_2.out, "OCR-D-BIN2", "OCR-D-BIN-DENOISE")
@@ -157,5 +158,4 @@ workflow {
     ocrd_cis_ocropy_dewarp_6(ocrd_cis_ocropy_segment_5.out, "OCR-D-SEG", "OCR-D-SEG-LINE-RESEG-DEWARP")
     ocrd_calamari_recognize_7(ocrd_cis_ocropy_dewarp_6.out, "OCR-D-SEG-LINE-RESEG-DEWARP", "OCR-D-OCR")
 }
-
 

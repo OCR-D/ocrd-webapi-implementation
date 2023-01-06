@@ -5,6 +5,7 @@ nextflow.enable.dsl = 2
 // pipeline parameters
 params.workspace = "$projectDir/ocrd-workspace/"
 params.mets = "$projectDir/ocrd-workspace/mets.xml"
+params.input_group = "OCR-D-IMG"
 
 process ocrd_cis_ocropy_binarize {
 	maxForks 1
@@ -144,7 +145,7 @@ process ocrd_calamari_recognize {
 
 workflow {
 	main:
-		ocrd_cis_ocropy_binarize(params.mets, "OCR-D-IMG", "OCR-D-BIN")
+		ocrd_cis_ocropy_binarize(params.mets, params.input_group, "OCR-D-BIN")
 		ocrd_anybaseocr_crop(params.mets, ocrd_cis_ocropy_binarize.out, "OCR-D-CROP")
 		ocrd_skimage_binarize(params.mets, ocrd_anybaseocr_crop.out, "OCR-D-BIN2")
 		ocrd_skimage_denoise(params.mets, ocrd_skimage_binarize.out, "OCR-D-BIN-DENOISE")

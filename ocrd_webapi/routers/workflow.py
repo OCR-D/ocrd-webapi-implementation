@@ -195,7 +195,11 @@ async def run_workflow(
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
     try:
-        parameters = await workflow_manager.start_nf_workflow(workflow_id, workflow_args.workspace_id)
+        parameters = await workflow_manager.start_nf_workflow(
+            workflow_id=workflow_id,
+            workspace_id=workflow_args.workspace_id,
+            workflow_params=workflow_args.workflow_parameters
+        )
     except Exception as e:
         log.exception("error in start_workflow")
         raise ResponseException(500, {"error": "internal server error", "message": str(e)})
