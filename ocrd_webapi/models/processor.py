@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional
 
-from ocrd_webapi.models.base import Job, JobState, Resource
+from ocrd_webapi.models.base import Job, JobState
 from ocrd_webapi.models.workspace import WorkspaceRsrc
 
 

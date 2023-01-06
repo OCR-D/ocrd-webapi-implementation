@@ -1,5 +1,5 @@
-import os
-import secrets
+from os import getenv
+from secrets import compare_digest
 from typing import List, Union
 
 from fastapi import (
@@ -44,11 +44,11 @@ def __dummy_security_check(auth):
     """
     user = auth.username.encode("utf8")
     pw = auth.password.encode("utf8")
-    expected_user = os.getenv("OCRD_WEBAPI_USERNAME", "test").encode("utf8")
-    expected_pw = os.getenv("OCRD_WEBAPI_PASSWORD", "test").encode("utf8")
+    expected_user = getenv("OCRD_WEBAPI_USERNAME", "test").encode("utf8")
+    expected_pw = getenv("OCRD_WEBAPI_PASSWORD", "test").encode("utf8")
 
-    user_matched = secrets.compare_digest(user, expected_user)
-    pw_matched = secrets.compare_digest(pw, expected_pw)
+    user_matched = compare_digest(user, expected_user)
+    pw_matched = compare_digest(pw, expected_pw)
 
     if not user or not pw or not user_matched or not pw_matched:
         raise HTTPException(

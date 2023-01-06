@@ -1,4 +1,4 @@
-import os
+from os.path import join
 from pathlib import Path
 from typing import Union
 import bagit
@@ -13,6 +13,7 @@ from ocrd_utils import (
     initLogging,
 )
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
+
 from ocrd_webapi.constants import (
     SERVER_URL,
 )
@@ -152,7 +153,7 @@ def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None,
     if ocrd_identifier is None:
         ocrd_identifier = f"ocrd-{generate_id()}"
 
-    bag_dest = os.path.join(dest, f"{ocrd_identifier}.zip")
+    bag_dest = join(dest, f"{ocrd_identifier}.zip")
     resolver = Resolver()
     # Create an OCR-D Workspace from a mets URL
     # without downloading the files referenced in the mets file

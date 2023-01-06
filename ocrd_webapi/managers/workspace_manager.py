@@ -1,4 +1,5 @@
-import os
+from os.path import join
+from os import remove, symlink
 from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
@@ -18,15 +19,8 @@ from ocrd_webapi.utils import (
 class WorkspaceManager(ResourceManager):
     # Warning: Don't change these defaults
     # till everything is configured properly
-    def __init__(
-            self,
-            resource_router: str = WORKSPACES_ROUTER,
-            logger_label: str = 'ocrd_webapi.workspace_manager'
-    ):
-        super().__init__(
-            logger_label=logger_label,
-            resource_router=resource_router
-        )
+    def __init__(self):
+        super().__init__(logger_label=__name__, resource_router=WORKSPACES_ROUTER)
 
     def get_workspaces(self) -> List[str]:
         """
@@ -41,7 +35,7 @@ class WorkspaceManager(ResourceManager):
             uid: str = None
     ) -> Tuple[Union[str, None], str]:
         workspace_id, workspace_dir = self._create_resource_dir(uid)
-        os.symlink(mets_dir, workspace_dir)
+        symlink(mets_dir, workspace_dir)
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
@@ -64,7 +58,7 @@ class WorkspaceManager(ResourceManager):
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         # TODO: Get rid of this low level os.path access,
         #  should happen inside the Resource manager
-        zip_dest = os.path.join(self._resource_dir, workspace_id + ".zip")
+        zip_dest = join(self._resource_dir, workspace_id + ".zip")
         # TODO: Must be a more optimal way to achieve this
         if file_stream:
             # Handles the UploadFile type file
@@ -78,7 +72,7 @@ class WorkspaceManager(ResourceManager):
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
         await db.save_workspace(workspace_id, bag_info)
 
-        os.remove(zip_dest)
+        remove(zip_dest)
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
@@ -125,7 +119,7 @@ class WorkspaceManager(ResourceManager):
             # TODO: Get rid of this low level os.path access,
             #  should happen inside the Resource manager
             generated_id = generate_id(file_ext=".zip")
-            bag_dest = os.path.join(self._resource_dir, generated_id)
+            bag_dest = join(self._resource_dir, generated_id)
             extract_bag_dest(workspace_db, workspace_dir, bag_dest)
             return bag_dest
         return None

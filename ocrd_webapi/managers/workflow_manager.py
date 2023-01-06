@@ -1,4 +1,6 @@
-import os
+from os import mkdir
+from os.path import join
+
 from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
@@ -17,15 +19,8 @@ from ocrd_webapi.utils import generate_id
 class WorkflowManager(ResourceManager):
     # Warning: Don't change these defaults
     # till everything is configured properly
-    def __init__(
-            self,
-            resource_router: str = WORKFLOWS_ROUTER,
-            logger_label: str = 'ocrd_webapi.workflow_manager'
-    ):
-        super().__init__(
-            logger_label=logger_label,
-            resource_router=resource_router
-        )
+    def __init__(self):
+        super().__init__(logger_label=__name__, resource_router=WORKFLOWS_ROUTER)
         self._nextflow_executor = NextflowManager()
 
     def get_workflows(self) -> List[str]:
@@ -50,8 +45,8 @@ class WorkflowManager(ResourceManager):
 
         """
         workflow_id, workflow_dir = self._create_resource_dir(uid)
-        os.mkdir(workflow_dir)
-        nf_script_dest = os.path.join(workflow_dir, file.filename)
+        mkdir(workflow_dir)
+        nf_script_dest = join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
         await db.save_workflow(workflow_id)
 
@@ -78,7 +73,7 @@ class WorkflowManager(ResourceManager):
     ) -> Tuple[str, Union[str, None]]:
         job_id = generate_id()
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
-        os.mkdir(job_dir)
+        mkdir(job_dir)
         return job_id, job_dir
 
     # TODO: The return type of this method is weird,

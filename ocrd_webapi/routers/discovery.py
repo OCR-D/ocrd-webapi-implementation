@@ -1,8 +1,8 @@
 """
 module for implementing the discovery section of the api
 """
-import os
-import psutil
+from os import cpu_count
+from psutil import virtual_memory
 from fastapi import APIRouter
 from ocrd_webapi.models.discovery import DiscoveryResponse
 
@@ -21,8 +21,8 @@ class Discovery:
         #       (I plan to use docker `ocrd/all:medium` container) does this mean has_docker and
         #       has_ocrd_all  must both be true?
         res = DiscoveryResponse()
-        res.ram = psutil.virtual_memory().total / (1024.0 ** 3)
-        res.cpu_cores = os.cpu_count()
+        res.ram = virtual_memory().total / (1024.0 ** 3)
+        res.cpu_cores = cpu_count()
         # TODO: Whether cuda is available or not
         res.has_cuda = False
         res.cuda_version = "Default: Cuda not available"

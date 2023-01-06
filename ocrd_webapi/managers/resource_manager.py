@@ -1,4 +1,5 @@
-import os
+from os import listdir, scandir
+from os.path import exists, isdir, join
 from pathlib import Path
 from typing import List, Union, Tuple
 
@@ -23,20 +24,21 @@ class ResourceManager:
             resources_base: str = BASE_DIR,
             resources_url: str = SERVER_URL,
     ):
+        # Logger label of this manager - passed from the child class
         self.log = getLogger(logger_label)
         # Server URL
         self._resources_url = resources_url
         # Base directory for all resource managers
         self._resources_base = resources_base
-        # Routing key of this manager
+        # Routing key of this manager - passed from the child class
         self._resource_router = resource_router
 
         # Base directory of this manager - BASE_DIR/resource_router
-        self._resource_dir = os.path.join(self._resources_base, self._resource_router)
+        self._resource_dir = join(self._resources_base, self._resource_router)
         # self._resource_dir = resource_dir
 
         log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
-        if not os.path.exists(self._resource_dir):
+        if not exists(self._resource_dir):
             Path(self._resource_dir).mkdir(parents=True, exist_ok=True)
             self.log.info(f"Created non-existing {log_msg}")
         else:
@@ -44,7 +46,7 @@ class ResourceManager:
 
     def get_all_resources(self, local: bool) -> List[str]:
         resources = []
-        for res in os.scandir(self._resource_dir):
+        for res in scandir(self._resource_dir):
             if res.is_dir():
                 if local:
                     resources.append(res)
@@ -82,7 +84,7 @@ class ResourceManager:
         identified with `resource_id` or None
         """
         resource_dir = self._to_resource(resource_id, local=True)
-        if os.path.exists(resource_dir) and os.path.isdir(resource_dir):
+        if exists(resource_dir) and isdir(resource_dir):
             return resource_dir
         return None
 
@@ -92,9 +94,9 @@ class ResourceManager:
         with `resource_id` or None
         """
         resource_dir = self._to_resource(resource_id, local=True)
-        for file in os.listdir(resource_dir):
+        for file in listdir(resource_dir):
             if file_ext and file.endswith(file_ext):
-                return os.path.join(resource_dir, file)
+                return join(resource_dir, file)
         return None
 
     def _to_resource(self, resource_id: str, local: bool) -> str:
@@ -103,14 +105,14 @@ class ResourceManager:
         `resource_id` without any checks
         """
         if local:
-            return os.path.join(self._resource_dir, resource_id)
+            return join(self._resource_dir, resource_id)
         return f"{self._resources_url}/{self._resource_router}/{resource_id}"
 
     def _to_resource_job(self, resource_id: str, job_id: str, local: bool) -> Union[str, None]:
         if self._has_dir(resource_id):
             resource_base = self._to_resource(resource_id, local)
             if local:
-                return os.path.join(resource_base, job_id)
+                return join(resource_base, job_id)
             return resource_base + f'/{job_id}'
         return None
 
@@ -118,14 +120,14 @@ class ResourceManager:
         if resource_id is None:
             resource_id = generate_id()
         resource_dir = self._to_resource(resource_id, local=True)
-        if os.path.exists(resource_dir):
+        if exists(resource_dir):
             self.log.error("Cannot create: {resource_id}. Resource already exists!")
             # TODO: Raise an Exception here
         return resource_id, resource_dir
 
     def _delete_resource_dir(self, resource_id: str) -> Tuple[str, str]:
         resource_dir = self._to_resource(resource_id, local=True)
-        if os.path.isdir(resource_dir):
+        if isdir(resource_dir):
             shutil.rmtree(resource_dir)
         return resource_id, resource_dir
 

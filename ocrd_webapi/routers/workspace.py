@@ -1,4 +1,4 @@
-import os
+from os import unlink
 from typing import List, Union
 
 from fastapi import (
@@ -76,7 +76,7 @@ async def get_workspace(
         )
         if bag_path:
             # Remove the produced bag after sending it in the response
-            background_tasks.add_task(os.unlink, bag_path)
+            background_tasks.add_task(unlink, bag_path)
             return FileResponse(bag_path)
         raise ResponseException(404, {})
     raise HTTPException(

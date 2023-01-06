@@ -1,4 +1,4 @@
-import os
+from os.path import exists, join
 import shlex
 import subprocess
 from re import search as regex_search
@@ -12,7 +12,7 @@ class NextflowManager:
     def __init__(self):
         # Check if Nextflow is installed
         # If installed, get the version
-        self.log = getLogger('ocrd_webapi.nextflow_executor')
+        self.log = getLogger(__name__)
         self.nf_version = self.is_nf_available()
         self.log.info(f"Installed Nextflow version: {self.nf_version}")
 
@@ -50,7 +50,6 @@ class NextflowManager:
             return None
 
         nf_version = self.__parse_nf_version(ver_process.stdout)
-
         return nf_version
 
     @staticmethod
@@ -104,7 +103,6 @@ class NextflowManager:
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
             self.log.exception(f"Nextflow process failed to start: {error}")
-
         return True
 
     @staticmethod
@@ -114,7 +112,7 @@ class NextflowManager:
     ) -> Union[str, None]:
         if report_name is None:
             report_name = "report.html"
-        report_path = os.path.join(location_dir, report_name)
-        if os.path.exists(report_path):
+        report_path = join(location_dir, report_name)
+        if exists(report_path):
             return report_path
         return None
