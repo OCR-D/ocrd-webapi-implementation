@@ -10,26 +10,23 @@ from ocrd_utils import getLogger
 # Must be further refined
 class NextflowManager:
     def __init__(self):
-        # Check if Nextflow is installed
-        # If installed, get the version
-        self.log = getLogger(__name__)
-        self.nf_version = self.is_nf_available()
-        self.log.info(f"Installed Nextflow version: {self.nf_version}")
+        pass
 
+    @staticmethod
     def execute_workflow(
-            self,
             nf_script_path: str,
             workspace_path: str,
             job_dir: str
     ) -> Union[bool, Exception]:
-        nf_command = self.build_nf_command(nf_script_path, workspace_path)
+        nf_command = NextflowManager.build_nf_command(nf_script_path, workspace_path)
         try:
-            return self._start_nf_process(nf_command, job_dir)
+            return NextflowManager.start_nf_process(nf_command, job_dir)
         except Exception as error:
-            self.log.exception(f"start_nf_workflow: \n{error}")
+            getLogger(__name__).log.exception(f"Failed to execute workflow: {error}")
             raise error
 
-    def is_nf_available(self) -> Union[str, None]:
+    @staticmethod
+    def is_nf_available() -> Union[str, None]:
         # The path to Nextflow must be in $PATH
         # Otherwise, the full path must be provided
 
@@ -45,29 +42,25 @@ class NextflowManager:
                                          check=True,
                                          stdout=subprocess.PIPE,
                                          universal_newlines=True)
-        except Exception:
-            self.log.exception("Failed to detect Nextflow version")
+        except Exception as error:
+            getLogger(__name__).log.error(f"Failed to detect Nextflow installation, {error}")
             return None
 
-        nf_version = self.__parse_nf_version(ver_process.stdout)
+        nf_version = NextflowManager.__parse_nf_version(ver_process.stdout)
+        if nf_version:
+            getLogger(__name__).log.info(f"Installed Nextflow version: {nf_version}")
+        else:
+            getLogger(__name__).log.error(f"Installed Nextflow version: None")
         return nf_version
 
     @staticmethod
-    def __parse_nf_version(
-            version_string: str
-    ) -> Union[str, None]:
+    def __parse_nf_version(version_string: str) -> Union[str, None]:
         regex_pattern = r"nextflow version\s*([\d.]+)"
         nf_version = regex_search(regex_pattern, version_string).group(1)
-        if nf_version:
-            return nf_version
-        return None
+        return nf_version
 
     @staticmethod
-    def build_nf_command(
-            nf_script_path: str,
-            workspace_path: str,
-            workspace_mets: str = None
-    ) -> str:
+    def build_nf_command(nf_script_path: str, workspace_path: str, workspace_mets: str = None) -> str:
         if workspace_mets is None:
             workspace_mets = "mets.xml"
         nf_command = "nextflow -bg"
@@ -77,11 +70,8 @@ class NextflowManager:
         nf_command += " -with-report"
         return nf_command
 
-    def _start_nf_process(
-            self,
-            nf_command: str,
-            job_dir: str
-    ) -> Union[bool, Exception]:
+    @staticmethod
+    def start_nf_process(nf_command: str, job_dir: str) -> Union[bool, Exception]:
         # Must be refined
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
@@ -102,14 +92,11 @@ class NextflowManager:
         # More detailed exception catches needed
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
-            self.log.exception(f"Nextflow process failed to start: {error}")
+            getLogger(__name__).log.exception(f"Nextflow process failed to start: {error}")
         return True
 
     @staticmethod
-    def is_nf_report(
-            location_dir: str,
-            report_name: str = None
-    ) -> Union[str, None]:
+    def is_nf_report(location_dir: str, report_name: str = None) -> Union[str, None]:
         if report_name is None:
             report_name = "report.html"
         report_path = join(location_dir, report_name)

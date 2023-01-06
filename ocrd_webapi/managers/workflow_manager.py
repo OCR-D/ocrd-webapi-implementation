@@ -21,7 +21,6 @@ class WorkflowManager(ResourceManager):
     # till everything is configured properly
     def __init__(self):
         super().__init__(logger_label=__name__, resource_router=WORKFLOWS_ROUTER)
-        self._nextflow_executor = NextflowManager()
 
     def get_workflows(self) -> List[str]:
         """
@@ -99,7 +98,7 @@ class WorkflowManager(ResourceManager):
             raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
-        self._nextflow_executor.execute_workflow(nf_script_path, workspace_dir, job_dir)
+        NextflowManager.execute_workflow(nf_script_path, workspace_dir, job_dir)
 
         workflow_job_status = 'RUNNING'
         await db.save_workflow_job(
@@ -140,7 +139,7 @@ class WorkflowManager(ResourceManager):
             job_id
     ) -> bool:
         """
-        Tests if the file `WORKFLOW_DIR/{workflow_id}/{job_id}/report.html` exists.
+        Tests if the file `report.html` exists inside the workflow job directory.
 
         I assume that the report will be created after the job has finished.
 
@@ -150,7 +149,7 @@ class WorkflowManager(ResourceManager):
             None: workflow_id or job_id (path to file) don't exist
         """
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
-        if job_dir and self._nextflow_executor.is_nf_report(job_dir):
+        if job_dir and NextflowManager.is_nf_report(job_dir):
             await db.set_workflow_job_state(job_id, 'STOPPED')
             return True
         return False
