@@ -19,13 +19,16 @@ from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import WorkflowArgs
 from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
+from ocrd_webapi.utils import safe_init_logging
 
 router = APIRouter(
     tags=["Workflow"],
 )
 
+safe_init_logging()
+
 # TODO: More flexible configuration for logging level should be possible
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logging.getLogger(__name__).setLevel(logging.INFO)
 workflow_manager = WorkflowManager()
 security = HTTPBasic()
@@ -151,7 +154,7 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
             workflow_params=workflow_args.workflow_parameters
         )
     except Exception as e:
-        log.exception(f"Error in start_workflow: {e}")
+        logger.exception(f"Error in start_workflow: {e}")
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": "internal server error", "message": str(e)})
 
@@ -183,7 +186,7 @@ async def upload_workflow_script(nextflow_script: UploadFile,
     try:
         workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception as e:
-        log.exception(f"Error in upload_workflow_script: {e}")
+        logger.exception(f"Error in upload_workflow_script: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkflowRsrc.create(workflow_url=workflow_url)
@@ -206,7 +209,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
             workflow_id=workflow_id
         )
     except Exception as e:
-        log.exception(f"Error in update_workflow_script: {e}")
+        logger.exception(f"Error in update_workflow_script: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkflowRsrc.create(workflow_url=updated_workflow_url)

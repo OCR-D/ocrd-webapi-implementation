@@ -19,13 +19,16 @@ from ocrd_webapi.exceptions import (
 )
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
+from ocrd_webapi.utils import safe_init_logging
 
 router = APIRouter(
     tags=["Workspace"],
 )
 
+safe_init_logging()
+
 # TODO: More flexible configuration for logging level should be possible
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logging.getLogger(__name__).setLevel(logging.INFO)
 workspace_manager = WorkspaceManager()
 
@@ -94,7 +97,7 @@ async def post_workspace(workspace: UploadFile) -> Union[WorkspaceRsrc, Response
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
-        log.exception(f"Unexpected error in post_workspace: {e}")
+        logger.exception(f"Unexpected error in post_workspace: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkspaceRsrc.create(workspace_url=ws_url)
@@ -110,7 +113,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> Union[Works
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
-        log.exception(f"Unexpected error in put_workspace: {e}")
+        logger.exception(f"Unexpected error in put_workspace: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkspaceRsrc.create(workspace_url=updated_workspace_url)

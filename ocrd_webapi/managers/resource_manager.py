@@ -6,6 +6,7 @@ import aiofiles
 import shutil
 import logging
 
+from ocrd_utils import getLogger
 from ocrd_webapi.constants import (
     BASE_DIR,
     SERVER_URL,
@@ -24,7 +25,7 @@ class ResourceManager:
             resources_url: str = SERVER_URL,
     ):
         # Logger label of this manager - passed from the child class
-        self.log = logging.getLogger(logger_label)
+        self.log = getLogger(logger_label)
         # TODO: More flexible configuration for logging level should be possible
         logging.getLogger(logger_label).setLevel(logging.INFO)
         # Server URL
@@ -38,10 +39,12 @@ class ResourceManager:
         self._resource_dir = join(self._resources_base, self._resource_router)
         # self._resource_dir = resource_dir
 
+        log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
         if not exists(self._resource_dir):
-            log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
             Path(self._resource_dir).mkdir(parents=True, exist_ok=True)
             self.log.info(f"Created non-existing {log_msg}")
+        else:
+            self.log.info(f"Using the existing {log_msg}")
 
     def get_all_resources(self, local: bool) -> List[str]:
         resources = []

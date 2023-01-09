@@ -9,11 +9,13 @@ from ocrd_webapi.models.database import (
     WorkflowJobDB,
     WorkspaceDB,
 )
+from ocrd_webapi.utils import safe_init_logging
 
+safe_init_logging()
 # Having a logger in this scope should be better
 # than calling getLogger in every DB method call
 logger = logging.getLogger(__name__)
-logging.getLogger(__name__).setLevel(logging.WARNING)
+logging.getLogger(__name__).setLevel(logging.INFO)
 
 
 async def initiate_database(db_url: str, db_name: str = None, doc_models: List[Document] = None):
