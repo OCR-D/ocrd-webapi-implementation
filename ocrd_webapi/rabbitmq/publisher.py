@@ -24,10 +24,12 @@ from ocrd_webapi.rabbitmq.constants import (
     RABBIT_MQ_VHOST as VHOST
 )
 from ocrd_webapi.rabbitmq.connector import RMQConnector
+from ocrd_webapi.utils import safe_init_logging
 
 
 class RMQPublisher(RMQConnector):
     def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
+        safe_init_logging()
         if logger_name is None:
             logger_name = __name__
         logger = getLogger(logger_name)
