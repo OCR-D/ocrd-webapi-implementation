@@ -12,7 +12,6 @@ from pika import (
     PlainCredentials
 )
 
-from ocrd_utils import getLogger
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_QUEUE,
     LOG_FORMAT,
@@ -22,15 +21,13 @@ from ocrd_webapi.rabbitmq.constants import (
     RABBIT_MQ_VHOST as VHOST
 )
 from ocrd_webapi.rabbitmq.connector import RMQConnector
-from ocrd_webapi.utils import safe_init_logging
 
 
 class RMQConsumer(RMQConnector):
     def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
-        safe_init_logging()
         if logger_name is None:
             logger_name = __name__
-        logger = getLogger(logger_name)
+        logger = logging.getLogger(logger_name)
         logging.getLogger(logger_name).setLevel(LOG_LEVEL)
         # This may mess up the global logger
         logging.basicConfig(level=logging.WARNING)
