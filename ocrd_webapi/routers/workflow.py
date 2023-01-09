@@ -1,6 +1,7 @@
 from os import getenv
 from secrets import compare_digest
 from typing import List, Union
+import logging
 
 from fastapi import (
     APIRouter,
@@ -11,29 +12,21 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse
-from fastapi.security import (
-    HTTPBasic,
-    HTTPBasicCredentials,
-)
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd_utils import getLogger
-from ocrd_webapi.exceptions import (
-    ResponseException,
-)
+from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import WorkflowArgs
 from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
-from ocrd_webapi.utils import (
-    safe_init_logging,
-)
 
 router = APIRouter(
     tags=["Workflow"],
 )
 
-safe_init_logging()
-log = getLogger('ocrd_webapi.workflow')
+# TODO: More flexible configuration for logging level should be possible
+log = logging.getLogger(__name__)
+logging.getLogger(__name__).setLevel(logging.INFO)
 workflow_manager = WorkflowManager()
 security = HTTPBasic()
 
@@ -74,9 +67,7 @@ async def list_workflows() -> List[WorkflowRsrc]:
 
 
 @router.get("/workflow/{workflow_id}")
-async def get_workflow_script(
-        workflow_id: str,
-        accept: str = Header(...)
+async def get_workflow_script(workflow_id: str, accept: str = Header(...)
 ) -> Union[WorkflowRsrc, FileResponse, ResponseException]:
     """
     Get the Nextflow script of an existing workflow space.
@@ -116,11 +107,8 @@ async def get_workflow_script(
     )
 
 
-@router.get("/workflow/{workflow_id}/{job_id}",
-            responses={"200": {"model": WorkflowJobRsrc}})
-async def get_workflow_job(
-        workflow_id: str,
-        job_id: str
+@router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}})
+async def get_workflow_job(workflow_id: str, job_id: str
 ) -> Union[WorkflowJobRsrc, ResponseException]:
     """
     Query a job from the database. Used to query if a job is finished or still running
@@ -130,63 +118,25 @@ async def get_workflow_job(
     in other implementations for example if a job_id is only unique in conjunction with a
     workflow_id.
     """
-    wf_job_db = await workflow_manager.get_workflow_job(
-        workflow_id,
-        job_id
-    )
+    wf_job_db = await workflow_manager.get_workflow_job(workflow_id, job_id)
     if not wf_job_db:
         raise ResponseException(404, {})
 
-    # TODO: this should not use a protected function, if a separate wrapper
-    #  function is provided, this would duplicate some code...
-    wf_job_url = workflow_manager.get_resource_job(
-        wf_job_db.workflow_id,
-        wf_job_db.id,
-        local=False
-    )
-    workflow_url = workflow_manager.get_resource(
-        wf_job_db.workflow_id,
-        local=False
-    )
-    workspace_url = WorkspaceManager.static_get_resource(
-        wf_job_db.workspace_id,
-        local=False
-    )
+    wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
+    workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
+    workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
     job_state = wf_job_db.job_state
 
-    return WorkflowJobRsrc.create(job_url=wf_job_url,
-                                  workflow_url=workflow_url,
-                                  workspace_url=workspace_url,
-                                  job_state=job_state)
+    return WorkflowJobRsrc.create(
+        job_url=wf_job_url,
+        workflow_url=workflow_url,
+        workspace_url=workspace_url,
+        job_state=job_state
+    )
 
 
-@router.post("/workflow",
-             responses={"201": {"model": WorkflowRsrc}})
-async def upload_workflow_script(
-        nextflow_script: UploadFile,
-        auth: HTTPBasicCredentials = Depends(security)
-) -> Union[WorkflowRsrc, ResponseException]:
-    """
-    Create a new workflow space. Upload a Nextflow script inside.
-
-    curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
-    """
-
-    __dummy_security_check(auth)
-    try:
-        workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
-    except Exception:
-        log.exception("error in upload_workflow_script")
-        raise ResponseException(500, {"error": "internal server error"})
-
-    return WorkflowRsrc.create(workflow_url=workflow_url)
-
-
-@router.post("/workflow/{workflow_id}",
-             responses={"201": {"model": WorkflowJobRsrc}})
-async def run_workflow(
-        workflow_id: str,
-        workflow_args: WorkflowArgs
+@router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
+async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
 ) -> Union[WorkflowJobRsrc, ResponseException]:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
@@ -201,7 +151,8 @@ async def run_workflow(
             workflow_params=workflow_args.workflow_parameters
         )
     except Exception as e:
-        log.exception("error in start_workflow")
+        log.exception(f"Error in start_workflow: {e}")
+        # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": "internal server error", "message": str(e)})
 
     # Parse parameters for better readability of the code
@@ -210,18 +161,37 @@ async def run_workflow(
     workflow_url = parameters[2]
     workspace_url = parameters[3]
 
-    return WorkflowJobRsrc.create(job_url=job_url,
-                                  job_state=job_status,
-                                  workflow_url=workflow_url,
-                                  workspace_url=workspace_url)
+    return WorkflowJobRsrc.create(
+        job_url=job_url,
+        workflow_url=workflow_url,
+        workspace_url=workspace_url,
+        job_state=job_status
+    )
 
 
-@router.put("/workflow/{workflow_id}",
-            responses={"201": {"model": WorkflowRsrc}})
-async def update_workflow_script(
-        nextflow_script: UploadFile,
-        workflow_id: str,
-        auth: HTTPBasicCredentials = Depends(security)
+@router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
+async def upload_workflow_script(nextflow_script: UploadFile,
+                                 auth: HTTPBasicCredentials = Depends(security)
+) -> Union[WorkflowRsrc, ResponseException]:
+    """
+    Create a new workflow space. Upload a Nextflow script inside.
+
+    curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
+    """
+
+    __dummy_security_check(auth)
+    try:
+        workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
+    except Exception as e:
+        log.exception(f"Error in upload_workflow_script: {e}")
+        raise ResponseException(500, {"error": "internal server error"})
+
+    return WorkflowRsrc.create(workflow_url=workflow_url)
+
+
+@router.put("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
+async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
+                                 auth: HTTPBasicCredentials = Depends(security)
 ) -> Union[WorkflowRsrc, ResponseException]:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
@@ -235,8 +205,8 @@ async def update_workflow_script(
             file=nextflow_script,
             workflow_id=workflow_id
         )
-    except Exception:
-        log.exception("error in update_workflow_script")
+    except Exception as e:
+        log.exception(f"Error in update_workflow_script: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkflowRsrc.create(workflow_url=updated_workflow_url)

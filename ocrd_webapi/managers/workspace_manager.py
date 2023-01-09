@@ -29,21 +29,13 @@ class WorkspaceManager(ResourceManager):
         workspace_urls = self.get_all_resources(local=False)
         return workspace_urls
 
-    async def create_workspace_from_mets_dir(
-            self,
-            mets_dir: str,
-            uid: str = None
-    ) -> Tuple[Union[str, None], str]:
+    async def create_workspace_from_mets_dir(self, mets_dir: str, uid: str = None) -> Tuple[Union[str, None], str]:
         workspace_id, workspace_dir = self._create_resource_dir(uid)
         symlink(mets_dir, workspace_dir)
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
-    async def create_workspace_from_zip(
-            self,
-            file,
-            uid: str = None,
-            file_stream: bool = True
+    async def create_workspace_from_zip(self, file, uid: str = None, file_stream: bool = True
     ) -> Tuple[Union[str, None], str]:
         """
         create a workspace from an ocrd-zipfile
@@ -76,11 +68,7 @@ class WorkspaceManager(ResourceManager):
         workspace_url = self.get_resource(workspace_id, local=False)
         return workspace_url, workspace_id
 
-    async def update_workspace(
-            self,
-            file,
-            workspace_id: str
-    ) -> Union[str, None]:
+    async def update_workspace(self, file, workspace_id: str) -> Union[str, None]:
         """
         Update a workspace
 
@@ -92,10 +80,7 @@ class WorkspaceManager(ResourceManager):
         return ws_url
 
     # TODO: Refine this and get rid of the low level os.path bullshits
-    async def get_workspace_bag(
-            self,
-            workspace_id: str
-    ) -> Union[str, None]:
+    async def get_workspace_bag(self, workspace_id: str) -> Union[str, None]:
         """
         Create workspace bag.
 
@@ -124,10 +109,7 @@ class WorkspaceManager(ResourceManager):
             return bag_dest
         return None
 
-    async def delete_workspace(
-            self,
-            workspace_id: str
-    ) -> Union[str, None]:
+    async def delete_workspace(self, workspace_id: str) -> Union[str, None]:
         """
         Delete a workspace
         """
@@ -136,8 +118,8 @@ class WorkspaceManager(ResourceManager):
         if not workspace_dir:
             ws = await db.get_workspace(workspace_id)
             if ws and ws.deleted:
-                raise WorkspaceGoneException("workspace already deleted")
-            raise WorkspaceException(f"workspace with id {workspace_id} not existing")
+                raise WorkspaceGoneException(f"Workspace is already deleted: {workspace_id}")
+            raise WorkspaceException(f"Workspace is not existing: {workspace_id}")
 
         deleted_workspace_url = self.get_resource(workspace_id, local=False)
         self._delete_resource_dir(workspace_id)
@@ -151,12 +133,8 @@ class WorkspaceManager(ResourceManager):
     # avoid giving access to the full WorkspaceManager
     # 2. Probably making the managers to be
     # static singletons is the right approach here
-    def static_get_resource(
-            resource_id: str,
-            local: bool
-    ) -> Union[str, None]:
-        workspace_manager = WorkspaceManager()
-        return workspace_manager.get_resource(
+    def static_get_resource(resource_id: str, local: bool) -> Union[str, None]:
+        return WorkspaceManager().get_resource(
             resource_id=resource_id,
             local=local
         )

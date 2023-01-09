@@ -3,7 +3,6 @@ import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ocrd_utils import getLogger
 from ocrd_webapi.constants import DB_URL, SERVER_URL
 from ocrd_webapi.database import initiate_database
 from ocrd_webapi.exceptions import ResponseException
@@ -13,7 +12,6 @@ from ocrd_webapi.routers import (
     workflow,
     workspace,
 )
-from ocrd_webapi.utils import safe_init_logging
 
 
 app = FastAPI(
@@ -36,10 +34,6 @@ app.include_router(discovery.router)
 # app.include_router(processor.router)
 app.include_router(workflow.router)
 app.include_router(workspace.router)
-
-safe_init_logging()
-log = getLogger('ocrd_webapi.main')
-log.info(f"DB_URL: {DB_URL}")
 
 
 @app.exception_handler(ResponseException)

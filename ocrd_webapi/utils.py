@@ -9,17 +9,9 @@ import zipfile
 from ocrd import Resolver
 from ocrd.workspace import Workspace
 from ocrd.workspace_bagger import WorkspaceBagger
-from ocrd_utils import (
-    initLogging,
-)
 from ocrd_validators.ocrd_zip_validator import OcrdZipValidator
-
-from ocrd_webapi.constants import (
-    SERVER_URL,
-)
-from ocrd_webapi.exceptions import (
-    WorkspaceNotValidException,
-)
+from ocrd_webapi.constants import SERVER_URL
+from ocrd_webapi.exceptions import WorkspaceNotValidException
 
 __all__ = [
     "bagit_from_url",
@@ -28,7 +20,6 @@ __all__ = [
     "find_upwards",
     "generate_id",
     "read_bag_info_from_zip",
-    "safe_init_logging",
 ]
 
 
@@ -40,20 +31,6 @@ def to_processor_job_url(processor_name: str, job_id: str) -> str:
     does not verify that the processor or/and the processor-job exists
     """
     return f"{SERVER_URL}/processor/{processor_name}/{job_id}"
-
-
-logging_initialized = False
-
-
-def safe_init_logging() -> None:
-    """
-    wrapper around ocrd_utils.initLogging. It assures that ocrd_utils.initLogging is only called
-    once. This function may be called multiple times
-    """
-    global logging_initialized
-    if not logging_initialized:
-        logging_initialized = True
-        initLogging()
 
 
 def extract_bag_info(zip_dest, workspace_dir) -> dict:

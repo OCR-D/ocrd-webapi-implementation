@@ -9,7 +9,7 @@ from pika import (
     BasicProperties,
     BlockingConnection,
     ConnectionParameters,
-    PlainCredentials,
+    PlainCredentials
 )
 
 from ocrd_webapi.rabbitmq.constants import (
@@ -20,18 +20,12 @@ from ocrd_webapi.rabbitmq.constants import (
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST,
-    PREFETCH_COUNT,
+    PREFETCH_COUNT
 )
 
 
 class RMQConnector:
-    def __init__(
-            self,
-            logger,
-            host: str = HOST,
-            port: int = PORT,
-            vhost: str = VHOST
-    ):
+    def __init__(self, logger, host: str = HOST, port: int = PORT, vhost: str = VHOST):
         self._logger = logger
         self._host = host
         self._port = port
@@ -146,17 +140,10 @@ class RMQConnector:
             return exchange
 
     @staticmethod
-    def exchange_delete(
-            channel,
-            exchange_name: str,
-            if_unused: bool = False,
-    ):
+    def exchange_delete(channel, exchange_name: str, if_unused: bool = False):
+        # Deletes queue only if unused
         if channel and channel.is_open:
-            channel.exchange_delete(
-                exchange=exchange_name,
-                # Only delete if the exchange is unused
-                if_unused=if_unused
-            )
+            channel.exchange_delete(exchange=exchange_name, if_unused=if_unused)
 
     @staticmethod
     def exchange_unbind(
@@ -165,7 +152,6 @@ class RMQConnector:
             source_exchange: str,
             routing_key: str,
             arguments: Optional[Any] = None
-
     ):
         if arguments is None:
             arguments = {}
@@ -178,22 +164,11 @@ class RMQConnector:
             )
 
     @staticmethod
-    def queue_bind(
-            channel,
-            queue_name: str,
-            exchange_name: str,
-            routing_key: str,
-            arguments: Optional[Any] = None
-    ):
+    def queue_bind(channel, queue_name: str, exchange_name: str, routing_key: str, arguments: Optional[Any] = None):
         if arguments is None:
             arguments = {}
         if channel and channel.is_open:
-            channel.queue_bind(
-                queue=queue_name,
-                exchange=exchange_name,
-                routing_key=routing_key,
-                arguments=arguments
-            )
+            channel.queue_bind(queue=queue_name, exchange=exchange_name, routing_key=routing_key, arguments=arguments)
 
     @staticmethod
     def queue_declare(
@@ -225,12 +200,7 @@ class RMQConnector:
             return queue
 
     @staticmethod
-    def queue_delete(
-            channel,
-            queue_name: str,
-            if_unused: bool = False,
-            if_empty: bool = False
-    ):
+    def queue_delete(channel, queue_name: str, if_unused: bool = False, if_empty: bool = False):
         if channel and channel.is_open:
             channel.queue_delete(
                 queue=queue_name,
@@ -241,23 +211,12 @@ class RMQConnector:
             )
 
     @staticmethod
-    def queue_purge(
-            channel,
-            queue_name: str
-    ):
+    def queue_purge(channel, queue_name: str):
         if channel and channel.is_open:
-            channel.queue_purge(
-                queue=queue_name
-            )
+            channel.queue_purge(queue=queue_name)
 
     @staticmethod
-    def queue_unbind(
-            channel,
-            queue_name: str,
-            exchange_name: str,
-            routing_key: str,
-            arguments: Optional[Any] = None
-    ):
+    def queue_unbind(channel, queue_name: str, exchange_name: str, routing_key: str, arguments: Optional[Any] = None):
         if arguments is None:
             arguments = {}
         if channel and channel.is_open:
@@ -269,12 +228,7 @@ class RMQConnector:
             )
 
     @staticmethod
-    def set_qos(
-            channel,
-            prefetch_size: int = 0,
-            prefetch_count: int = PREFETCH_COUNT,
-            global_qos: bool = False
-    ):
+    def set_qos(channel, prefetch_size: int = 0, prefetch_count: int = PREFETCH_COUNT, global_qos: bool = False):
         if channel and channel.is_open:
             channel.basic_qos(
                 # No specific limit if set to 0
@@ -290,18 +244,7 @@ class RMQConnector:
             channel.confirm_delivery()
 
     @staticmethod
-    def basic_consume(channel):
-        # TODO: provide a general consume method here as well
-        pass
-
-    @staticmethod
-    def basic_publish(
-            channel,
-            exchange_name: str,
-            routing_key: str,
-            message_body: bytes,
-            properties: BasicProperties
-    ):
+    def basic_publish(channel, exchange_name: str, routing_key: str, message_body: bytes, properties: BasicProperties):
         if channel and channel.is_open:
             channel.basic_publish(
                 exchange=exchange_name,
@@ -309,3 +252,10 @@ class RMQConnector:
                 body=message_body,
                 properties=properties
             )
+
+    """ 
+    @staticmethod
+    def basic_consume(channel):
+        # TODO: provide a general consume method here as well
+        pass
+    """

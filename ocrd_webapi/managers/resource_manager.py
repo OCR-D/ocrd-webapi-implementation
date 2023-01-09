@@ -2,11 +2,10 @@ from os import listdir, scandir
 from os.path import exists, isdir, join
 from pathlib import Path
 from typing import List, Union, Tuple
-
 import aiofiles
 import shutil
+import logging
 
-from ocrd_utils import getLogger
 from ocrd_webapi.constants import (
     BASE_DIR,
     SERVER_URL,
@@ -25,7 +24,9 @@ class ResourceManager:
             resources_url: str = SERVER_URL,
     ):
         # Logger label of this manager - passed from the child class
-        self.log = getLogger(logger_label)
+        self.log = logging.getLogger(logger_label)
+        # TODO: More flexible configuration for logging level should be possible
+        logging.getLogger(logger_label).setLevel(logging.INFO)
         # Server URL
         self._resources_url = resources_url
         # Base directory for all resource managers
@@ -37,12 +38,10 @@ class ResourceManager:
         self._resource_dir = join(self._resources_base, self._resource_router)
         # self._resource_dir = resource_dir
 
-        log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
         if not exists(self._resource_dir):
+            log_msg = f"{self._resource_router}s base directory: {self._resource_dir}"
             Path(self._resource_dir).mkdir(parents=True, exist_ok=True)
             self.log.info(f"Created non-existing {log_msg}")
-        else:
-            self.log.info(f"Using the existing {log_msg}")
 
     def get_all_resources(self, local: bool) -> List[str]:
         resources = []
@@ -131,8 +130,8 @@ class ResourceManager:
             shutil.rmtree(resource_dir)
         return resource_id, resource_dir
 
-    # TODO: Get rid of the duplication by
-    #  implementing a single method
+    # TODO: Getting rid of the duplication seems
+    #  trickier than expected implementing a single method is harder
     @staticmethod
     async def _receive_resource(file, resource_dest):
         async with aiofiles.open(resource_dest, "wb") as fpt:

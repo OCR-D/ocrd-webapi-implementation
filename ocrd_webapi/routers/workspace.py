@@ -1,5 +1,6 @@
 from os import unlink
 from typing import List, Union
+import logging
 
 from fastapi import (
     APIRouter,
@@ -10,7 +11,6 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse
-from ocrd_utils import getLogger
 from ocrd_webapi.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -19,13 +19,14 @@ from ocrd_webapi.exceptions import (
 )
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.workspace import WorkspaceRsrc
-from ocrd_webapi.utils import safe_init_logging
 
 router = APIRouter(
     tags=["Workspace"],
 )
-safe_init_logging()
-log = getLogger('ocrd_webapi.workspace')
+
+# TODO: More flexible configuration for logging level should be possible
+log = logging.getLogger(__name__)
+logging.getLogger(__name__).setLevel(logging.INFO)
 workspace_manager = WorkspaceManager()
 
 
@@ -63,17 +64,12 @@ async def get_workspace(
     `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
     if accept == "application/json":
-        workspace_url = workspace_manager.get_resource(
-            workspace_id,
-            local=False
-        )
+        workspace_url = workspace_manager.get_resource(workspace_id, local=False)
         if workspace_url:
             return WorkspaceRsrc.create(workspace_url=workspace_url)
         raise ResponseException(404, {})
     if accept == "application/vnd.ocrd+zip":
-        bag_path = await workspace_manager.get_workspace_bag(
-            workspace_id
-        )
+        bag_path = await workspace_manager.get_workspace_bag(workspace_id)
         if bag_path:
             # Remove the produced bag after sending it in the response
             background_tasks.add_task(unlink, bag_path)
@@ -86,11 +82,8 @@ async def get_workspace(
     )
 
 
-@router.post("/workspace",
-             responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(
-        workspace: UploadFile
-) -> Union[WorkspaceRsrc, ResponseException]:
+@router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
+async def post_workspace(workspace: UploadFile) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Create a new workspace
 
@@ -100,41 +93,31 @@ async def post_workspace(
         ws_url, ws_id = await workspace_manager.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
-    except Exception:
-        log.exception("unexpected error in post_workspace")
+    except Exception as e:
+        log.exception(f"Unexpected error in post_workspace: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkspaceRsrc.create(workspace_url=ws_url)
 
 
-@router.put("/workspace/{workspace_id}",
-            responses={"201": {"model": WorkspaceRsrc}})
-async def put_workspace(
-        workspace: UploadFile,
-        workspace_id: str
-) -> Union[WorkspaceRsrc, ResponseException]:
+@router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
+async def put_workspace(workspace: UploadFile, workspace_id: str) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Update or create a workspace
     """
     try:
-        updated_workspace_url = await workspace_manager.update_workspace(
-            file=workspace,
-            workspace_id=workspace_id
-        )
+        updated_workspace_url = await workspace_manager.update_workspace(file=workspace, workspace_id=workspace_id)
     except WorkspaceNotValidException as e:
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
-    except Exception:
-        log.exception("unexpected error in put_workspace")
+    except Exception as e:
+        log.exception(f"Unexpected error in put_workspace: {e}")
         raise ResponseException(500, {"error": "internal server error"})
 
     return WorkspaceRsrc.create(workspace_url=updated_workspace_url)
 
 
-@router.delete("/workspace/{workspace_id}",
-               responses={"200": {"model": WorkspaceRsrc}})
-async def delete_workspace(
-        workspace_id: str
-) -> Union[WorkspaceRsrc, ResponseException]:
+@router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
+async def delete_workspace(workspace_id: str) -> Union[WorkspaceRsrc, ResponseException]:
     """
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'

@@ -1,17 +1,13 @@
 from os import mkdir
 from os.path import join
-
 from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
 from ocrd_webapi.constants import WORKFLOWS_ROUTER
-from ocrd_webapi.exceptions import (
-    WorkflowJobException,
-)
+from ocrd_webapi.exceptions import WorkflowJobException
 from ocrd_webapi.managers.nextflow_manager import NextflowManager
 from ocrd_webapi.managers.resource_manager import ResourceManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
-from ocrd_webapi.models.base import JobState
 from ocrd_webapi.models.database import WorkflowJobDB
 from ocrd_webapi.utils import generate_id
 
@@ -21,6 +17,11 @@ class WorkflowManager(ResourceManager):
     # till everything is configured properly
     def __init__(self):
         super().__init__(logger_label=__name__, resource_router=WORKFLOWS_ROUTER)
+        self.nf_version = NextflowManager.is_nf_available()
+        if self.nf_version:
+            self.log.info(f"Detected Nextflow version: {self.nf_version}")
+        else:
+            self.log.error(f"Detected Nextflow version: unable to detect")
 
     def get_workflows(self) -> List[str]:
         """
@@ -29,11 +30,7 @@ class WorkflowManager(ResourceManager):
         workflow_urls = self.get_all_resources(local=False)
         return workflow_urls
 
-    async def create_workflow_space(
-            self,
-            file,
-            uid: str = None
-    ) -> Union[str, None]:
+    async def create_workflow_space(self, file, uid: str = None) -> Union[str, None]:
         """
         Create a new workflow space. Upload a Nextflow script inside.
 
@@ -52,11 +49,7 @@ class WorkflowManager(ResourceManager):
         workflow_url = self.get_resource(workflow_id, local=False)
         return workflow_url
 
-    async def update_workflow_space(
-            self,
-            file,
-            workflow_id: str
-    ) -> Union[str, None]:
+    async def update_workflow_space(self, file, workflow_id: str) -> Union[str, None]:
         """
         Update a workflow space
 
@@ -66,93 +59,69 @@ class WorkflowManager(ResourceManager):
         self._delete_resource_dir(workflow_id)
         return await self.create_workflow_space(file, workflow_id)
 
-    def create_workflow_execution_space(
-            self,
-            workflow_id: str
-    ) -> Tuple[str, Union[str, None]]:
+    def create_workflow_execution_space(self, workflow_id: str) -> Tuple[str, Union[str, None]]:
         job_id = generate_id()
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
         mkdir(job_dir)
         return job_id, job_dir
 
-    # TODO: The return type of this method is weird,
-    #  this method does more things than it should do
-    #  refactor it
-    async def start_nf_workflow(
-            self,
-            workflow_id: str,
-            workspace_id: str,
-            workflow_params: dict
-    ) -> Union[List[Union[str, JobState, None]], WorkflowJobException]:
-        # TODO: mets-name can differ from mets.xml. The name of the mets is stored in the mongodb
-        #       (ocrd_webapi.models.WorkspaceDb.ocrd_mets). Try to make it possible to tell nextflow the
-        #       name of the mets if it is not mets.xml.        
-
-        # nf_script is the path to the Nextflow script inside workflow_id
+    async def start_nf_workflow(self, workflow_id: str, workspace_id: str, workflow_params: dict
+    ) -> Union[list, WorkflowJobException]:
+        # The path to the Nextflow script inside workflow_id
         nf_script_path = self.get_resource_file(workflow_id, file_ext='.nf')
         workspace_dir = WorkspaceManager.static_get_resource(workspace_id, local=True)
 
         # TODO: These checks must happen inside the Resource Manager, not here
         if not nf_script_path:
-            raise WorkflowJobException(f"Workflow not existing. Id: {workflow_id}")
+            raise WorkflowJobException(f"Workflow not existing: {workflow_id}")
         if not workspace_dir:
-            raise WorkflowJobException(f"Workspace not existing. Id: {workspace_id}")
+            raise WorkflowJobException(f"Workspace not existing: {workspace_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
-        NextflowManager.execute_workflow(
-            nf_script_path,
-            workspace_dir,
-            job_dir,
-            workflow_params
-        )
-
-        workflow_job_status = 'RUNNING'
-        await db.save_workflow_job(
-            job_id=job_id,
-            workflow_id=workflow_id,
-            workspace_id=workspace_id,
-            job_state=workflow_job_status
-        )
-
-        # These assignments are done just for the sake of better readability
-        workflow_job_url = self.get_resource_job(workflow_id, job_id, local=False)
-        workflow_url = self.get_resource(workflow_id, local=False)
-        workspace_url = WorkspaceManager.static_get_resource(workspace_id, local=False)
+        try:
+            NextflowManager.execute_workflow(
+                nf_script_path,
+                workspace_dir,
+                job_dir,
+                workflow_params
+            )
+            workflow_job_status = 'RUNNING'
+            await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
+                                       workspace_id=workspace_id, job_state=workflow_job_status)
+        except Exception as error:
+            # TODO: Integrate FAILED instead of STOPPED
+            workflow_job_status = 'STOPPED'
+            await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
+                                       workspace_id=workspace_id, job_state=workflow_job_status)
+            self.log.exception(f"Failed to execute workflow: {error}")
+            raise WorkflowJobException(f"Failed to execute workflow: {workflow_id}, "f"with workspace: {workspace_id}")
 
         parameters = [
-            workflow_job_url,
+            # Workflow Job URL
+            self.get_resource_job(workflow_id, job_id, local=False),
             workflow_job_status,
-            workflow_url,
-            workspace_url
+            # Workflow URL
+            self.get_resource(workflow_id, local=False),
+            # Workspace URL
+            WorkspaceManager.static_get_resource(workspace_id, local=False)
         ]
-
         return parameters
 
-    async def get_workflow_job(
-            self,
-            workflow_id: str,
-            job_id: str
-    ) -> Union[WorkflowJobDB, None]:
+    async def get_workflow_job(self, workflow_id: str, job_id: str) -> Union[WorkflowJobDB, None]:
         # We do not need the result,
         # perform check to set a new job status if required
         await self.is_job_finished(workflow_id, job_id)
         wf_job_db = await db.get_workflow_job(job_id)
         return wf_job_db
 
-    async def is_job_finished(
-            self,
-            workflow_id: str,
-            job_id: str
-    ) -> bool:
+    async def is_job_finished(self, workflow_id: str, job_id: str) -> bool:
         """
-        Tests if the file `report.html` exists inside the workflow job directory.
-
-        I assume that the report will be created after the job has finished.
+        Tests if an execution report exists inside the workflow job directory.
+        A report file is always created after job finishes.
 
         returns:
-            true: file exists
-            false: file doesn't exist
-            None: workflow_id or job_id (path to file) don't exist
+            true: Job has finished successfully or with an error
+            false: Job has not finished yet
         """
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
         if job_dir and NextflowManager.is_nf_report(job_dir):
