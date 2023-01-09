@@ -29,7 +29,7 @@ class RMQConsumer(RMQConnector):
         logger = getLogger(__name__)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         # This may mess up the global logger
-        # logging.basicConfig(format=LOG_FORMAT)
+        logging.basicConfig(level=logging.WARNING)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None
