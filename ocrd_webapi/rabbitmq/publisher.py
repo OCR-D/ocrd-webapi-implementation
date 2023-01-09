@@ -26,10 +26,13 @@ from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQPublisher(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger: str = None):
-        if logger is None:
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
+        if logger_name is None:
             logger = logging.getLogger(__name__)
-        logging.getLogger(__name__).setLevel(LOG_LEVEL)
+            logging.getLogger(__name__).setLevel(LOG_LEVEL)
+        else:
+            logger = logging.getLogger(logger_name)
+            logging.getLogger(logger_name).setLevel(LOG_LEVEL)
         # This may mess up the global logger
         logging.basicConfig(level=logging.WARNING)
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
