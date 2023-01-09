@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -14,9 +15,6 @@ from ocrd_webapi.routers import (
     workspace,
 )
 from ocrd_webapi.utils import safe_init_logging
-
-safe_init_logging()
-log = getLogger(__name__)
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -38,6 +36,9 @@ app.include_router(discovery.router)
 # app.include_router(processor.router)
 app.include_router(workflow.router)
 app.include_router(workspace.router)
+
+safe_init_logging()
+log = getLogger('ocrd_webapi.main')
 
 
 @app.exception_handler(ResponseException)

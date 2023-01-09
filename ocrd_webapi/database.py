@@ -3,6 +3,7 @@ from beanie import init_beanie, Document
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
 
+from ocrd_utils import getLogger
 from ocrd_webapi.constants import DB_NAME
 from ocrd_webapi.models.database import (
     WorkflowDB,
@@ -14,8 +15,8 @@ from ocrd_webapi.utils import safe_init_logging
 safe_init_logging()
 # Having a logger in this scope should be better
 # than calling getLogger in every DB method call
-logger = logging.getLogger(__name__)
-logging.getLogger(__name__).setLevel(logging.INFO)
+logger = getLogger('ocrd_webapi.database')
+# logging.getLogger('ocrd_webapi.database').setLevel(logging.INFO)
 
 
 async def initiate_database(db_url: str, db_name: str = None, doc_models: List[Document] = None):

@@ -1,6 +1,5 @@
 from os import unlink
 from typing import List, Union
-import logging
 
 from fastapi import (
     APIRouter,
@@ -11,6 +10,8 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse
+
+from ocrd_utils import getLogger
 from ocrd_webapi.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -28,8 +29,8 @@ router = APIRouter(
 safe_init_logging()
 
 # TODO: More flexible configuration for logging level should be possible
-logger = logging.getLogger(__name__)
-logging.getLogger(__name__).setLevel(logging.INFO)
+logger = getLogger(__name__)
+# logging.getLogger(__name__).setLevel(logging.INFO)
 workspace_manager = WorkspaceManager()
 
 
