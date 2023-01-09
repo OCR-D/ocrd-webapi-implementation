@@ -24,8 +24,9 @@ from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST):
-        logger = logging.getLogger(__name__)
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger: str = None):
+        if logger is None:
+            logger = logging.getLogger(__name__)
         logging.getLogger(__name__).setLevel(LOG_LEVEL)
         # This may mess up the global logger
         logging.basicConfig(level=logging.WARNING)
