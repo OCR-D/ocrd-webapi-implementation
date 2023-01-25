@@ -15,6 +15,4 @@ pytest-env>=0.6.2
 pytest-pudb>=0.7.0 # Seems not needed, should be verified
 python-dotenv>=0.20.0
 python-multipart>=0.0.5
-tomli>=2.0.0
 uvicorn>=0.17.6
-
