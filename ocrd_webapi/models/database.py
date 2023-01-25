@@ -20,6 +20,7 @@ class WorkspaceDB(Document):
                                     key-value-pairs which are saved here
     """
     id: str
+    workspace_path: str
     ocrd_identifier: str
     bagit_profile_identifier: str
     ocrd_base_version_checksum: Optional[str]
@@ -36,6 +37,7 @@ class WorkflowDB(Document):
     Model to store a workflow in the mongo-database.
     """
     id: str
+    workflow_path: str
     deleted: bool = False
 
     class Collection:

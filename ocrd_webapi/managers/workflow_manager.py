@@ -44,7 +44,7 @@ class WorkflowManager(ResourceManager):
         mkdir(workflow_dir)
         nf_script_dest = join(workflow_dir, file.filename)
         await self._receive_resource(file, nf_script_dest)
-        await db.save_workflow(workflow_id)
+        await db.save_workflow(workflow_id, workflow_dir)
 
         workflow_url = self.get_resource(workflow_id, local=False)
         return workflow_url

@@ -76,18 +76,19 @@ async def mark_deleted_workspace(workspace_id) -> bool:
     return False
 
 
-async def save_workflow(workflow_id: str) -> Union[WorkflowDB, None]:
-    workflow_db = WorkflowDB(_id=workflow_id)
+async def save_workflow(workflow_id: str, workflow_path) -> Union[WorkflowDB, None]:
+    workflow_db = WorkflowDB(_id=workflow_id, workflow_path=workflow_path)
     await workflow_db.save()
     return workflow_db
 
 
-async def save_workspace(workspace_id: str, bag_info: dict) -> Union[WorkspaceDB, None]:
+async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict) -> Union[WorkspaceDB, None]:
     """
     save a workspace to the database. Can also be used to update a workspace
 
     Arguments:
          workspace_id: uid of the workspace which must be available on disk
+         workspace_path: the path of the workspace on the local disk
          bag_info: dict with key-value-pairs from bag-info.txt
     """
     bag_info = dict(bag_info)
@@ -101,6 +102,7 @@ async def save_workspace(workspace_id: str, bag_info: dict) -> Union[WorkspaceDB
 
     workspace_db = WorkspaceDB(
         _id=workspace_id,
+        workspace_path=workspace_path,
         ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,
         bagit_profile_identifier=bagit_profile_identifier,

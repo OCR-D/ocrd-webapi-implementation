@@ -62,7 +62,7 @@ class WorkspaceManager(ResourceManager):
         bag_info = extract_bag_info(zip_dest, workspace_dir)
 
         # TODO: Provide a functionality to enable/disable writing to/reading from a DB
-        await db.save_workspace(workspace_id, bag_info)
+        await db.save_workspace(workspace_id, workspace_dir, bag_info)
 
         remove(zip_dest)
         workspace_url = self.get_resource(workspace_id, local=False)
