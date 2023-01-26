@@ -99,7 +99,8 @@ async def post_workspace(workspace: UploadFile) -> Union[WorkspaceRsrc, Response
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
         logger.exception(f"Unexpected error in post_workspace: {e}")
-        raise ResponseException(500, {"error": "internal server error"})
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkspaceRsrc.create(workspace_url=ws_url)
 
@@ -115,7 +116,8 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> Union[Works
         raise ResponseException(422, {"error": "workspace not valid", "reason": str(e)})
     except Exception as e:
         logger.exception(f"Unexpected error in put_workspace: {e}")
-        raise ResponseException(500, {"error": "internal server error"})
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkspaceRsrc.create(workspace_url=updated_workspace_url)
 
@@ -134,5 +136,9 @@ async def delete_workspace(workspace_id: str) -> Union[WorkspaceRsrc, ResponseEx
         raise ResponseException(410, {})
     except WorkspaceException:
         raise ResponseException(404, {})
+    except Exception as e:
+        logger.exception(f"Unexpected error in delete_workspace: {e}")
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkspaceRsrc.create(workspace_url=deleted_workspace_url)

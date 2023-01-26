@@ -1,3 +1,4 @@
+import logging
 from os import getenv
 from secrets import compare_digest
 from typing import List, Union
@@ -126,10 +127,15 @@ async def get_workflow_job(workflow_id: str, job_id: str
     if not wf_job_db:
         raise ResponseException(404, {})
 
-    wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
-    workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
-    workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
-    job_state = wf_job_db.job_state
+    try:
+        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
+        workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
+        workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
+        job_state = wf_job_db.job_state
+    except Exception as e:
+        logger.exception(f"Unexpected error in get_workflow_job: {e}")
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkflowJobRsrc.create(
         job_url=wf_job_url,
@@ -155,9 +161,9 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
             workflow_params=workflow_args.workflow_parameters
         )
     except Exception as e:
-        logger.exception(f"Error in start_workflow: {e}")
+        logger.exception(f"Unexpected error in run_workflow: {e}")
         # TODO: Don't provide the exception message to the outside world
-        raise ResponseException(500, {"error": "internal server error", "message": str(e)})
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     # Parse parameters for better readability of the code
     job_url = parameters[0]
@@ -188,7 +194,8 @@ async def upload_workflow_script(nextflow_script: UploadFile,
         workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception as e:
         logger.exception(f"Error in upload_workflow_script: {e}")
-        raise ResponseException(500, {"error": "internal server error"})
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkflowRsrc.create(workflow_url=workflow_url)
 
@@ -211,7 +218,8 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
         )
     except Exception as e:
         logger.exception(f"Error in update_workflow_script: {e}")
-        raise ResponseException(500, {"error": "internal server error"})
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     return WorkflowRsrc.create(workflow_url=updated_workflow_url)
 
