@@ -52,11 +52,13 @@ class WorkflowJobDB(Document):
         id            the job's id
         workspace_id  id of the workspace on which this job is running
         workflow_id   id of the workflow the job is executing
+        job_path      the path of the workflow job
         job_state     current state of the workflow job
     """
     id: str
     workspace_id: str
     workflow_id: str
+    job_path: str
     job_state: str
 
     class Settings:

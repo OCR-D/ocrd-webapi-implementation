@@ -82,7 +82,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)
     can not be used to test getting the workflow as a file. See:
     https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
 
-    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
+
     curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
     """
     if accept == "application/json":

@@ -87,12 +87,12 @@ class WorkflowManager(ResourceManager):
             )
             workflow_job_status = 'RUNNING'
             await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
-                                       workspace_id=workspace_id, job_state=workflow_job_status)
+                                       workspace_id=workspace_id, job_path=job_dir, job_state=workflow_job_status)
         except Exception as error:
             # TODO: Integrate FAILED instead of STOPPED
             workflow_job_status = 'STOPPED'
             await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
-                                       workspace_id=workspace_id, job_state=workflow_job_status)
+                                       workspace_id=workspace_id, job_path=job_dir, job_state=workflow_job_status)
             self.log.exception(f"Failed to execute workflow: {error}")
             raise WorkflowJobException(f"Failed to execute workflow: {workflow_id}, "f"with workspace: {workspace_id}")
 

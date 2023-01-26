@@ -42,12 +42,28 @@ async def get_workflow(workflow_id) -> Union[WorkflowDB, None]:
     return await WorkflowDB.get(workflow_id)
 
 
+async def get_workflow_path(workflow_id) -> Union[str, None]:
+    workflow = await WorkflowDB.get(workflow_id)
+    if workflow:
+        return workflow.workflow_path
+    logger.warning(f"Trying to get a workflow path of a non-existing workflow_id: {workflow_id}")
+    return None
+
+
 async def get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
     return await WorkflowJobDB.get(job_id)
 
 
 async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
     return await WorkspaceDB.get(workspace_id)
+
+
+async def get_workspace_path(workspace_id) -> Union[str, None]:
+    workspace = await WorkspaceDB.get(workspace_id)
+    if workspace:
+        return workspace.workspace_path
+    logger.warning(f"Trying to get a workspace path of a non-existing workspace_id: {workspace_id}")
+    return None
 
 
 async def mark_deleted_workflow(workflow_id) -> bool:
@@ -113,7 +129,7 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
     return workspace_db
 
 
-async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_state: str
+async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_path: str, job_state: str
 ) -> Union[WorkflowJobDB, None]:
     """
     save a workflow_job to the database
@@ -122,12 +138,14 @@ async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, jo
         job_id: id of the workflow job
         workflow_id: id of the workflow the job is/was executing
         workspace_id: id of the workspace the job runs on
+        job_path: the path of the workflow job
         job_state: current state of the job
     """
     workflow_job = WorkflowJobDB(
         _id=job_id,
         workflow_id=workflow_id,
         workspace_id=workspace_id,
+        job_path=job_path,
         job_state=job_state
     )
     await workflow_job.save()
@@ -145,3 +163,14 @@ async def set_workflow_job_state(job_id, job_state: str) -> bool:
         return True
     logger.warning(f"Trying to set a state to a non-existing workflow job: {job_id}")
     return False
+
+
+async def get_workflow_job_state(job_id) -> Union[str, None]:
+    """
+    get state of job
+    """
+    job = await WorkflowJobDB.get(job_id)
+    if job:
+        return job.job_state
+    logger.warning(f"Trying to get a state of a non-existing workflow job: {job_id}")
+    return None
