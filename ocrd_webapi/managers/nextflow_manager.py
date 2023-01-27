@@ -4,8 +4,6 @@ import subprocess
 from re import search as regex_search
 from typing import Union
 
-import ocrd_webapi.database as db
-
 
 # Must be further refined
 class NextflowManager:
@@ -13,7 +11,7 @@ class NextflowManager:
         pass
 
     @staticmethod
-    async def execute_workflow(
+    def execute_workflow(
             nf_script_path: str,
             workspace_path: str,
             job_id: str,
@@ -27,7 +25,7 @@ class NextflowManager:
         )
 
         # Throws an exception if not successful
-        await NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
+        NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
 
     @staticmethod
     def is_nf_available() -> Union[str, None]:
@@ -70,7 +68,7 @@ class NextflowManager:
         return nf_command
 
     @staticmethod
-    async def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
+    def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
@@ -92,13 +90,7 @@ class NextflowManager:
         # More detailed exception catches needed
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
-            await db.set_workflow_job_state(job_id=job_id, job_state="STOPPED")
             raise error
-
-        # Since check=True is set, when the return code is
-        # different from 0 it throws an exception that is caught above
-        if nf_process.returncode == 0:
-            await db.set_workflow_job_state(job_id=job_id, job_state="SUCCESS")
 
     @staticmethod
     def is_nf_report(location_dir: str) -> Union[str, None]:

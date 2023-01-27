@@ -2,6 +2,7 @@ from os.path import join
 from pathlib import Path
 from typing import Union
 import bagit
+import functools
 import tempfile
 import uuid
 import zipfile
@@ -17,6 +18,7 @@ from ocrd_webapi.exceptions import WorkspaceNotValidException
 
 __all__ = [
     "bagit_from_url",
+    "call_sync",
     "extract_bag_dest",
     "extract_bag_info",
     "find_upwards",
@@ -167,3 +169,16 @@ def bagit_from_url(mets_url, mets_basename="mets.xml", dest=None, file_grp=None,
     WorkspaceBagger(resolver).bag(workspace, dest=bag_dest, ocrd_identifier=ocrd_identifier)
 
     return bag_dest
+
+
+# Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
+def call_sync(func):
+    import asyncio
+
+    @functools.wraps(func)
+    def func_wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            return asyncio.get_event_loop().run_until_complete(result)
+        return result
+    return func_wrapper

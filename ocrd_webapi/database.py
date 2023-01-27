@@ -10,7 +10,7 @@ from ocrd_webapi.models.database import (
     WorkflowJobDB,
     WorkspaceDB,
 )
-from ocrd_webapi.utils import safe_init_logging
+from ocrd_webapi.utils import call_sync, safe_init_logging
 
 safe_init_logging()
 # Having a logger in this scope should be better
@@ -38,8 +38,18 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
     )
 
 
+@call_sync
+async def sync_initiate_database(db_url: str, db_name: str = None, doc_models: List[Document] = None):
+    await initiate_database(db_url, db_name, doc_models)
+
+
 async def get_workflow(workflow_id) -> Union[WorkflowDB, None]:
     return await WorkflowDB.get(workflow_id)
+
+
+@call_sync
+async def sync_get_workflow(workflow_id) -> Union[WorkflowDB, None]:
+    return await get_workflow(workflow_id)
 
 
 async def get_workflow_path(workflow_id) -> Union[str, None]:
@@ -50,12 +60,27 @@ async def get_workflow_path(workflow_id) -> Union[str, None]:
     return None
 
 
+@call_sync
+async def sync_get_workflow_path(workflow_id) -> Union[str, None]:
+    return await get_workflow_path(workflow_id)
+
+
 async def get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
     return await WorkflowJobDB.get(job_id)
 
 
+@call_sync
+async def sync_get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
+    return await get_workflow_job(job_id)
+
+
 async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
     return await WorkspaceDB.get(workspace_id)
+
+
+@call_sync
+async def sync_get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
+    return await get_workspace(workspace_id)
 
 
 async def get_workspace_path(workspace_id) -> Union[str, None]:
@@ -66,6 +91,11 @@ async def get_workspace_path(workspace_id) -> Union[str, None]:
     return None
 
 
+@call_sync
+async def sync_get_workspace_path(workspace_id) -> Union[str, None]:
+    return await get_workspace_path(workspace_id)
+
+
 async def mark_deleted_workflow(workflow_id) -> bool:
     wf = await WorkflowDB.get(workflow_id)
     if wf:
@@ -74,6 +104,11 @@ async def mark_deleted_workflow(workflow_id) -> bool:
         return True
     logger.warning(f"Trying to flag non-existing workflow as deleted: {workflow_id}")
     return False
+
+
+@call_sync
+async def sync_mark_deleted_workflow(workflow_id) -> bool:
+    return await mark_deleted_workflow(workflow_id)
 
 
 async def mark_deleted_workspace(workspace_id) -> bool:
@@ -92,10 +127,20 @@ async def mark_deleted_workspace(workspace_id) -> bool:
     return False
 
 
-async def save_workflow(workflow_id: str, workflow_path) -> Union[WorkflowDB, None]:
+@call_sync
+async def sync_mark_deleted_workspace(workspace_id) -> bool:
+    return await mark_deleted_workspace(workspace_id)
+
+
+async def save_workflow(workflow_id: str, workflow_path: str) -> Union[WorkflowDB, None]:
     workflow_db = WorkflowDB(_id=workflow_id, workflow_path=workflow_path)
     await workflow_db.save()
     return workflow_db
+
+
+@call_sync
+async def sync_save_workflow(workflow_id: str, workflow_path: str) -> Union[WorkflowDB, None]:
+    return await sync_save_workflow(workflow_id, workflow_path)
 
 
 async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict) -> Union[WorkspaceDB, None]:
@@ -129,6 +174,11 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
     return workspace_db
 
 
+@call_sync
+async def sync_save_workspace(workspace_id: str, workspace_path: str, bag_info: dict) -> Union[WorkspaceDB, None]:
+    return await save_workspace(workspace_id, workspace_path, bag_info)
+
+
 async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_path: str, job_state: str
 ) -> Union[WorkflowJobDB, None]:
     """
@@ -152,6 +202,12 @@ async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, jo
     return workflow_job
 
 
+@call_sync
+async def sync_save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_path: str, job_state: str
+) -> Union[WorkflowJobDB, None]:
+    return await save_workflow_job(job_id, workflow_id, workspace_id, job_path, job_state)
+
+
 async def set_workflow_job_state(job_id, job_state: str) -> bool:
     """
     set state of job to 'state'
@@ -165,6 +221,11 @@ async def set_workflow_job_state(job_id, job_state: str) -> bool:
     return False
 
 
+@call_sync
+async def sync_set_workflow_job_state(job_id, job_state: str) -> bool:
+    return await set_workflow_job_state(job_id, job_state)
+
+
 async def get_workflow_job_state(job_id) -> Union[str, None]:
     """
     get state of job
@@ -174,3 +235,8 @@ async def get_workflow_job_state(job_id) -> Union[str, None]:
         return job.job_state
     logger.warning(f"Trying to get a state of a non-existing workflow job: {job_id}")
     return None
+
+
+@call_sync
+async def sync_get_workflow_job_state(job_id) -> Union[str, None]:
+    return await get_workflow_job_state(job_id)

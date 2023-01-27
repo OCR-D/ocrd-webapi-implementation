@@ -78,7 +78,7 @@ class WorkflowManager(ResourceManager):
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         try:
-            await NextflowManager.execute_workflow(
+            NextflowManager.execute_workflow(
                 nf_script_path,
                 workspace_dir,
                 job_id,
