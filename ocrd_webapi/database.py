@@ -65,6 +65,19 @@ async def sync_get_workflow_path(workflow_id) -> Union[str, None]:
     return await get_workflow_path(workflow_id)
 
 
+async def get_workflow_script_path(workflow_id) -> Union[str, None]:
+    workflow = await WorkflowDB.get(workflow_id)
+    if workflow:
+        return workflow.workflow_script_path
+    logger.warning(f"Trying to get a workflow script path of a non-existing workflow_id: {workflow_id}")
+    return None
+
+
+@call_sync
+async def sync_get_workflow_script_path(workflow_id) -> Union[str, None]:
+    return await get_workflow_script_path(workflow_id)
+
+
 async def get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
     return await WorkflowJobDB.get(job_id)
 
@@ -132,15 +145,15 @@ async def sync_mark_deleted_workspace(workspace_id) -> bool:
     return await mark_deleted_workspace(workspace_id)
 
 
-async def save_workflow(workflow_id: str, workflow_path: str) -> Union[WorkflowDB, None]:
-    workflow_db = WorkflowDB(_id=workflow_id, workflow_path=workflow_path)
+async def save_workflow(workflow_id: str, workflow_path: str, workflow_script_path: str) -> Union[WorkflowDB, None]:
+    workflow_db = WorkflowDB(_id=workflow_id, workflow_path=workflow_path, workflow_script_path=workflow_script_path)
     await workflow_db.save()
     return workflow_db
 
 
 @call_sync
-async def sync_save_workflow(workflow_id: str, workflow_path: str) -> Union[WorkflowDB, None]:
-    return await sync_save_workflow(workflow_id, workflow_path)
+async def sync_save_workflow(workflow_id: str, workflow_path: str, workflow_script_path: str) -> Union[WorkflowDB, None]:
+    return await sync_save_workflow(workflow_id, workflow_path, workflow_script_path)
 
 
 async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict) -> Union[WorkspaceDB, None]:

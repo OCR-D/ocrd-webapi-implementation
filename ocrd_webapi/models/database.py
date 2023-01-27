@@ -38,6 +38,7 @@ class WorkflowDB(Document):
     """
     id: str
     workflow_path: str
+    workflow_script_path: str
     deleted: bool = False
 
     class Collection:
