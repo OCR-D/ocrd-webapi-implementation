@@ -82,6 +82,7 @@ class WorkflowManager(ResourceManager):
             NextflowManager.execute_workflow(
                 nf_script_path,
                 workspace_dir,
+                job_id,
                 job_dir,
                 workflow_params
             )
@@ -108,23 +109,12 @@ class WorkflowManager(ResourceManager):
         return parameters
 
     async def get_workflow_job(self, workflow_id: str, job_id: str) -> Union[WorkflowJobDB, None]:
-        # We do not need the result,
-        # perform check to set a new job status if required
-        await self.is_job_finished(workflow_id, job_id)
         wf_job_db = await db.get_workflow_job(job_id)
-        return wf_job_db
-
-    async def is_job_finished(self, workflow_id: str, job_id: str) -> bool:
-        """
-        Tests if an execution report exists inside the workflow job directory.
-        A report file is always created after job finishes.
-
-        returns:
-            true: Job has finished successfully or with an error
-            false: Job has not finished yet
-        """
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
-        if job_dir and NextflowManager.is_nf_report(job_dir):
-            await db.set_workflow_job_state(job_id, 'STOPPED')
-            return True
-        return False
+        # Check if a nextflow report is available in the job dir
+        if NextflowManager.is_nf_report(job_dir):
+            # If there is a report and the job state is not STOPPED/SUCCESS
+            if wf_job_db.job_state != 'STOPPED' or wf_job_db.job_state != 'SUCCESS':
+                # Set to STOPPED, since it probably failed.
+                await db.set_workflow_job_state(job_id=job_id, job_state='STOPPED')
+        return wf_job_db

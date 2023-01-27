@@ -4,6 +4,7 @@ import subprocess
 from re import search as regex_search
 from typing import Union
 
+import ocrd_webapi.database as db
 from ocrd_webapi.constants import (
     DEFAULT_INPUT_GROUP,
     DEFAULT_METS_NAME,
@@ -20,6 +21,7 @@ class NextflowManager:
     def execute_workflow(
             nf_script_path: str,
             workspace_path: str,
+            job_id: str,
             job_dir: str,
             workflow_params: dict
     ):
@@ -41,7 +43,7 @@ class NextflowManager:
         )
 
         # Throws an exception if not successful
-        NextflowManager.__start_nf_process(nf_command, job_dir)
+        NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
 
     @staticmethod
     def is_nf_available() -> Union[str, None]:
@@ -79,7 +81,7 @@ class NextflowManager:
         return nf_command
 
     @staticmethod
-    def __start_nf_process(nf_command: str, job_dir: str):
+    def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
@@ -88,21 +90,26 @@ class NextflowManager:
         try:
             with open(nf_out, 'w+') as nf_out_file:
                 with open(nf_err, 'w+') as nf_err_file:
-                    # TODO: Maybe we need a better management here,
-                    #  For example knowing the PID of the created sub process
-                    #  should help for better error/recovery management
+                    # TODO: We will need better management of this, blocking is bad
+                    # The parent process blocks till the subprocess returns.
                     # Raises an exception if the subprocess fails
-                    subprocess.run(shlex.split(nf_command),
-                                   shell=False,
-                                   check=True,
-                                   cwd=job_dir,
-                                   stdout=nf_out_file,
-                                   stderr=nf_err_file,
-                                   universal_newlines=True)
+                    nf_process = subprocess.run(shlex.split(nf_command),
+                                                shell=False,
+                                                check=True,
+                                                cwd=job_dir,
+                                                stdout=nf_out_file,
+                                                stderr=nf_err_file,
+                                                universal_newlines=True)
         # More detailed exception catches needed
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
+            db.set_workflow_job_state(job_id=job_id, job_state="STOPPED")
             raise error
+
+        # Since check=True is set, when the return code is
+        # different from 0 it throws an exception that is caught above
+        if nf_process.returncode == 0:
+            db.set_workflow_job_state(job_id=job_id, job_state="SUCCESS")
 
     @staticmethod
     def is_nf_report(location_dir: str, report_name: str = None) -> Union[str, None]:
