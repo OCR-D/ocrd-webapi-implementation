@@ -5,11 +5,6 @@ from re import search as regex_search
 from typing import Union
 
 import ocrd_webapi.database as db
-from ocrd_webapi.constants import (
-    DEFAULT_INPUT_GROUP,
-    DEFAULT_METS_NAME,
-    DEFAULT_NF_REPORT_NAME
-)
 
 
 # Must be further refined
@@ -18,32 +13,21 @@ class NextflowManager:
         pass
 
     @staticmethod
-    def execute_workflow(
+    async def execute_workflow(
             nf_script_path: str,
             workspace_path: str,
             job_id: str,
             job_dir: str,
-            workflow_params: dict
     ):
-        # Gets the values from the dictionary, if missing assign defaults
-        if workflow_params:
-            workspace_mets = workflow_params.get('mets', DEFAULT_METS_NAME)
-            input_group = workflow_params.get('input_group', DEFAULT_INPUT_GROUP)
-        else:
-            workspace_mets = DEFAULT_METS_NAME
-            input_group = DEFAULT_INPUT_GROUP
-
         # TODO: Parse the rest of the possible workflow params
         # TODO: Use workflow_params to enable more flexible workflows
         nf_command = NextflowManager.build_nf_command(
             nf_script_path=nf_script_path,
             ws_path=workspace_path,
-            ws_mets=workspace_mets,
-            input_group=input_group
         )
 
         # Throws an exception if not successful
-        NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
+        await NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
 
     @staticmethod
     def is_nf_available() -> Union[str, None]:
@@ -71,17 +55,22 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, ws_path: str, ws_mets: str, input_group: str) -> str:
+    def build_nf_command(nf_script_path: str, ws_path: str, ws_mets: str = None, input_group: str = None) -> str:
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
-        nf_command += f" --workspace {ws_path}/"
-        nf_command += f" --mets {ws_path}/{ws_mets}"
-        nf_command += f" --input_group {input_group}"
-        nf_command += f" -with-report {DEFAULT_NF_REPORT_NAME}"
+        if ws_path:
+            nf_command += f" --workspace {ws_path}/"
+        # If ws_mets None, the mets.xml will be used
+        if ws_path and ws_mets:
+            nf_command += f" --mets {ws_path}/{ws_mets}"
+        # If None, the input_group set inside the Nextflow script will be used
+        if input_group:
+            nf_command += f" --input_group {input_group}"
+        nf_command += f" -with-report report.html"
         return nf_command
 
     @staticmethod
-    def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
+    async def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
@@ -103,19 +92,17 @@ class NextflowManager:
         # More detailed exception catches needed
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
-            db.set_workflow_job_state(job_id=job_id, job_state="STOPPED")
+            await db.set_workflow_job_state(job_id=job_id, job_state="STOPPED")
             raise error
 
         # Since check=True is set, when the return code is
         # different from 0 it throws an exception that is caught above
         if nf_process.returncode == 0:
-            db.set_workflow_job_state(job_id=job_id, job_state="SUCCESS")
+            await db.set_workflow_job_state(job_id=job_id, job_state="SUCCESS")
 
     @staticmethod
-    def is_nf_report(location_dir: str, report_name: str = None) -> Union[str, None]:
-        if report_name is None:
-            report_name = DEFAULT_NF_REPORT_NAME
-        report_path = join(location_dir, report_name)
+    def is_nf_report(location_dir: str) -> Union[str, None]:
+        report_path = join(location_dir, "report.html")
         if exists(report_path):
             return report_path
         return None

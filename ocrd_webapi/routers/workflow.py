@@ -157,8 +157,7 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
     try:
         parameters = await workflow_manager.start_nf_workflow(
             workflow_id=workflow_id,
-            workspace_id=workflow_args.workspace_id,
-            workflow_params=workflow_args.workflow_parameters
+            workspace_id=workflow_args.workspace_id
         )
     except Exception as e:
         logger.exception(f"Unexpected error in run_workflow: {e}")

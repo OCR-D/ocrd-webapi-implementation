@@ -4,9 +4,6 @@ from dotenv import load_dotenv
 __all__ = [
     'DB_NAME',
     'DB_URL',
-    'DEFAULT_INPUT_GROUP',
-    'DEFAULT_METS_NAME',
-    'DEFAULT_NF_REPORT_NAME',
     'MONGO_TESTDB',
     'SERVER_URL',
     'BASE_DIR',
@@ -40,8 +37,3 @@ JOBS_ROUTER: str = getenv("OCRD_WEBAPI_JOBS_ROUTER", "jobs")
 WORKFLOWS_ROUTER: str = getenv("OCRD_WEBAPI_WORKFLOWS_ROUTER", "workflows")
 WORKSPACES_ROUTER: str = getenv("OCRD_WEBAPI_WORKSPACES_ROUTER", "workspaces")
 # Warning: Don't change the router defaults till everything is configured properly
-
-# Nextflow managing related constants
-DEFAULT_NF_REPORT_NAME = "report.html"
-DEFAULT_METS_NAME = "mets.xml"
-DEFAULT_INPUT_GROUP = "OCR-D-IMG"

@@ -40,4 +40,3 @@ class ProcessorArgs(BaseModel):
 
 class WorkflowArgs(BaseModel):
     workspace_id: str = None
-    workflow_parameters: Optional[Dict[str, Any]] = {}

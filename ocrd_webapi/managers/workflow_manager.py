@@ -65,8 +65,7 @@ class WorkflowManager(ResourceManager):
         mkdir(job_dir)
         return job_id, job_dir
 
-    async def start_nf_workflow(self, workflow_id: str, workspace_id: str, workflow_params: dict
-    ) -> Union[list, WorkflowJobException]:
+    async def start_nf_workflow(self, workflow_id: str, workspace_id: str) -> Union[list, WorkflowJobException]:
         # The path to the Nextflow script inside workflow_id
         nf_script_path = self.get_resource_file(workflow_id, file_ext='.nf')
         workspace_dir = WorkspaceManager.static_get_resource(workspace_id, local=True)
@@ -79,12 +78,11 @@ class WorkflowManager(ResourceManager):
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         try:
-            NextflowManager.execute_workflow(
+            await NextflowManager.execute_workflow(
                 nf_script_path,
                 workspace_dir,
                 job_id,
-                job_dir,
-                workflow_params
+                job_dir
             )
             workflow_job_status = 'RUNNING'
             await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
