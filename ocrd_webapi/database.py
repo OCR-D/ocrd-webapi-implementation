@@ -96,17 +96,17 @@ async def sync_get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
     return await get_workspace(workspace_id)
 
 
-async def get_workspace_path(workspace_id) -> Union[str, None]:
+async def get_workspace_mets_path(workspace_id) -> Union[str, None]:
     workspace = await WorkspaceDB.get(workspace_id)
     if workspace:
-        return workspace.workspace_path
+        return workspace.workspace_mets_path
     logger.warning(f"Trying to get a workspace path of a non-existing workspace_id: {workspace_id}")
     return None
 
 
 @call_sync
-async def sync_get_workspace_path(workspace_id) -> Union[str, None]:
-    return await get_workspace_path(workspace_id)
+async def sync_get_workspace_mets_path(workspace_id) -> Union[str, None]:
+    return await get_workspace_mets_path(workspace_id)
 
 
 async def mark_deleted_workflow(workflow_id) -> bool:
@@ -162,21 +162,25 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
 
     Arguments:
          workspace_id: uid of the workspace which must be available on disk
-         workspace_path: the path of the workspace on the local disk
+         workspace_path: the path of the workspace directory on the local disk
          bag_info: dict with key-value-pairs from bag-info.txt
     """
+
+    workspace_mets_path = f"{workspace_path}/mets.xml"
+
     bag_info = dict(bag_info)
     ocrd_mets, ocrd_base_version_checksum = None, None
     ocrd_identifier = bag_info.pop("Ocrd-Identifier")
     bagit_profile_identifier = bag_info.pop("BagIt-Profile-Identifier")
     if "Ocrd-Mets" in bag_info:
         ocrd_mets = bag_info.pop("Ocrd-Mets")
+        workspace_mets_path = ocrd_mets  # Replace it with the real path
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
     workspace_db = WorkspaceDB(
         _id=workspace_id,
-        workspace_path=workspace_path,
+        workspace_mets_path=workspace_mets_path,
         ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,
         bagit_profile_identifier=bagit_profile_identifier,

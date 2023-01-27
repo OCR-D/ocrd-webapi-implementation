@@ -72,20 +72,20 @@ class WorkflowManager(ResourceManager):
     async def start_nf_workflow(self, workflow_id: str, workspace_id: str) -> Union[list, WorkflowJobException]:
         # The path to the Nextflow script inside workflow_id
         nf_script_path = self.get_resource_file(workflow_id, file_ext='.nf')
-        workspace_dir = WorkspaceManager.static_get_resource(workspace_id, local=True)
+        workspace_mets_path = await db.get_workspace_mets_path(workspace_id=workspace_id)
+        # workspace_dir = WorkspaceManager.static_get_resource(workspace_id, local=True)
 
         # TODO: These checks must happen inside the Resource Manager, not here
         if not nf_script_path:
-            raise WorkflowJobException(f"Workflow not existing: {workflow_id}")
-        if not workspace_dir:
-            raise WorkflowJobException(f"Workspace not existing: {workspace_id}")
+            raise WorkflowJobException(f"Workflow script file not existing: {workflow_id}")
+        if not workspace_mets_path:
+            raise WorkflowJobException(f"Workspace mets file not existing: {workspace_id}")
 
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         try:
             NextflowManager.execute_workflow(
                 nf_script_path,
-                workspace_dir,
-                job_id,
+                workspace_mets_path,
                 job_dir
             )
             workflow_job_status = 'RUNNING'

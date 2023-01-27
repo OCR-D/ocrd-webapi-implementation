@@ -13,19 +13,18 @@ class NextflowManager:
     @staticmethod
     def execute_workflow(
             nf_script_path: str,
-            workspace_path: str,
-            job_id: str,
+            workspace_mets_path: str,
             job_dir: str,
     ):
         # TODO: Parse the rest of the possible workflow params
         # TODO: Use workflow_params to enable more flexible workflows
         nf_command = NextflowManager.build_nf_command(
             nf_script_path=nf_script_path,
-            ws_path=workspace_path,
+            ws_mets_path=workspace_mets_path,
         )
 
         # Throws an exception if not successful
-        NextflowManager.__start_nf_process(nf_command, job_id, job_dir)
+        NextflowManager.__start_nf_process(nf_command, job_dir)
 
     @staticmethod
     def is_nf_available() -> Union[str, None]:
@@ -53,14 +52,10 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, ws_path: str, ws_mets: str = None, input_group: str = None) -> str:
+    def build_nf_command(nf_script_path: str, ws_mets_path: str, input_group: str = None) -> str:
         nf_command = "nextflow -bg"
         nf_command += f" run {nf_script_path}"
-        if ws_path:
-            nf_command += f" --workspace {ws_path}/"
-        # If ws_mets None, the mets.xml will be used
-        if ws_path and ws_mets:
-            nf_command += f" --mets {ws_path}/{ws_mets}"
+        nf_command += f" --mets {ws_mets_path}"
         # If None, the input_group set inside the Nextflow script will be used
         if input_group:
             nf_command += f" --input_group {input_group}"
@@ -68,7 +63,7 @@ class NextflowManager:
         return nf_command
 
     @staticmethod
-    def __start_nf_process(nf_command: str, job_id: str, job_dir: str):
+    def __start_nf_process(nf_command: str, job_dir: str):
         nf_out = f'{job_dir}/nextflow_out.txt'
         nf_err = f'{job_dir}/nextflow_err.txt'
 
