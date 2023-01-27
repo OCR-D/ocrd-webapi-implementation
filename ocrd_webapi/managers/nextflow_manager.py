@@ -15,16 +15,18 @@ class NextflowManager:
             nf_script_path: str,
             workspace_mets_path: str,
             job_dir: str,
+            in_background=True
     ):
         # TODO: Parse the rest of the possible workflow params
         # TODO: Use workflow_params to enable more flexible workflows
         nf_command = NextflowManager.build_nf_command(
             nf_script_path=nf_script_path,
             ws_mets_path=workspace_mets_path,
+            in_background=in_background
         )
 
         # Throws an exception if not successful
-        NextflowManager.__start_nf_process(nf_command, job_dir)
+        return NextflowManager.__start_nf_process(nf_command, job_dir)
 
     @staticmethod
     def is_nf_available() -> Union[str, None]:
@@ -52,8 +54,11 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, ws_mets_path: str, input_group: str = None) -> str:
-        nf_command = "nextflow -bg"
+    def build_nf_command(nf_script_path: str, ws_mets_path: str, input_group: str = None, in_background=True) -> str:
+        nf_command = "nextflow"
+        # If set, executes the nf process in the background
+        if in_background:
+            nf_command = " -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --mets {ws_mets_path}"
         # If None, the input_group set inside the Nextflow script will be used
@@ -86,6 +91,7 @@ class NextflowManager:
         # E.g., was the exception due to IOError or subprocess.CalledProcessError
         except Exception as error:
             raise error
+        return nf_process
 
     @staticmethod
     def is_nf_report(location_dir: str) -> Union[str, None]:
