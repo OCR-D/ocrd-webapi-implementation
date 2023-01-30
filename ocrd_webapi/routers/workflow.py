@@ -1,7 +1,9 @@
 import logging
 from os import getenv
 from secrets import compare_digest
+from shutil import make_archive
 from typing import List, Union
+
 
 from fastapi import (
     APIRouter,
@@ -113,8 +115,8 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)
 
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}})
-async def get_workflow_job(workflow_id: str, job_id: str
-) -> Union[WorkflowJobRsrc, ResponseException]:
+async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(...)
+) -> Union[WorkflowJobRsrc, FileResponse, ResponseException]:
     """
     Query a job from the database. Used to query if a job is finished or still running
 
@@ -129,6 +131,7 @@ async def get_workflow_job(workflow_id: str, job_id: str
 
     try:
         wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
+        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=True)
         workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
         workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
         job_state = wf_job_db.job_state
@@ -137,11 +140,26 @@ async def get_workflow_job(workflow_id: str, job_id: str
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkflowJobRsrc.create(
-        job_url=wf_job_url,
-        workflow_url=workflow_url,
-        workspace_url=workspace_url,
-        job_state=job_state
+    if accept == "application/json":
+        return WorkflowJobRsrc.create(
+            job_url=wf_job_url,
+            workflow_url=workflow_url,
+            workspace_url=workspace_url,
+            job_state=job_state
+        )
+
+    if accept == "application/vnd.zip":
+        job_archive_path = make_archive(
+            base_name=job_id,
+            format='zip',
+            root_dir=wf_job_local,
+        )
+        return FileResponse(job_archive_path)
+
+    raise HTTPException(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        "Unsupported media, expected application/json \
+        or application/vnd.zip",
     )
 
 
