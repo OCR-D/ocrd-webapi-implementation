@@ -7,14 +7,20 @@ from typing import Union
 
 # Must be further refined
 class NextflowManager:
-    def __init__(self):
-        pass
+    def __init__(self, venv_path: str = None):
+        # The virtual environment activation path where OCR-D processor are installed
+        self.venv_path = venv_path
+        # E.g., self.venv_path = "\$HOME/venv37-ocrd/bin/activate"
+        # WARNING: PEP complains about the \$ escape sequence,
+        # but this is the format that the Nextflow Executor expects
 
     @staticmethod
     def execute_workflow(
             nf_script_path: str,
             workspace_mets_path: str,
             job_dir: str,
+            venv_path: str = None,
+            input_group: str = None,
             in_background=True
     ):
         # TODO: Parse the rest of the possible workflow params
@@ -22,6 +28,8 @@ class NextflowManager:
         nf_command = NextflowManager.build_nf_command(
             nf_script_path=nf_script_path,
             ws_mets_path=workspace_mets_path,
+            venv_path=venv_path,
+            input_group=input_group,
             in_background=in_background
         )
 
@@ -54,14 +62,22 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, ws_mets_path: str,
-                         input_group: str = None, in_background: bool = True) -> str:
+    def build_nf_command(
+            nf_script_path: str,
+            ws_mets_path: str,
+            venv_path: str = None,
+            input_group: str = None,
+            in_background: bool = True
+    ) -> str:
         nf_command = "nextflow"
         # If set, executes the nf process in the background
         if in_background:
             nf_command += " -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --mets {ws_mets_path}"
+        # If None, the venv set inside the Nextflow script will be used
+        if venv_path:
+            nf_command += f" --venv {venv_path}"
         # If None, the input_group set inside the Nextflow script will be used
         if input_group:
             nf_command += f" --input_group {input_group}"
