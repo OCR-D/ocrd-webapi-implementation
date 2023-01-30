@@ -1,13 +1,12 @@
 __all__ = [
+  "OcrdProcessingMessage",
+  "OcrdResultMessage",
   "RMQConsumer",
   "RMQConnector",
   "RMQPublisher",
 ]
 
-from .consumer import RMQConsumer
 from .connector import RMQConnector
+from .consumer import RMQConsumer
 from .publisher import RMQPublisher
-from .ocrd_messages import (
-  OcrdProcessingMessage,
-  OcrdResultMessage
-)
+from .ocrd_messages import OcrdProcessingMessage, OcrdResultMessage
