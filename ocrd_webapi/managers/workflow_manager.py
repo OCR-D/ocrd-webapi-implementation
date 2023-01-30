@@ -84,9 +84,9 @@ class WorkflowManager(ResourceManager):
         job_id, job_dir = self.create_workflow_execution_space(workflow_id)
         try:
             NextflowManager.execute_workflow(
-                nf_script_path,
-                workspace_mets_path,
-                job_dir
+                nf_script_path=nf_script_path,
+                workspace_mets_path=workspace_mets_path,
+                job_dir=job_dir
             )
             workflow_job_status = 'RUNNING'
             await db.save_workflow_job(job_id=job_id, workflow_id=workflow_id,
@@ -116,7 +116,7 @@ class WorkflowManager(ResourceManager):
         # Check if a nextflow report is available in the job dir
         if NextflowManager.is_nf_report(job_dir):
             # If there is a report and the job state is not STOPPED/SUCCESS
-            if wf_job_db.job_state != 'STOPPED' or wf_job_db.job_state != 'SUCCESS':
+            if wf_job_db.job_state != 'STOPPED' and wf_job_db.job_state != 'SUCCESS':
                 # Set to STOPPED, since it probably failed.
                 await db.set_workflow_job_state(job_id=job_id, job_state='STOPPED')
         return wf_job_db

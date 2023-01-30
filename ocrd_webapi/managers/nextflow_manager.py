@@ -54,11 +54,12 @@ class NextflowManager:
         return nf_version
 
     @staticmethod
-    def build_nf_command(nf_script_path: str, ws_mets_path: str, input_group: str = None, in_background=True) -> str:
+    def build_nf_command(nf_script_path: str, ws_mets_path: str,
+                         input_group: str = None, in_background: bool = True) -> str:
         nf_command = "nextflow"
         # If set, executes the nf process in the background
         if in_background:
-            nf_command = " -bg"
+            nf_command += " -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --mets {ws_mets_path}"
         # If None, the input_group set inside the Nextflow script will be used
