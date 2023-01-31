@@ -73,9 +73,9 @@ async def list_workflows() -> List[WorkflowRsrc]:
     return response
 
 
-@router.get("/workflow/{workflow_id}")
+@router.get("/workflow/{workflow_id}", response_model=None)
 async def get_workflow_script(workflow_id: str, accept: str = Header(...)
-) -> Union[WorkflowRsrc, FileResponse, ResponseException]:
+) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get the Nextflow script of an existing workflow space.
     Specify your download path with --output
@@ -114,9 +114,9 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)
     )
 
 
-@router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}})
+@router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
 async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(...)
-) -> Union[WorkflowJobRsrc, FileResponse, ResponseException]:
+) -> Union[WorkflowJobRsrc, FileResponse]:
     """
     Query a job from the database. Used to query if a job is finished or still running
 
@@ -165,7 +165,7 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(.
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
 async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
-) -> Union[WorkflowJobRsrc, ResponseException]:
+) -> WorkflowJobRsrc:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
@@ -199,7 +199,7 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(nextflow_script: UploadFile,
                                  auth: HTTPBasicCredentials = Depends(security)
-) -> Union[WorkflowRsrc, ResponseException]:
+) -> WorkflowRsrc:
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
@@ -220,7 +220,7 @@ async def upload_workflow_script(nextflow_script: UploadFile,
 @router.put("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
 async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
                                  auth: HTTPBasicCredentials = Depends(security)
-) -> Union[WorkflowRsrc, ResponseException]:
+) -> WorkflowRsrc:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 

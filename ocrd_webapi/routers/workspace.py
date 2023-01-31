@@ -49,12 +49,12 @@ async def list_workspaces() -> List[WorkspaceRsrc]:
     return response
 
 
-@router.get("/workspace/{workspace_id}")
+@router.get("/workspace/{workspace_id}", response_model=None)
 async def get_workspace(
         background_tasks: BackgroundTasks,
         workspace_id: str,
         accept: str = Header(...)
-) -> Union[WorkspaceRsrc, FileResponse, ResponseException]:
+) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace
 
@@ -87,7 +87,7 @@ async def get_workspace(
 
 
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(workspace: UploadFile) -> Union[WorkspaceRsrc, ResponseException]:
+async def post_workspace(workspace: UploadFile) -> WorkspaceRsrc:
     """
     Create a new workspace
 
@@ -106,7 +106,7 @@ async def post_workspace(workspace: UploadFile) -> Union[WorkspaceRsrc, Response
 
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
-async def put_workspace(workspace: UploadFile, workspace_id: str) -> Union[WorkspaceRsrc, ResponseException]:
+async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRsrc:
     """
     Update or create a workspace
     """
@@ -123,7 +123,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> Union[Works
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def delete_workspace(workspace_id: str) -> Union[WorkspaceRsrc, ResponseException]:
+async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
     """
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
