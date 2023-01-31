@@ -3,6 +3,7 @@ from os import getenv
 from secrets import compare_digest
 from shutil import make_archive
 from typing import List, Union
+import tempfile
 
 
 from fastapi import (
@@ -149,8 +150,9 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(.
         )
 
     if accept == "application/vnd.zip":
+        tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
         job_archive_path = make_archive(
-            base_name=job_id,
+            base_name=f'{tempdir}/{job_id}',
             format='zip',
             root_dir=wf_job_local,
         )
