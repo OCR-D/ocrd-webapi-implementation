@@ -157,9 +157,11 @@ def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
     for x in range(0, 100):
         response = client.get(f"workflow/{dummy_workflow_id}/{job_id}")
         job_state = parse_job_state(response)
+        if job_state is None:
+            break
         if job_state == 'STOPPED' or job_state == 'SUCCESS':
             break
-        sleep(2)
+        sleep(3)
 
     assert (job_state == 'STOPPED' or job_state == 'SUCCESS'), \
         f"expecting job.state to be set to stopped/success but is {job_state}"

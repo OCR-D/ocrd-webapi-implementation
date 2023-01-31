@@ -141,14 +141,6 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(.
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    if accept == "application/json":
-        return WorkflowJobRsrc.create(
-            job_url=wf_job_url,
-            workflow_url=workflow_url,
-            workspace_url=workspace_url,
-            job_state=job_state
-        )
-
     if accept == "application/vnd.zip":
         tempdir = tempfile.mkdtemp(prefix="ocrd-wf-job-zip-")
         job_archive_path = make_archive(
@@ -158,10 +150,11 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(.
         )
         return FileResponse(job_archive_path)
 
-    raise HTTPException(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        "Unsupported media, expected application/json \
-        or application/vnd.zip",
+    return WorkflowJobRsrc.create(
+        job_url=wf_job_url,
+        workflow_url=workflow_url,
+        workspace_url=workspace_url,
+        job_state=job_state
     )
 
 
