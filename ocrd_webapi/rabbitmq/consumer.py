@@ -8,14 +8,10 @@ import logging
 from time import sleep
 from typing import Any, Union
 
-from pika import (
-    PlainCredentials
-)
+from pika import PlainCredentials
 
 from ocrd_webapi.rabbitmq.constants import (
     DEFAULT_QUEUE,
-    LOG_FORMAT,
-    LOG_LEVEL,
     RABBIT_MQ_HOST as HOST,
     RABBIT_MQ_PORT as PORT,
     RABBIT_MQ_VHOST as VHOST
@@ -24,13 +20,12 @@ from ocrd_webapi.rabbitmq.connector import RMQConnector
 
 
 class RMQConsumer(RMQConnector):
-    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST, logger_name: str = None):
+    def __init__(self, host: str = HOST, port: int = PORT, vhost: str = VHOST,
+                 logger_name: str = None, log_level: str = "INFO"):
         if logger_name is None:
             logger_name = __name__
         logger = logging.getLogger(logger_name)
-        logging.getLogger(logger_name).setLevel(LOG_LEVEL)
-        # This may mess up the global logger
-        logging.basicConfig(level=logging.WARNING)
+        logger.setLevel(logging.getLevelName(log_level))
         super().__init__(logger=logger, host=host, port=port, vhost=vhost)
 
         self.consumer_tag = None

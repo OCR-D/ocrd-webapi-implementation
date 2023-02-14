@@ -6,11 +6,7 @@ import aiofiles
 import shutil
 import logging
 
-from ocrd_utils import getLogger
-from ocrd_webapi.constants import (
-    BASE_DIR,
-    SERVER_URL,
-)
+from ocrd_webapi.constants import BASE_DIR, SERVER_URL
 from ocrd_webapi.utils import generate_id
 
 
@@ -23,11 +19,13 @@ class ResourceManager:
             resource_router: str,
             resources_base: str = BASE_DIR,
             resources_url: str = SERVER_URL,
+            log_level: str = "INFO"
     ):
+
         # Logger label of this manager - passed from the child class
-        self.log = getLogger(logger_label)
-        # TODO: More flexible configuration for logging level should be possible
-        logging.getLogger(logger_label).setLevel(logging.INFO)
+        self.log = logging.getLogger(logger_label)
+        self.log.setLevel(logging.getLevelName(log_level))
+
         # Server URL
         self._resources_url = resources_url
         # Base directory for all resource managers

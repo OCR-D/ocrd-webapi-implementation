@@ -10,9 +10,7 @@ __all__ = [
     "RABBIT_MQ_VHOST",
     "RECONNECT_WAIT",
     "RECONNECT_TRIES",
-    "PREFETCH_COUNT",
-    "LOG_FORMAT",
-    "LOG_LEVEL"
+    "PREFETCH_COUNT"
 ]
 
 DEFAULT_EXCHANGER_NAME: str = "ocrd-network-default"
@@ -32,7 +30,3 @@ RECONNECT_TRIES: int = 3
 # QOS, i.e., how many messages to consume in a single go
 # Check here: https://www.rabbitmq.com/consumer-prefetch.html
 PREFETCH_COUNT: int = 1
-
-# TODO: Integrate the OCR-D Logger once the logging in OCR-D is improved/optimized
-LOG_FORMAT: str = '%(levelname) -10s %(asctime)s %(name) -30s %(funcName) -35s %(lineno) -5d: %(message)s'
-LOG_LEVEL: int = logging.WARNING

@@ -15,8 +15,8 @@ from ocrd_webapi.utils import generate_id
 class WorkflowManager(ResourceManager):
     # Warning: Don't change these defaults
     # till everything is configured properly
-    def __init__(self):
-        super().__init__(logger_label=__name__, resource_router=WORKFLOWS_ROUTER)
+    def __init__(self, log_level: str = "INFO"):
+        super().__init__(logger_label=__name__, log_level=log_level, resource_router=WORKFLOWS_ROUTER)
         self.nf_version = NextflowManager.is_nf_available()
         if self.nf_version:
             self.log.info(f"Detected Nextflow version: {self.nf_version}")

@@ -1,10 +1,8 @@
-import datetime
-import logging
+from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ocrd_utils import getLogger
 from ocrd_webapi.constants import DB_URL, SERVER_URL
 from ocrd_webapi.database import initiate_database
 from ocrd_webapi.exceptions import ResponseException
@@ -14,7 +12,6 @@ from ocrd_webapi.routers import (
     workflow,
     workspace,
 )
-from ocrd_webapi.utils import safe_init_logging
 
 app = FastAPI(
     title="OCR-D Web API",
@@ -24,7 +21,7 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    version="0.0.1",
+    version="0.8.2",
     servers=[
         {
             "url": SERVER_URL,
@@ -36,9 +33,6 @@ app.include_router(discovery.router)
 # app.include_router(processor.router)
 app.include_router(workflow.router)
 app.include_router(workspace.router)
-
-safe_init_logging()
-log = getLogger('ocrd_webapi.main')
 
 
 @app.exception_handler(ResponseException)
@@ -62,4 +56,4 @@ async def test():
     """
     to test if server is running on root-path
     """
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    return datetime.now().strftime("%Y-%m-%d %H:%M")

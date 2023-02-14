@@ -17,24 +17,18 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd_utils import getLogger
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import WorkflowArgs
 from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
-from ocrd_webapi.utils import safe_init_logging
 
 
 router = APIRouter(
     tags=["Workflow"],
 )
 
-safe_init_logging()
-
-# TODO: More flexible configuration for logging level should be possible
-logger = getLogger(__name__)
-# logging.getLogger(__name__).setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 workflow_manager = WorkflowManager()
 security = HTTPBasic()
 

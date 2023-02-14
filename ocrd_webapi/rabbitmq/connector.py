@@ -3,7 +3,9 @@ The source code in this file is adapted by reusing
 some part of the source code from the official
 RabbitMQ documentation.
 """
+from logging import Logger
 from typing import Any, Optional
+
 
 from pika import (
     BasicProperties,
@@ -25,7 +27,7 @@ from ocrd_webapi.rabbitmq.constants import (
 
 
 class RMQConnector:
-    def __init__(self, logger, host: str = HOST, port: int = PORT, vhost: str = VHOST):
+    def __init__(self, logger: Logger, host: str = HOST, port: int = PORT, vhost: str = VHOST):
         self._logger = logger
         self._host = host
         self._port = port
@@ -252,10 +254,3 @@ class RMQConnector:
                 body=message_body,
                 properties=properties
             )
-
-    """ 
-    @staticmethod
-    def basic_consume(channel):
-        # TODO: provide a general consume method here as well
-        pass
-    """

@@ -19,8 +19,8 @@ from ocrd_webapi.utils import (
 class WorkspaceManager(ResourceManager):
     # Warning: Don't change these defaults
     # till everything is configured properly
-    def __init__(self):
-        super().__init__(logger_label=__name__, resource_router=WORKSPACES_ROUTER)
+    def __init__(self, log_level: str = "INFO"):
+        super().__init__(logger_label=__name__, log_level=log_level, resource_router=WORKSPACES_ROUTER)
 
     def get_workspaces(self) -> List[str]:
         """
