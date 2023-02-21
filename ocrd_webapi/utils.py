@@ -54,7 +54,7 @@ def to_processor_job_url(processor_name: str, job_id: str) -> str:
 def extract_bag_info(zip_dest, workspace_dir) -> dict:
     try:
         resolver = Resolver()
-        valid_report = OcrdZipValidator(resolver, zip_dest).validate()
+        valid_report = OcrdZipValidator(resolver, zip_dest).validate(processes=1)
     except Exception as e:
         raise WorkspaceNotValidException(f"Error during workspace validation: {str(e)}") from e
 
