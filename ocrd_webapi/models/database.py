@@ -20,6 +20,7 @@ class WorkspaceDB(Document):
                                     key-value-pairs which are saved here
     """
     id: str
+    workspace_path: str
     workspace_mets_path: str
     ocrd_identifier: str
     bagit_profile_identifier: str

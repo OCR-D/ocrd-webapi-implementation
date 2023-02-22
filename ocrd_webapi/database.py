@@ -174,12 +174,15 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
     bagit_profile_identifier = bag_info.pop("BagIt-Profile-Identifier")
     if "Ocrd-Mets" in bag_info:
         ocrd_mets = bag_info.pop("Ocrd-Mets")
+        # TODO: Assign the correct workspace_path here
+        # workspace_path =
         workspace_mets_path = ocrd_mets  # Replace it with the real path
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
     workspace_db = WorkspaceDB(
         _id=workspace_id,
+        workspace_path=workspace_path,
         workspace_mets_path=workspace_mets_path,
         ocrd_mets=ocrd_mets,
         ocrd_identifier=ocrd_identifier,

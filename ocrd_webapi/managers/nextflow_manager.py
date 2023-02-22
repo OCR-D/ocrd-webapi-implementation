@@ -19,6 +19,7 @@ class NextflowManager:
             nf_script_path: str,
             workspace_mets_path: str,
             job_dir: str,
+            workspace_path: str = None,
             venv_path: str = None,
             input_group: str = None,
             in_background=True
@@ -28,6 +29,7 @@ class NextflowManager:
         nf_command = NextflowManager.build_nf_command(
             nf_script_path=nf_script_path,
             ws_mets_path=workspace_mets_path,
+            ws_path=workspace_path,
             venv_path=venv_path,
             input_group=input_group,
             in_background=in_background
@@ -65,6 +67,7 @@ class NextflowManager:
     def build_nf_command(
             nf_script_path: str,
             ws_mets_path: str,
+            ws_path: str = None,
             venv_path: str = None,
             input_group: str = None,
             in_background: bool = True
@@ -75,6 +78,8 @@ class NextflowManager:
             nf_command += " -bg"
         nf_command += f" run {nf_script_path}"
         nf_command += f" --mets {ws_mets_path}"
+        if ws_path:
+            nf_command += f" --workspace_dir {ws_path}"
         # If None, the venv set inside the Nextflow script will be used
         if venv_path:
             nf_command += f" --venv {venv_path}"
