@@ -29,7 +29,7 @@ class WorkspaceDB(Document):
     bag_info_adds: Optional[dict]
     deleted: bool = False
 
-    class Collection:
+    class Settings:
         name = "workspace"
 
 
@@ -42,7 +42,7 @@ class WorkflowDB(Document):
     workflow_script_path: str
     deleted: bool = False
 
-    class Collection:
+    class Settings:
         name = "workflow"
 
 
