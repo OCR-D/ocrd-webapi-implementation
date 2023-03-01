@@ -131,12 +131,12 @@ def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):
     # TODO: Do database checks
 
 
-def test_run_workflow_different_mets(client, dummy_workflow_id, asset_workspace3):
+def test_run_workflow_different_mets(client, auth, dummy_workflow_id, asset_workspace3):
     # The name of the mets file is not `mets.xml` inside the provided workspace
-    response = client.post("/workspace", files=asset_workspace3)
+    response = client.post("/workspace", files=asset_workspace3, auth=auth)
     workspace_id = parse_resource_id(response)
     params = {"workspace_id": workspace_id}
-    response = client.post(f"/workflow/{dummy_workflow_id}", json=params)
+    response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     job_id = parse_resource_id(response)
     assert job_id

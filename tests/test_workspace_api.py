@@ -52,8 +52,8 @@ def assert_workspaces_len(client, expected_len):
 
 
 # Test cases
-def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
-    response = client.post("/workspace", files=asset_workspace1)
+def test_post_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
+    response = client.post("/workspace", files=asset_workspace1, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     workspace_id = parse_resource_id(response)
     assert_workspace_dir(workspace_id)
@@ -63,9 +63,9 @@ def test_post_workspace(client, workspace_mongo_coll, asset_workspace1):
     assert_db_entry_created(resource_from_db, workspace_id)
 
 
-def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_workspace3):
+def test_post_workspace_different_mets(client, auth, workspace_mongo_coll, asset_workspace3):
     # The name of the mets file is not `mets.xml` inside the provided workspace
-    response = client.post("/workspace", files=asset_workspace3)
+    response = client.post("/workspace", files=asset_workspace3, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     workspace_id = parse_resource_id(response)
     assert_workspace_dir(workspace_id)
@@ -75,10 +75,10 @@ def test_post_workspace_different_mets(client, workspace_mongo_coll, asset_works
     assert_db_entry_created(resource_from_db, workspace_id)
 
 
-def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_workspace2):
+def test_put_workspace(client, auth, workspace_mongo_coll, asset_workspace1, asset_workspace2):
     test_id = "workspace_put_test_id"
     request1 = f"/workspace/{test_id}"
-    response1 = client.put(request1, files=asset_workspace1)
+    response1 = client.put(request1, files=asset_workspace1, auth=auth)
     assert_status_code(response1.status_code, expected_floor=2)
     assert_workspace_dir(test_id)
 
@@ -88,7 +88,7 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
     ocrd_identifier1 = workspace_from_db["ocrd_identifier"]
 
     request2 = f"/workspace/{test_id}"
-    response2 = client.put(request2, files=asset_workspace2)
+    response2 = client.put(request2, files=asset_workspace2, auth=auth)
     assert_status_code(response2.status_code, expected_floor=2)
 
     # Database checks
@@ -112,15 +112,15 @@ def test_put_workspace(client, workspace_mongo_coll, asset_workspace1, asset_wor
             "expected string '%s' in mets file" % workspace_2_id
 
 
-def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
+def test_delete_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
     # Upload a workspace
-    response = client.post("/workspace", files=asset_workspace1)
+    response = client.post("/workspace", files=asset_workspace1, auth=auth)
     workspace_id = parse_resource_id(response)
     assert_status_code(response.status_code, expected_floor=2)
     assert_workspace_dir(workspace_id)
 
     # Delete the uploaded workspace
-    response = client.delete(f"/workspace/{workspace_id}")
+    response = client.delete(f"/workspace/{workspace_id}", auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     assert_not_workspace_dir(workspace_id)
 
@@ -131,19 +131,19 @@ def test_delete_workspace(client, workspace_mongo_coll, asset_workspace1):
     assert_db_entry_deleted(workspace_from_db)
 
 
-def test_delete_workspace_non_existing(client, workspace_mongo_coll, asset_workspace1):
-    response = client.post("/workspace", files=asset_workspace1)
+def test_delete_workspace_non_existing(client, auth, workspace_mongo_coll, asset_workspace1):
+    response = client.post("/workspace", files=asset_workspace1, auth=auth)
     workspace_id = parse_resource_id(response)
-    response = client.delete(f"/workspace/{workspace_id}")
+    response = client.delete(f"/workspace/{workspace_id}", auth=auth)
     assert_status_code(response.status_code, expected_floor=2)  # Deleted
-    response = client.delete(f"/workspace/{workspace_id}")
+    response = client.delete(f"/workspace/{workspace_id}", auth=auth)
     assert_status_code(response.status_code, expected_floor=4)  # Not available
 
     # TODO: Do database checks
 
 
-def test_get_workspace(client, asset_workspace3):
-    response = client.post("/workspace", files=asset_workspace3)
+def test_get_workspace(client, auth, asset_workspace3):
+    response = client.post("/workspace", files=asset_workspace3, auth=auth)
     workspace_id = parse_resource_id(response)
     headers = {"accept": "application/vnd.ocrd+zip"}
     response = client.get(f"/workspace/{workspace_id}", headers=headers)

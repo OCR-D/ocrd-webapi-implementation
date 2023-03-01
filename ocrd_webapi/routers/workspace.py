@@ -5,13 +5,16 @@ from typing import List, Union
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    Depends,
     Header,
     HTTPException,
     status,
     UploadFile,
 )
 from fastapi.responses import FileResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from ocrd_webapi.auth import dummy_security_check
 from ocrd_webapi.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -27,6 +30,7 @@ router = APIRouter(
 
 logger = logging.getLogger(__name__)
 workspace_manager = WorkspaceManager()
+security = HTTPBasic()
 
 
 # TODO: Refine all the exceptions...
@@ -82,12 +86,13 @@ async def get_workspace(
 
 
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
-async def post_workspace(workspace: UploadFile) -> WorkspaceRsrc:
+async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
     Create a new workspace
 
     curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F workspace=@things/example_ws.ocrd.zip  # noqa
     """
+    dummy_security_check(auth)
     try:
         ws_url, ws_id = await workspace_manager.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException as e:
@@ -101,10 +106,12 @@ async def post_workspace(workspace: UploadFile) -> WorkspaceRsrc:
 
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
-async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRsrc:
+async def put_workspace(workspace: UploadFile, workspace_id: str,
+                        auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
     Update or create a workspace
     """
+    dummy_security_check(auth)
     try:
         updated_workspace_url = await workspace_manager.update_workspace(file=workspace, workspace_id=workspace_id)
     except WorkspaceNotValidException as e:
@@ -118,11 +125,12 @@ async def put_workspace(workspace: UploadFile, workspace_id: str) -> WorkspaceRs
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
-async def delete_workspace(workspace_id: str) -> WorkspaceRsrc:
+async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
     """
+    dummy_security_check(auth)
     try:
         deleted_workspace_url = await workspace_manager.delete_workspace(
             workspace_id

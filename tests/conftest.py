@@ -181,8 +181,8 @@ def _fixture_asset_workspace3():
 
 
 @pytest.fixture(name='dummy_workspace_id')
-def _fixture_dummy_workspace(asset_workspace1, client):
-    response = client.post("/workspace", files=asset_workspace1)
+def _fixture_dummy_workspace(asset_workspace1, client, auth):
+    response = client.post("/workspace", files=asset_workspace1, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     yield parse_resource_id(response)  # returns dummy_workspace_id
 

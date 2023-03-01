@@ -1,6 +1,4 @@
 import logging
-from os import getenv
-from secrets import compare_digest
 from shutil import make_archive
 from typing import List, Union
 import tempfile
@@ -17,6 +15,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from ocrd_webapi.auth import dummy_security_check
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
@@ -31,25 +30,6 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 workflow_manager = WorkflowManager()
 security = HTTPBasic()
-
-
-def __dummy_security_check(auth):
-    """
-    Reference security check implementation
-    """
-    user = auth.username.encode("utf8")
-    pw = auth.password.encode("utf8")
-    expected_user = getenv("OCRD_WEBAPI_USERNAME", "test").encode("utf8")
-    expected_pw = getenv("OCRD_WEBAPI_PASSWORD", "test").encode("utf8")
-
-    user_matched = compare_digest(user, expected_user)
-    pw_matched = compare_digest(pw, expected_pw)
-
-    if not user or not pw or not user_matched or not pw_matched:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            headers={"WWW-Authenticate": "Basic"}
-        )
 
 
 # TODO: Refine all the exceptions...
@@ -153,14 +133,15 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(.
 
 
 @router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
-async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
-) -> WorkflowJobRsrc:
+async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs,
+                       auth: HTTPBasicCredentials = Depends(security)) -> WorkflowJobRsrc:
     """
     Trigger a Nextflow execution by using a Nextflow script with id {workflow_id} on a
     workspace with id {workspace_id}. The OCR-D results are stored inside the {workspace_id}.
 
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
+    dummy_security_check(auth)
     try:
         parameters = await workflow_manager.start_nf_workflow(
             workflow_id=workflow_id,
@@ -187,15 +168,14 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs
 
 @router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(nextflow_script: UploadFile,
-                                 auth: HTTPBasicCredentials = Depends(security)
-) -> WorkflowRsrc:
+                                 auth: HTTPBasicCredentials = Depends(security)) -> WorkflowRsrc:
     """
     Create a new workflow space. Upload a Nextflow script inside.
 
     curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
 
-    __dummy_security_check(auth)
+    dummy_security_check(auth)
     try:
         workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception as e:
@@ -208,15 +188,14 @@ async def upload_workflow_script(nextflow_script: UploadFile,
 
 @router.put("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
 async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
-                                 auth: HTTPBasicCredentials = Depends(security)
-) -> WorkflowRsrc:
+                                 auth: HTTPBasicCredentials = Depends(security)) -> WorkflowRsrc:
     """
     Update or create a new workflow space. Upload a Nextflow script inside.
 
     curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
 
-    __dummy_security_check(auth)
+    dummy_security_check(auth)
     try:
         updated_workflow_url = await workflow_manager.update_workflow_space(
             file=nextflow_script,
