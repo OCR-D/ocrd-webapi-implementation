@@ -1,6 +1,6 @@
 from os import mkdir
 from os.path import join
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Type
 
 from ocrd_webapi import database as db
 from ocrd_webapi.constants import WORKFLOWS_ROUTER
@@ -23,14 +23,13 @@ class WorkflowManager(ResourceManager):
         else:
             self.log.error(f"Detected Nextflow version: unable to detect")
 
-    def get_workflows(self) -> List[str]:
+    def get_workflows(self) -> List[Tuple[str, str]]:
         """
         Get a list of all available workflow urls.
         """
-        workflow_urls = self.get_all_resources(local=False)
-        return workflow_urls
+        return self.get_all_resources(local=False)
 
-    async def create_workflow_space(self, file, uid: str = None) -> Union[str, None]:
+    async def create_workflow_space(self, file, uid: str = None) -> Tuple[str, str]:
         """
         Create a new workflow space. Upload a Nextflow script inside.
 
@@ -51,9 +50,9 @@ class WorkflowManager(ResourceManager):
         )
 
         workflow_url = self.get_resource(workflow_id, local=False)
-        return workflow_url
+        return workflow_id, workflow_url
 
-    async def update_workflow_space(self, file, workflow_id: str) -> Union[str, None]:
+    async def update_workflow_space(self, file, workflow_id: str) -> Tuple[str, str]:
         """
         Update a workflow space
 
@@ -100,6 +99,8 @@ class WorkflowManager(ResourceManager):
             raise WorkflowJobException(f"Failed to execute workflow: {workflow_id}, "f"with workspace: {workspace_id}")
 
         parameters = [
+            # Workflow Job ID
+            job_id,
             # Workflow Job URL
             self.get_resource_job(workflow_id, job_id, local=False),
             workflow_job_status,

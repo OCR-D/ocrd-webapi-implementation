@@ -120,8 +120,8 @@ def _fixture_workflow_mongo_coll(mongo_client):
 # TODO: Utilize them, once they are completely finalized
 @pytest.fixture(name='auth')
 def _fixture_auth():
-    user = os.getenv("OCRD_WEBAPI_USERNAME")
-    pw = os.getenv("OCRD_WEBAPI_PASSWORD")
+    user = os.getenv("OCRD_WEBAPI_USERNAME", "test")
+    pw = os.getenv("OCRD_WEBAPI_PASSWORD", "test")
     yield user, pw
 
 

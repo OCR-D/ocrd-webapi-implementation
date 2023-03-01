@@ -1,7 +1,7 @@
 from os import listdir, scandir
 from os.path import exists, isdir, join
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Type
 import aiofiles
 import shutil
 import logging
@@ -44,15 +44,15 @@ class ResourceManager:
         else:
             self.log.info(f"Using the existing {log_msg}")
 
-    def get_all_resources(self, local: bool) -> List[str]:
+    def get_all_resources(self, local: bool) -> List[Tuple[str, str]]:
         resources = []
         for res in scandir(self._resource_dir):
             if res.is_dir():
                 if local:
-                    resources.append(res)
+                    resources.append((str(res.name), res))
                 else:
                     url = self._to_resource(res.name, local=False)
-                    resources.append(url)
+                    resources.append((str(res.name), url))
         return resources
 
     def get_resource(self, resource_id: str, local: bool) -> Union[str, None]:

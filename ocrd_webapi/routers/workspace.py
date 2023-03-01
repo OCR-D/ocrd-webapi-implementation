@@ -39,10 +39,11 @@ async def list_workspaces() -> List[WorkspaceRsrc]:
 
     curl http://localhost:8000/workspace/
     """
-    workspace_urls = workspace_manager.get_workspaces()
+    workspaces = workspace_manager.get_workspaces()
     response = []
-    for ws_url in workspace_urls:
-        response.append(WorkspaceRsrc.create(workspace_url=ws_url))
+    for workspace in workspaces:
+        ws_id, ws_url = workspace
+        response.append(WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url))
     return response
 
 
@@ -83,7 +84,7 @@ async def get_workspace(
         background_tasks.add_task(unlink, bag_path)
         return FileResponse(bag_path)
 
-    return WorkspaceRsrc.create(workspace_url=workspace_url)
+    return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url)
 
 
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
@@ -103,7 +104,7 @@ async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Dep
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkspaceRsrc.create(workspace_url=ws_url)
+    return WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url)
 
 
 @router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
@@ -122,7 +123,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str,
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkspaceRsrc.create(workspace_url=updated_workspace_url)
+    return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=updated_workspace_url)
 
 
 @router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
@@ -145,4 +146,4 @@ async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depen
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkspaceRsrc.create(workspace_url=deleted_workspace_url)
+    return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=deleted_workspace_url)

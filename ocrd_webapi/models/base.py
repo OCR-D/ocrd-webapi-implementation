@@ -3,6 +3,10 @@ from typing import Any, Dict, Optional
 
 
 class Resource(BaseModel):
+    resource_id: str = Field(
+        ...,  # the field is required, no default set
+        description='ID of this thing'
+    )
     resource_url: str = Field(
         ...,  # the field is required, no default set
         description='URL of this thing'
@@ -22,6 +26,7 @@ class JobState(BaseModel):
 
 class Job(Resource):
     # Local variables:
+    # resource_id: (str) - inherited from Resource
     # resource_url: (str) - inherited from Resource
     # description: (str) - inherited from Resource
     job_state: Optional[JobState] = None

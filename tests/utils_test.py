@@ -23,7 +23,7 @@ def assert_resources_len(resource_router, resources_len, expected_len):
 
 def parse_resource_id(response):
     try:
-        return response.json()['resource_url'].split("/")[-1]
+        return response.json()['resource_id']
     except (AttributeError, KeyError):
         return None
 

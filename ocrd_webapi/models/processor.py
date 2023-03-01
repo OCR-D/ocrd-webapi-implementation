@@ -33,14 +33,16 @@ class ProcessorRsrc(BaseModel):
 
 class ProcessorJobRsrc(Job):
     # Local variables:
-    # id: (str)          - inherited from Resource -> Job
+    # resource_id: (str) - inherited from Resource -> Job
+    # resource_url: (str) - inherited from Resource -> Job
     # description: (str) - inherited from Resource -> Job
     # job_state: (JobState)  - inherited from Job
     processor: Optional[ProcessorRsrc] = None
     workspace: Optional[WorkspaceRsrc] = None
 
     @staticmethod
-    def create(job_url: str,
+    def create(job_id: str,
+               job_url: str,
                processor_name: str,
                workspace_url: str,
                job_state: JobState,
@@ -50,7 +52,8 @@ class ProcessorJobRsrc(Job):
         processor_rsrc = ProcessorRsrc.create(processor_name)
         workspace_rsrc = WorkspaceRsrc.create(workspace_url)
         return ProcessorJobRsrc(
-            id=job_url,
+            id=job_id,
+            job_url=job_url,
             description=description,
             job_state=job_state,
             processor=processor_rsrc,

@@ -1,6 +1,6 @@
 from os.path import join
 from os import remove, symlink
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Type
 
 from ocrd_webapi import database as db
 from ocrd_webapi.constants import WORKSPACES_ROUTER
@@ -22,12 +22,11 @@ class WorkspaceManager(ResourceManager):
     def __init__(self, log_level: str = "INFO"):
         super().__init__(logger_label=__name__, log_level=log_level, resource_router=WORKSPACES_ROUTER)
 
-    def get_workspaces(self) -> List[str]:
+    def get_workspaces(self) -> List[Tuple[str, str]]:
         """
         Get a list of all available workspace urls.
         """
-        workspace_urls = self.get_all_resources(local=False)
-        return workspace_urls
+        return self.get_all_resources(local=False)
 
     async def create_workspace_from_mets_dir(self, mets_dir: str, uid: str = None) -> Tuple[Union[str, None], str]:
         workspace_id, workspace_dir = self._create_resource_dir(uid)

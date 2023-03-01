@@ -39,10 +39,11 @@ async def list_workflows() -> List[WorkflowRsrc]:
 
     curl http://localhost:8000/workflow/
     """
-    workflow_space_urls = workflow_manager.get_workflows()
+    workflows = workflow_manager.get_workflows()
     response = []
-    for wf_url in workflow_space_urls:
-        response.append(WorkflowRsrc.create(workflow_url=wf_url))
+    for workflow in workflows:
+        wf_id, wf_url = workflow
+        response.append(WorkflowRsrc.create(workflow_id=wf_id, workflow_url=wf_url))
     return response
 
 
@@ -76,7 +77,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(default="ap
 
     if not workflow_script_url:
         raise ResponseException(404, {})
-    return WorkflowRsrc.create(workflow_url=workflow_script_url)
+    return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_script_url)
 
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
@@ -115,8 +116,11 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(d
         return FileResponse(job_archive_path)
 
     return WorkflowJobRsrc.create(
+        job_id=job_id,
         job_url=wf_job_url,
+        workflow_id=workflow_id,
         workflow_url=workflow_url,
+        workspace_id=wf_job_db.workspace_id,
         workspace_url=workspace_url,
         job_state=job_state
     )
@@ -143,14 +147,18 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs,
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
     # Parse parameters for better readability of the code
-    job_url = parameters[0]
-    job_status = parameters[1]
-    workflow_url = parameters[2]
-    workspace_url = parameters[3]
+    job_id = parameters[0]
+    job_url = parameters[1]
+    job_status = parameters[2]
+    workflow_url = parameters[3]
+    workspace_url = parameters[4]
 
     return WorkflowJobRsrc.create(
+        job_id=job_id,
         job_url=job_url,
+        workflow_id=workflow_id,
         workflow_url=workflow_url,
+        workspace_id=workflow_args.workspace_id,
         workspace_url=workspace_url,
         job_state=job_status
     )
@@ -167,13 +175,13 @@ async def upload_workflow_script(nextflow_script: UploadFile,
 
     dummy_security_check(auth)
     try:
-        workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
+        workflow_id, workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception as e:
         logger.exception(f"Error in upload_workflow_script: {e}")
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkflowRsrc.create(workflow_url=workflow_url)
+    return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_url)
 
 
 @router.put("/workflow/{workflow_id}", responses={"201": {"model": WorkflowRsrc}})
@@ -187,7 +195,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
 
     dummy_security_check(auth)
     try:
-        updated_workflow_url = await workflow_manager.update_workflow_space(
+        workflow_id, updated_workflow_url = await workflow_manager.update_workflow_space(
             file=nextflow_script,
             workflow_id=workflow_id
         )
@@ -196,7 +204,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
         # TODO: Don't provide the exception message to the outside world
         raise ResponseException(500, {"error": f"internal server error: {e}"})
 
-    return WorkflowRsrc.create(workflow_url=updated_workflow_url)
+    return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=updated_workflow_url)
 
     # Not in the Web API Specification. Will be implemented if needed.
     # TODO: Implement that since we have some sort of dummy security check
