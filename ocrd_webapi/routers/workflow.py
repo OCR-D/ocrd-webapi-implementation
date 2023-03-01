@@ -8,8 +8,6 @@ from fastapi import (
     APIRouter,
     Depends,
     Header,
-    HTTPException,
-    status,
     UploadFile,
 )
 from fastapi.responses import FileResponse
@@ -49,7 +47,7 @@ async def list_workflows() -> List[WorkflowRsrc]:
 
 
 @router.get("/workflow/{workflow_id}", response_model=None)
-async def get_workflow_script(workflow_id: str, accept: str = Header(...)
+async def get_workflow_script(workflow_id: str, accept: str = Header(default="application/json")
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
     Get the Nextflow script of an existing workflow space.
@@ -60,37 +58,29 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(...)
     can not be used to test getting the workflow as a file. See:
     https://github.com/OCR-D/ocrd-webapi-implementation/issues/2
 
-
-    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: application/json" --output ./nextflow.nf
+    curl -X GET http://localhost:8000/workflow/{workflow_id} -H "accept: text/vnd.ocrd.workflow" --output ./nextflow.nf
     """
-    if accept == "application/json":
-        workflow_script_url = workflow_manager.get_resource(
-            workflow_id,
-            local=False
-        )
-        if workflow_script_url:
-            return WorkflowRsrc.create(workflow_url=workflow_script_url)
-        raise ResponseException(404, {})
+
+    try:
+        workflow_script_url = workflow_manager.get_resource(workflow_id, local=False)
+        workflow_script_path = workflow_manager.get_resource_file(workflow_id, file_ext=".nf")
+    except Exception as e:
+        logger.exception(f"Unexpected error in get_workflow_script: {e}")
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
+
     if accept == "text/vnd.ocrd.workflow":
-        workflow_script_path = workflow_manager.get_resource_file(
-            workflow_id,
-            file_ext=".nf"
-        )
-        if workflow_script_path:
-            return FileResponse(
-                path=workflow_script_path,
-                filename="workflow_script.nf"
-            )
+        if not workflow_script_path:
+            raise ResponseException(404, {})
+        return FileResponse(path=workflow_script_path, filename="workflow_script.nf")
+
+    if not workflow_script_url:
         raise ResponseException(404, {})
-    raise HTTPException(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        "Unsupported media, expected application/json \
-        or text/vnd.ocrd.workflow",
-    )
+    return WorkflowRsrc.create(workflow_url=workflow_script_url)
 
 
 @router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
-async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(...)
+async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(default="application/json")
 ) -> Union[WorkflowJobRsrc, FileResponse]:
     """
     Query a job from the database. Used to query if a job is finished or still running

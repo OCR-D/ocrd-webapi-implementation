@@ -7,8 +7,6 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     Header,
-    HTTPException,
-    status,
     UploadFile,
 )
 from fastapi.responses import FileResponse
@@ -52,7 +50,7 @@ async def list_workspaces() -> List[WorkspaceRsrc]:
 async def get_workspace(
         background_tasks: BackgroundTasks,
         workspace_id: str,
-        accept: str = Header(...)
+        accept: str = Header(default="application/json")
 ) -> Union[WorkspaceRsrc, FileResponse]:
     """
     Get an existing workspace
@@ -66,23 +64,26 @@ async def get_workspace(
     `curl http://localhost:8000/workspace/-the-id-of-ws -H "accept: application/json"` and
     `curl http://localhost:8000/workspace/{ws-id} -H "accept: application/vnd.ocrd+zip" -o foo.zip`
     """
-    if accept == "application/json":
+
+    try:
         workspace_url = workspace_manager.get_resource(workspace_id, local=False)
-        if workspace_url:
-            return WorkspaceRsrc.create(workspace_url=workspace_url)
-        raise ResponseException(404, {})
+    except Exception as e:
+        logger.exception(f"Unexpected error in get_workspace: {e}")
+        # TODO: Don't provide the exception message to the outside world
+        raise ResponseException(500, {"error": f"internal server error: {e}"})
+
+    if not workspace_url:
+        raise ResponseException(404, {"error": "workspace_url is None"})
+
     if accept == "application/vnd.ocrd+zip":
         bag_path = await workspace_manager.get_workspace_bag(workspace_id)
-        if bag_path:
-            # Remove the produced bag after sending it in the response
-            background_tasks.add_task(unlink, bag_path)
-            return FileResponse(bag_path)
-        raise ResponseException(404, {})
-    raise HTTPException(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        "Unsupported media, expected application/json \
-        or application/vnd.ocrd+zip",
-    )
+        if not bag_path:
+            raise ResponseException(404, {"error": "bag_path is None"})
+        # Remove the produced bag after sending it in the response
+        background_tasks.add_task(unlink, bag_path)
+        return FileResponse(bag_path)
+
+    return WorkspaceRsrc.create(workspace_url=workspace_url)
 
 
 @router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
@@ -135,10 +136,10 @@ async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depen
         deleted_workspace_url = await workspace_manager.delete_workspace(
             workspace_id
         )
-    except WorkspaceGoneException:
-        raise ResponseException(410, {})
-    except WorkspaceException:
-        raise ResponseException(404, {})
+    except WorkspaceGoneException as e:
+        raise ResponseException(410, {"error:": f"{e}"})
+    except WorkspaceException as e:
+        raise ResponseException(404, {"error:": f"{e}"})
     except Exception as e:
         logger.exception(f"Unexpected error in delete_workspace: {e}")
         # TODO: Don't provide the exception message to the outside world
