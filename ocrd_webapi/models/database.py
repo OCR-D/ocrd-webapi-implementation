@@ -19,7 +19,7 @@ class WorkspaceDB(Document):
         bag_info_adds               bag-info.txt can also (optionally) contain additional
                                     key-value-pairs which are saved here
     """
-    id: str
+    workspace_id: str
     workspace_path: str
     workspace_mets_path: str
     ocrd_identifier: str

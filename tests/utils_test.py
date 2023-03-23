@@ -40,7 +40,7 @@ def assert_db_entry_created(resource_from_db, resource_id, db_key="_id"):
         "Resource entry was not created in mongodb"
     db_id = resource_from_db[db_key]
     assert db_id == resource_id, \
-        "Wrong resource id. Expected: {resource_id}, found {db_id}"
+        f"Wrong resource id. Expected: {resource_id}, found {db_id}"
 
 
 def assert_db_entry_deleted(resource_from_db, db_key="deleted"):

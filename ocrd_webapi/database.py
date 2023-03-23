@@ -88,7 +88,7 @@ async def sync_get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
 
 
 async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
-    return await WorkspaceDB.get(workspace_id)
+    return await WorkspaceDB.find_one(WorkspaceDB.workspace_id == workspace_id)
 
 
 @call_sync
@@ -97,7 +97,7 @@ async def sync_get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
 
 
 async def get_workspace_mets_path(workspace_id) -> Union[str, None]:
-    workspace = await WorkspaceDB.get(workspace_id)
+    workspace = await get_workspace(workspace_id)
     if workspace:
         return workspace.workspace_mets_path
     logger.warning(f"Trying to get a workspace path of a non-existing workspace_id: {workspace_id}")
@@ -131,7 +131,7 @@ async def mark_deleted_workspace(workspace_id) -> bool:
     The api should keep track of deleted workspaces according to the specs.
     This is done with this function and the deleted-property
     """
-    ws = await WorkspaceDB.get(workspace_id)
+    ws = await get_workspace(workspace_id)
     if ws:
         ws.deleted = True
         await ws.save()
@@ -180,16 +180,26 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
-    workspace_db = WorkspaceDB(
-        _id=workspace_id,
-        workspace_path=workspace_path,
-        workspace_mets_path=workspace_mets_path,
-        ocrd_mets=ocrd_mets,
-        ocrd_identifier=ocrd_identifier,
-        bagit_profile_identifier=bagit_profile_identifier,
-        ocrd_base_version_checksum=ocrd_base_version_checksum,
-        bag_info_adds=bag_info
-    )
+    workspace_db = await get_workspace(workspace_id)
+    if not workspace_db:
+        workspace_db = WorkspaceDB(
+            workspace_id=workspace_id,
+            workspace_path=workspace_path,
+            workspace_mets_path=workspace_mets_path,
+            ocrd_mets=ocrd_mets,
+            ocrd_identifier=ocrd_identifier,
+            bagit_profile_identifier=bagit_profile_identifier,
+            ocrd_base_version_checksum=ocrd_base_version_checksum,
+            bag_info_adds=bag_info
+        )
+    else:
+        workspace_db.workspace_path = workspace_path
+        workspace_db.workspace_mets_path = workspace_mets_path
+        workspace_db.ocrd_mets = ocrd_mets
+        workspace_db.ocrd_identifier = ocrd_identifier
+        workspace_db.bagit_profile_identifier = bagit_profile_identifier
+        workspace_db.ocrd_base_version_checksum = ocrd_base_version_checksum
+        workspace_db.bag_info_adds = bag_info
     await workspace_db.save()
     return workspace_db
 

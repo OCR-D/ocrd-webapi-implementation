@@ -60,7 +60,7 @@ def test_post_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
 
     # Database checks
     resource_from_db = workspace_mongo_coll.find_one()
-    assert_db_entry_created(resource_from_db, workspace_id)
+    assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")
 
 
 def test_post_workspace_different_mets(client, auth, workspace_mongo_coll, asset_workspace3):
@@ -72,7 +72,7 @@ def test_post_workspace_different_mets(client, auth, workspace_mongo_coll, asset
 
     # Database checks
     resource_from_db = workspace_mongo_coll.find_one()
-    assert_db_entry_created(resource_from_db, workspace_id)
+    assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")
 
 
 def test_put_workspace(client, auth, workspace_mongo_coll, asset_workspace1, asset_workspace2):
@@ -84,7 +84,7 @@ def test_put_workspace(client, auth, workspace_mongo_coll, asset_workspace1, ass
 
     # Database checks
     workspace_from_db = workspace_mongo_coll.find_one()
-    assert_db_entry_created(workspace_from_db, test_id)
+    assert_db_entry_created(workspace_from_db, test_id, db_key="workspace_id")
     ocrd_identifier1 = workspace_from_db["ocrd_identifier"]
 
     request2 = f"/workspace/{test_id}"
