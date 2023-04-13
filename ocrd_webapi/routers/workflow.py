@@ -96,8 +96,8 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(d
         raise ResponseException(404, {})
 
     try:
-        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=False)
-        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.id, local=True)
+        wf_job_url = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.workflow_job_id, local=False)
+        wf_job_local = workflow_manager.get_resource_job(wf_job_db.workflow_id, wf_job_db.workflow_job_id, local=True)
         workflow_url = workflow_manager.get_resource(wf_job_db.workflow_id, local=False)
         workspace_url = WorkspaceManager.static_get_resource(wf_job_db.workspace_id, local=False)
         job_state = wf_job_db.job_state

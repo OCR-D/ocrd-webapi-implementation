@@ -37,7 +37,7 @@ class WorkflowDB(Document):
     """
     Model to store a workflow in the mongo-database.
     """
-    id: str
+    workflow_id: str
     workflow_path: str
     workflow_script_path: str
     deleted: bool = False
@@ -51,13 +51,13 @@ class WorkflowJobDB(Document):
     Model to store a Workflow-Job in the mongo-database.
 
     Attributes:
-        id            the job's id
-        workspace_id  id of the workspace on which this job is running
-        workflow_id   id of the workflow the job is executing
-        job_path      the path of the workflow job
-        job_state     current state of the workflow job
+        workflow_job_id   the job's id
+        workspace_id      id of the workspace on which this job is running
+        workflow_id       id of the workflow the job is executing
+        job_path          the path of the workflow job
+        job_state         current state of the workflow job
     """
-    id: str
+    workflow_job_id: str
     workspace_id: str
     workflow_id: str
     job_path: str

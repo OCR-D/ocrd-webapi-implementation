@@ -35,7 +35,7 @@ def parse_job_state(response):
         return None
 
 
-def assert_db_entry_created(resource_from_db, resource_id, db_key="_id"):
+def assert_db_entry_created(resource_from_db, resource_id, db_key):
     assert resource_from_db, \
         "Resource entry was not created in mongodb"
     db_id = resource_from_db[db_key]
