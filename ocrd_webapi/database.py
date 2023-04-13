@@ -44,7 +44,7 @@ async def sync_initiate_database(db_url: str, db_name: str = None, doc_models: L
 
 
 async def get_workflow(workflow_id) -> Union[WorkflowDB, None]:
-    return await WorkflowDB.get(workflow_id)
+    return await WorkflowDB.find_one(WorkflowDB.workflow_id == workflow_id)
 
 
 @call_sync
@@ -53,7 +53,7 @@ async def sync_get_workflow(workflow_id) -> Union[WorkflowDB, None]:
 
 
 async def get_workflow_path(workflow_id) -> Union[str, None]:
-    workflow = await WorkflowDB.get(workflow_id)
+    workflow = await get_workflow(workflow_id)
     if workflow:
         return workflow.workflow_path
     logger.warning(f"Trying to get a workflow path of a non-existing workflow_id: {workflow_id}")
@@ -66,7 +66,7 @@ async def sync_get_workflow_path(workflow_id) -> Union[str, None]:
 
 
 async def get_workflow_script_path(workflow_id) -> Union[str, None]:
-    workflow = await WorkflowDB.get(workflow_id)
+    workflow = await get_workflow(workflow_id)
     if workflow:
         return workflow.workflow_script_path
     logger.warning(f"Trying to get a workflow script path of a non-existing workflow_id: {workflow_id}")
@@ -79,7 +79,7 @@ async def sync_get_workflow_script_path(workflow_id) -> Union[str, None]:
 
 
 async def get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
-    return await WorkflowJobDB.get(job_id)
+    return await WorkflowJobDB.find_one(WorkflowJobDB.workflow_job_id == job_id)
 
 
 @call_sync
@@ -88,7 +88,7 @@ async def sync_get_workflow_job(job_id) -> Union[WorkflowJobDB, None]:
 
 
 async def get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
-    return await WorkspaceDB.get(workspace_id)
+    return await WorkspaceDB.find_one(WorkspaceDB.workspace_id == workspace_id)
 
 
 @call_sync
@@ -97,7 +97,7 @@ async def sync_get_workspace(workspace_id) -> Union[WorkspaceDB, None]:
 
 
 async def get_workspace_mets_path(workspace_id) -> Union[str, None]:
-    workspace = await WorkspaceDB.get(workspace_id)
+    workspace = await get_workspace(workspace_id)
     if workspace:
         return workspace.workspace_mets_path
     logger.warning(f"Trying to get a workspace path of a non-existing workspace_id: {workspace_id}")
@@ -110,7 +110,7 @@ async def sync_get_workspace_mets_path(workspace_id) -> Union[str, None]:
 
 
 async def mark_deleted_workflow(workflow_id) -> bool:
-    wf = await WorkflowDB.get(workflow_id)
+    wf = await get_workflow(workflow_id)
     if wf:
         wf.deleted = True
         await wf.save()
@@ -131,7 +131,7 @@ async def mark_deleted_workspace(workspace_id) -> bool:
     The api should keep track of deleted workspaces according to the specs.
     This is done with this function and the deleted-property
     """
-    ws = await WorkspaceDB.get(workspace_id)
+    ws = await get_workspace(workspace_id)
     if ws:
         ws.deleted = True
         await ws.save()
@@ -146,7 +146,17 @@ async def sync_mark_deleted_workspace(workspace_id) -> bool:
 
 
 async def save_workflow(workflow_id: str, workflow_path: str, workflow_script_path: str) -> Union[WorkflowDB, None]:
-    workflow_db = WorkflowDB(_id=workflow_id, workflow_path=workflow_path, workflow_script_path=workflow_script_path)
+    workflow_db = await get_workflow(workflow_id)
+    if not workflow_db:
+        workflow_db = WorkflowDB(
+            workflow_id=workflow_id,
+            workflow_path=workflow_path,
+            workflow_script_path=workflow_script_path
+        )
+    else:
+        workflow_db.workflow_id = workflow_id
+        workflow_db.workflow_path = workflow_path
+        workflow_db.workflow_script_path = workflow_script_path
     await workflow_db.save()
     return workflow_db
 
@@ -180,16 +190,26 @@ async def save_workspace(workspace_id: str, workspace_path: str, bag_info: dict)
     if "Ocrd-Base-Version-Checksum" in bag_info:
         ocrd_base_version_checksum = bag_info.pop("Ocrd-Base-Version-Checksum")
 
-    workspace_db = WorkspaceDB(
-        _id=workspace_id,
-        workspace_path=workspace_path,
-        workspace_mets_path=workspace_mets_path,
-        ocrd_mets=ocrd_mets,
-        ocrd_identifier=ocrd_identifier,
-        bagit_profile_identifier=bagit_profile_identifier,
-        ocrd_base_version_checksum=ocrd_base_version_checksum,
-        bag_info_adds=bag_info
-    )
+    workspace_db = await get_workspace(workspace_id)
+    if not workspace_db:
+        workspace_db = WorkspaceDB(
+            workspace_id=workspace_id,
+            workspace_path=workspace_path,
+            workspace_mets_path=workspace_mets_path,
+            ocrd_mets=ocrd_mets,
+            ocrd_identifier=ocrd_identifier,
+            bagit_profile_identifier=bagit_profile_identifier,
+            ocrd_base_version_checksum=ocrd_base_version_checksum,
+            bag_info_adds=bag_info
+        )
+    else:
+        workspace_db.workspace_path = workspace_path
+        workspace_db.workspace_mets_path = workspace_mets_path
+        workspace_db.ocrd_mets = ocrd_mets
+        workspace_db.ocrd_identifier = ocrd_identifier
+        workspace_db.bagit_profile_identifier = bagit_profile_identifier
+        workspace_db.ocrd_base_version_checksum = ocrd_base_version_checksum
+        workspace_db.bag_info_adds = bag_info
     await workspace_db.save()
     return workspace_db
 
@@ -200,9 +220,9 @@ async def sync_save_workspace(workspace_id: str, workspace_path: str, bag_info: 
 
 
 async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_path: str, job_state: str
-) -> Union[WorkflowJobDB, None]:
+                            ) -> Union[WorkflowJobDB, None]:
     """
-    save a workflow_job to the database
+    save a workflow_job to the database. Can also be used to update a workflow_job
 
     Arguments:
         job_id: id of the workflow job
@@ -211,20 +231,28 @@ async def save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, jo
         job_path: the path of the workflow job
         job_state: current state of the job
     """
-    workflow_job = WorkflowJobDB(
-        _id=job_id,
-        workflow_id=workflow_id,
-        workspace_id=workspace_id,
-        job_path=job_path,
-        job_state=job_state
-    )
-    await workflow_job.save()
-    return workflow_job
+    workflow_job_db = await get_workflow_job(job_id)
+    if not workflow_job_db:
+        workflow_job_db = WorkflowJobDB(
+            workflow_job_id=job_id,
+            workflow_id=workflow_id,
+            workspace_id=workspace_id,
+            job_path=job_path,
+            job_state=job_state
+        )
+    else:
+        workflow_job_db.workflow_job_id = job_id
+        workflow_job_db.workflow_id = workflow_id
+        workflow_job_db.workspace_id = workspace_id
+        workflow_job_db.job_path = job_path
+        workflow_job_db.job_state = job_state
+    await workflow_job_db.save()
+    return workflow_job_db
 
 
 @call_sync
 async def sync_save_workflow_job(job_id: str, workflow_id: str, workspace_id: str, job_path: str, job_state: str
-) -> Union[WorkflowJobDB, None]:
+                                 ) -> Union[WorkflowJobDB, None]:
     return await save_workflow_job(job_id, workflow_id, workspace_id, job_path, job_state)
 
 
@@ -232,7 +260,7 @@ async def set_workflow_job_state(job_id, job_state: str) -> bool:
     """
     set state of job to 'state'
     """
-    job = await WorkflowJobDB.get(job_id)
+    job = await get_workflow_job(job_id)
     if job:
         job.job_state = job_state
         await job.save()
@@ -250,7 +278,7 @@ async def get_workflow_job_state(job_id) -> Union[str, None]:
     """
     get state of job
     """
-    job = await WorkflowJobDB.get(job_id)
+    job = await get_workflow_job(job_id)
     if job:
         return job.job_state
     logger.warning(f"Trying to get a state of a non-existing workflow job: {job_id}")

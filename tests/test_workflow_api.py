@@ -64,7 +64,7 @@ def test_post_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1
 
     # Database checks
     workflow_from_db = workflow_mongo_coll.find_one()
-    assert_db_entry_created(workflow_from_db, workflow_id)
+    assert_db_entry_created(workflow_from_db, workflow_id, db_key="workflow_id")
 
 
 def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, asset_workflow3):

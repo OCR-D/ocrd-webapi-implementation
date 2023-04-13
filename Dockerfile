@@ -11,14 +11,20 @@ RUN apt-get update && apt-get -y install \
     make \
     python3-dev \
     python3-pip \
-    && curl -s https://get.nextflow.io | bash \
-    && mv nextflow /usr/local/bin/ \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-    
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools 
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --shell /bin/bash nextflow
+
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools
 RUN python3 -m pip install --no-cache-dir --upgrade -r /code/requirements.txt
 RUN pip3 install .
 
-CMD ["uvicorn", "ocrd_webapi.main:app", "--host", "0.0.0.0", "--port", "8000"]
+USER nextflow
+RUN cd $HOME \
+    && curl -s https://get.nextflow.io | bash \
+    && mkdir -p $HOME/.local/bin \
+    && mv nextflow $HOME/.local/bin/
 
+ENV PATH "${PATH}:/home/nextflow/.local/bin"
+
+CMD ["uvicorn", "ocrd_webapi.main:app", "--host", "0.0.0.0", "--port", "8000"]
