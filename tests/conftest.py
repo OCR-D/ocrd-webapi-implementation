@@ -6,6 +6,7 @@ from .constants import WORKFLOWS_DIR, WORKSPACES_DIR
 
 pytest_plugins = [
     "tests.fixtures_modules",
+    "tests.fixtures_rabbitmq",
     "tests.fixtures_workflow",
     "tests.fixtures_workspace",
 ]
