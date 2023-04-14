@@ -14,9 +14,12 @@ __all__ = [
 DB_NAME: str = getenv("OCRD_WEBAPI_DB_NAME", "ocrd_webapi_test")
 DB_URL: str = getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:6701")
 
+OCRD_WEBAPI_USERNAME = getenv("OCRD_WEBAPI_USERNAME", "test")
+OCRD_WEBAPI_PASSWORD = getenv("OCRD_WEBAPI_PASSWORD", "test")
+
 SERVER_URL: str = getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")
 
-BASE_DIR: str = getenv("OCRD_WEBAPI_BASE_DIR", "/tmp/ocrd_webapi_tests")
+BASE_DIR: str = getenv("OCRD_WEBAPI_BASE_DIR", "/tmp/ocrd_webapi_test")
 JOBS_ROUTER: str = getenv("OCRD_WEBAPI_JOBS_ROUTER", "jobs")
 WORKFLOWS_ROUTER: str = getenv("OCRD_WEBAPI_WORKFLOWS_ROUTER", "workflows")
 WORKSPACES_ROUTER: str = getenv("OCRD_WEBAPI_WORKSPACES_ROUTER", "workspaces")

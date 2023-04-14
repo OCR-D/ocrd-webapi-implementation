@@ -18,6 +18,8 @@ from .asserts_test import assert_status_code
 from .constants import (
     DB_NAME,
     DB_URL,
+    OCRD_WEBAPI_USERNAME,
+    OCRD_WEBAPI_PASSWORD,
     RABBITMQ_TEST_DEFAULT,
     WORKFLOWS_DIR,
     WORKSPACES_DIR
@@ -108,9 +110,7 @@ def _fixture_workflow_mongo_coll(mongo_client):
 # Dummy authentication
 @pytest.fixture(name='auth')
 def _fixture_auth():
-    user = os.getenv("OCRD_WEBAPI_USERNAME", "test")
-    pw = os.getenv("OCRD_WEBAPI_PASSWORD", "test")
-    yield user, pw
+    yield OCRD_WEBAPI_USERNAME, OCRD_WEBAPI_PASSWORD
 
 
 # TODO: Managers are not utilized during the tests
