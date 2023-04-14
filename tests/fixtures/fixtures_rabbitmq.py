@@ -1,13 +1,13 @@
-import pytest
+from pytest import fixture
 import pika.credentials
 from ocrd_webapi.rabbitmq.connector import RMQConnector
 from ocrd_webapi.rabbitmq.publisher import RMQPublisher
 from ocrd_webapi.rabbitmq.consumer import RMQConsumer
-from .constants import RABBITMQ_TEST_DEFAULT
+from tests.constants import RABBITMQ_TEST_DEFAULT
 
 
-@pytest.fixture(scope="session", name='rabbitmq_defaults')
-def _fixture_configure_exchange_and_queue():
+@fixture(scope="session", name='rabbitmq_defaults')
+def fixture_configure_exchange_and_queue():
     credentials = pika.credentials.PlainCredentials("test-session", "test-session")
     temp_connection = RMQConnector.open_blocking_connection(
         credentials=credentials,
@@ -40,16 +40,16 @@ def _fixture_configure_exchange_and_queue():
     )
 
 
-@pytest.fixture(name='rabbitmq_publisher')
-def _fixture_rabbitmq_publisher(rabbitmq_defaults):
+@fixture(name='rabbitmq_publisher')
+def fixture_rabbitmq_publisher(rabbitmq_defaults):
     publisher = RMQPublisher(host="localhost", port=5672, vhost="test")
     publisher.authenticate_and_connect("test-session", "test-session")
     publisher.enable_delivery_confirmations()
     yield publisher
 
 
-@pytest.fixture(name='rabbitmq_consumer')
-def _fixture_rabbitmq_consumer(rabbitmq_defaults):
+@fixture(name='rabbitmq_consumer')
+def fixture_rabbitmq_consumer(rabbitmq_defaults):
     consumer = RMQConsumer(host="localhost", port=5672, vhost="test")
     consumer.authenticate_and_connect("test-session", "test-session")
     yield consumer
