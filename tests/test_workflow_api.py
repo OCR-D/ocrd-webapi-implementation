@@ -11,14 +11,6 @@ from .utils_test import (
 )
 
 
-def assert_workflows_len(expected_len, client):
-    response = client.get("/workflow")
-    assert_status_code(response.status_code, expected_floor=2)
-    response_len = len(response.json())
-    assert expected_len == response_len, \
-        "more workflows than expected existing"
-
-
 # Test cases
 def test_post_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1):
     # Post a new workflow script

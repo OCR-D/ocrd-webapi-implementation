@@ -11,14 +11,6 @@ from .constants import WORKSPACES_DIR
 from .utils_test import parse_resource_id
 
 
-def assert_workspaces_len(client, expected_len):
-    response = client.get("/workspace")
-    assert_status_code(response.status_code, expected_floor=2)
-    response_len = len(response.json())
-    assert expected_len == response_len, \
-        "more workspaces than expected existing"
-
-
 # Test cases
 def test_post_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
     response = client.post("/workspace", files=asset_workspace1, auth=auth)
