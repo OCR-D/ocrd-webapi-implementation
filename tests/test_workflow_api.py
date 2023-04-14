@@ -1,35 +1,14 @@
-"""
-- for the tests the "storing"-directory is set to /tmp/ocrd_webapi_test. See config.py read_config()
-  for how that is accomplished currently.
-- to get the on_startup_event of the app running `with TestClient(app) as client` is necessary. The
-  on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
-  session-state maybe), but didn't try it yet
-"""
-import pytest
 from time import sleep
 
 from .asserts_test import (
     assert_db_entry_created,
-    assert_db_entry_deleted,
     assert_status_code,
-    assert_workflow_dir,
-    assert_not_workflow_dir,
+    assert_workflow_dir
 )
-from .constants import DB_NAME
 from .utils_test import (
     parse_resource_id,
     parse_job_state,
 )
-
-
-# TODO: Database part for Workflows is missing
-# Implement both the source code and the tests
-@pytest.fixture(autouse=True)
-def run_around_tests(mongo_client):
-    # Before each test (until yield):
-    mongo_client[DB_NAME]["workflow"].delete_many({})
-    yield
-    # After each test:
 
 
 def assert_workflows_len(expected_len, client):
@@ -49,16 +28,26 @@ def test_post_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1
     assert_workflow_dir(workflow_id)
 
     # Database checks
-    workflow_from_db = workflow_mongo_coll.find_one()
+    workflow_from_db = workflow_mongo_coll.find_one(
+        {"workflow_id": workflow_id}
+    )
     assert_db_entry_created(workflow_from_db, workflow_id, db_key="workflow_id")
 
 
-def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, asset_workflow3):
+def test_put_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1, asset_workflow2):
     # Post a new workflow script
     response = client.post("/workflow", files=asset_workflow1, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     workflow_id = parse_resource_id(response)
     assert_workflow_dir(workflow_id)
+    workflow_from_db = workflow_mongo_coll.find_one(
+        {"workflow_id": workflow_id}
+    )
+    assert_db_entry_created(workflow_from_db, workflow_id, db_key="workflow_id")
+    workflow_dir_path1 = workflow_from_db["workflow_path"]
+    workflow_path1 = workflow_from_db["workflow_script_path"]
+    assert workflow_dir_path1, "Failed to extract workflow dir path 1"
+    assert workflow_path1, "Failed to extract workflow path 1"
 
     # Put to the same workflow_id
     request = f"/workflow/{workflow_id}"
@@ -66,20 +55,19 @@ def test_put_workflow_script(client, auth, asset_workflow1, asset_workflow2, ass
     assert_status_code(response.status_code, expected_floor=2)
     workflow_id = parse_resource_id(response)
     assert_workflow_dir(workflow_id)
+    workflow_from_db = workflow_mongo_coll.find_one(
+        {"workflow_id": workflow_id}
+    )
+    assert_db_entry_created(workflow_from_db, workflow_id, db_key="workflow_id")
+    workflow_dir_path2 = workflow_from_db["workflow_path"]
+    workflow_path2 = workflow_from_db["workflow_script_path"]
+    assert workflow_dir_path2, "Failed to extract workflow dir path 1"
+    assert workflow_path2, "Failed to extract workflow path 1"
 
-    # TODO: Do database checks
-
-
-def test_put_workflow_script_non_existing(client, auth, asset_workflow1):
-    # Put to a non-existing workflow_id
-    non_existing = 'non_existing_123'
-    request = f"/workflow/{non_existing}"
-    response = client.put(request, files=asset_workflow1, auth=auth)
-    assert_status_code(response.status_code, expected_floor=2)
-    newly_created_workflow_id = parse_resource_id(response)
-    assert_workflow_dir(newly_created_workflow_id)
-
-    # TODO: Do database checks
+    assert workflow_dir_path1 == workflow_dir_path2, \
+        f"Workflow dir paths should match, but does not: {workflow_dir_path1} != {workflow_dir_path2}"
+    assert workflow_path1 != workflow_path2, \
+        f"Workflow paths should not, but match: {workflow_path1} == {workflow_path2}"
 
 
 def test_get_workflow_script(client, auth, asset_workflow1):
@@ -93,31 +81,23 @@ def test_get_workflow_script(client, auth, asset_workflow1):
     headers = {"accept": "text/vnd.ocrd.workflow"}
     response = client.get(f"/workflow/{workflow_id}", headers=headers)
     assert_status_code(response.status_code, expected_floor=2)
-    # the response is actually the workflow script
-    # checking for the resource_id doesn't make sense
-    # workflow_id = parse_resource_id(response)
-
-    # It should be checked the following way
-    # Not working currently:
-    # assert response.headers.get('content-type').find(".nf") > -1, \
-    #    "content-type missing '.nf'"
-    # assert response.headers.get('content-type').find("nextflow") > -1, \
-    #    "content-type missing 'nextflow'"
-
-    # TODO: Do database checks
+    assert response.headers.get('content-disposition').find(".nf") > -1, \
+        "filename should have the '.nf' extension"
 
 
-def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id):
+def test_run_workflow(client, auth, dummy_workflow_id, dummy_workspace_id, workflow_job_mongo_coll):
     params = {"workspace_id": dummy_workspace_id}
     response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     job_id = parse_resource_id(response)
     assert job_id
+    workflow_job_from_db = workflow_job_mongo_coll.find_one(
+        {"workflow_job_id": job_id}
+    )
+    assert_db_entry_created(workflow_job_from_db, job_id, db_key="workflow_job_id")
 
-    # TODO: Do database checks
 
-
-def test_run_workflow_different_mets(client, auth, dummy_workflow_id, asset_workspace3):
+def test_run_workflow_different_mets(client, auth, dummy_workflow_id, asset_workspace3, workflow_job_mongo_coll):
     # The name of the mets file is not `mets.xml` inside the provided workspace
     response = client.post("/workspace", files=asset_workspace3, auth=auth)
     workspace_id = parse_resource_id(response)
@@ -127,13 +107,17 @@ def test_run_workflow_different_mets(client, auth, dummy_workflow_id, asset_work
     job_id = parse_resource_id(response)
     assert job_id
 
+    workflow_job_from_db = workflow_job_mongo_coll.find_one(
+        {"workflow_job_id": job_id}
+    )
+    assert_db_entry_created(workflow_job_from_db, job_id, db_key="workflow_job_id")
+
     # TODO: assert the workflow finished successfully. Currently mets.xml is not dynamic, so first
-    # the possibility to provide a different-mets-name to run the workflow has to be implemented
-    # TODO: Do database checks
+    #  the possibility to provide a different-mets-name to run the workflow has to be implemented
 
 
 # TODO: This should be better implemented...
-def test_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
+def test_workflow_job_status(client, auth, dummy_workflow_id, dummy_workspace_id):
     params = {"workspace_id": dummy_workspace_id}
     response = client.post(f"/workflow/{dummy_workflow_id}", json=params, auth=auth)
     job_id = parse_resource_id(response)

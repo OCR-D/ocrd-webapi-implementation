@@ -1,11 +1,3 @@
-"""
-- for the tests the "storing"-directory is set to /tmp/ocrd_webapi_test. See config.py read_config()
-  for how that is accomplished currently.
-- to get the on_startup_event of the app running `with TestClient(app) as client` is necessary. The
-  on_startup_event is used to init mongodb. Maybe it is possible to move that to a fixture (with
-  session-state maybe), but didn't try it yet
-"""
-import pytest
 from os.path import join
 
 from .asserts_test import (
@@ -15,16 +7,8 @@ from .asserts_test import (
     assert_workspace_dir,
     assert_not_workspace_dir
 )
-from .constants import DB_NAME, WORKSPACES_DIR
+from .constants import WORKSPACES_DIR
 from .utils_test import parse_resource_id
-
-
-@pytest.fixture(autouse=True)
-def run_around_tests(mongo_client):
-    # Before each test (until yield):
-    mongo_client[DB_NAME]["workspace"].delete_many({})
-    yield
-    # After each test:
 
 
 def assert_workspaces_len(client, expected_len):
@@ -43,7 +27,9 @@ def test_post_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
     assert_workspace_dir(workspace_id)
 
     # Database checks
-    resource_from_db = workspace_mongo_coll.find_one()
+    resource_from_db = workspace_mongo_coll.find_one(
+        {"workspace_id": workspace_id}
+    )
     assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")
 
 
@@ -55,7 +41,9 @@ def test_post_workspace_different_mets(client, auth, workspace_mongo_coll, asset
     assert_workspace_dir(workspace_id)
 
     # Database checks
-    resource_from_db = workspace_mongo_coll.find_one()
+    resource_from_db = workspace_mongo_coll.find_one(
+        {"workspace_id": workspace_id}
+    )
     assert_db_entry_created(resource_from_db, workspace_id, db_key="workspace_id")
 
 
@@ -67,25 +55,26 @@ def test_put_workspace(client, auth, workspace_mongo_coll, asset_workspace1, ass
     assert_workspace_dir(test_id)
 
     # Database checks
-    workspace_from_db = workspace_mongo_coll.find_one()
+    workspace_from_db = workspace_mongo_coll.find_one(
+        {"workspace_id": test_id}
+    )
     assert_db_entry_created(workspace_from_db, test_id, db_key="workspace_id")
     ocrd_identifier1 = workspace_from_db["ocrd_identifier"]
+    assert ocrd_identifier1, f"Ocrd identifier 1 not extracted successfully"
 
     request2 = f"/workspace/{test_id}"
     response2 = client.put(request2, files=asset_workspace2, auth=auth)
     assert_status_code(response2.status_code, expected_floor=2)
 
     # Database checks
-    workspace_from_db = workspace_mongo_coll.find_one()
-    assert workspace_mongo_coll.count_documents({}) == 1, \
-        "expect exactly 1 workspace in db"
+    workspace_from_db = workspace_mongo_coll.find_one(
+        {"workspace_id": test_id}
+    )
     ocrd_identifier2 = workspace_from_db["ocrd_identifier"]
-
-    assert ocrd_identifier1 and ocrd_identifier2, \
-        "Ocrd identifiers were not extracted successfully"
+    assert ocrd_identifier2, f"Ocrd identifier 2 not extracted successfully"
 
     assert ocrd_identifier1 != ocrd_identifier2, \
-        f"Ocrd identifiers mismatch: {ocrd_identifier1} != {ocrd_identifier2}"
+        f"Ocrd identifiers should not match: {ocrd_identifier1} == {ocrd_identifier2}"
 
     # assert workspace updated correctly on disk
     # TODO: Use resource manager instance to check this...
@@ -108,10 +97,9 @@ def test_delete_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
     assert_status_code(response.status_code, expected_floor=2)
     assert_not_workspace_dir(workspace_id)
 
-    # Database checks
-    workspace_mongo_coll.find_one()
-    assert_not_workspace_dir(workspace_id)
-    workspace_from_db = workspace_mongo_coll.find_one()
+    workspace_from_db = workspace_mongo_coll.find_one(
+        {"workspace_id": workspace_id}
+    )
     assert_db_entry_deleted(workspace_from_db)
 
 

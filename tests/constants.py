@@ -4,6 +4,8 @@ from os.path import join
 __all__ = [
     'DB_NAME',
     'DB_URL',
+    'OCRD_WEBAPI_PASSWORD',
+    'OCRD_WEBAPI_USERNAME',
     'RABBITMQ_TEST_DEFAULT',
     'WORKFLOWS_DIR',
     'WORKSPACES_DIR'

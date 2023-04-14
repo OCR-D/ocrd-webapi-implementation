@@ -1,7 +1,5 @@
 import os
 import shutil
-
-import pika.credentials
 import pytest
 import requests
 from pymongo import MongoClient
@@ -10,9 +8,6 @@ from fastapi.testclient import TestClient
 from ocrd_webapi.main import app
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
-from ocrd_webapi.rabbitmq.connector import RMQConnector
-from ocrd_webapi.rabbitmq.publisher import RMQPublisher
-from ocrd_webapi.rabbitmq.consumer import RMQConsumer
 
 from .asserts_test import assert_status_code
 from .constants import (
@@ -20,7 +15,6 @@ from .constants import (
     DB_URL,
     OCRD_WEBAPI_USERNAME,
     OCRD_WEBAPI_PASSWORD,
-    RABBITMQ_TEST_DEFAULT,
     WORKFLOWS_DIR,
     WORKSPACES_DIR
 )
@@ -80,19 +74,12 @@ def docker_compose_project_name(docker_compose_project_name):
 # Fixtures related to the Mongo DB
 @pytest.fixture(scope="session", name='mongo_client')
 def _fixture_mongo_client(start_mongo_docker):
-    # The value of the DB_URL here comes from the pyproject.toml file
-    # -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/ocrd_webapi_test
-    # Not obvious and happens in a wacky way.
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
 
 
 @pytest.fixture(scope="session", name='workspace_mongo_coll')
 def _fixture_workspace_mongo_coll(mongo_client):
-    # Again, the MONGO_TESTDB has to match exactly
-    # test-ocrd-webapi, the suffix of
-    # OCRD_WEB_API_DB_URL inside pyproject.toml file
-    # This is again not straightforward to be understood
     mydb = mongo_client[DB_NAME]
     workspace_coll = mydb["workspace"]
     yield workspace_coll
@@ -105,6 +92,14 @@ def _fixture_workflow_mongo_coll(mongo_client):
     workflow_coll = mydb["workflow"]
     yield workflow_coll
     workflow_coll.drop()
+
+
+@pytest.fixture(scope="session", name='workflow_job_mongo_coll')
+def _fixture_workflow_job_mongo_coll(mongo_client):
+    mydb = mongo_client[DB_NAME]
+    workflow_job_coll = mydb["workflow_job"]
+    yield workflow_job_coll
+    workflow_job_coll.drop()
 
 
 # Dummy authentication
@@ -175,54 +170,3 @@ def _fixture_dummy_workspace(asset_workspace1, client, auth):
     response = client.post("/workspace", files=asset_workspace1, auth=auth)
     assert_status_code(response.status_code, expected_floor=2)
     yield parse_resource_id(response)  # returns dummy_workspace_id
-
-
-# NOTE: RabbitMQ docker container must be running before starting the tests
-# TODO: Start the container if not running -> stop it after tests
-@pytest.fixture(scope="session", name='rabbitmq_defaults')
-def _fixture_configure_exchange_and_queue():
-    credentials = pika.credentials.PlainCredentials("test-session", "test-session")
-    temp_connection = RMQConnector.open_blocking_connection(
-        credentials=credentials,
-        host="localhost",
-        port=5672,
-        vhost="test"
-    )
-    temp_channel = RMQConnector.open_blocking_channel(temp_connection)
-    RMQConnector.exchange_declare(
-        channel=temp_channel,
-        exchange_name=RABBITMQ_TEST_DEFAULT,
-        exchange_type="direct",
-        durable=False
-    )
-    RMQConnector.queue_declare(
-        channel=temp_channel,
-        queue_name=RABBITMQ_TEST_DEFAULT,
-        durable=False
-    )
-    RMQConnector.queue_bind(
-        channel=temp_channel,
-        exchange_name=RABBITMQ_TEST_DEFAULT,
-        queue_name=RABBITMQ_TEST_DEFAULT,
-        routing_key=RABBITMQ_TEST_DEFAULT
-    )
-    # Clean all messages inside if any from previous tests
-    RMQConnector.queue_purge(
-        channel=temp_channel,
-        queue_name=RABBITMQ_TEST_DEFAULT
-    )
-
-
-@pytest.fixture(name='rabbitmq_publisher')
-def _fixture_rabbitmq_publisher(rabbitmq_defaults):
-    publisher = RMQPublisher(host="localhost", port=5672, vhost="test")
-    publisher.authenticate_and_connect("test-session", "test-session")
-    publisher.enable_delivery_confirmations()
-    yield publisher
-
-
-@pytest.fixture(name='rabbitmq_consumer')
-def _fixture_rabbitmq_consumer(rabbitmq_defaults):
-    consumer = RMQConsumer(host="localhost", port=5672, vhost="test")
-    consumer.authenticate_and_connect("test-session", "test-session")
-    yield consumer
