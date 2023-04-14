@@ -14,9 +14,8 @@ from .asserts_test import (
     assert_status_code,
     assert_workflow_dir,
     assert_not_workflow_dir,
-    WORKFLOWS_DIR
 )
-from .constants import MONGO_TESTDB
+from .constants import DB_NAME
 from .utils_test import (
     parse_resource_id,
     parse_job_state,
@@ -28,7 +27,7 @@ from .utils_test import (
 @pytest.fixture(autouse=True)
 def run_around_tests(mongo_client):
     # Before each test (until yield):
-    mongo_client[MONGO_TESTDB]["workflow"].delete_many({})
+    mongo_client[DB_NAME]["workflow"].delete_many({})
     yield
     # After each test:
 

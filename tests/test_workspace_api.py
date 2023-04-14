@@ -13,17 +13,16 @@ from .asserts_test import (
     assert_db_entry_deleted,
     assert_status_code,
     assert_workspace_dir,
-    assert_not_workspace_dir,
-    WORKSPACES_DIR
+    assert_not_workspace_dir
 )
-from .constants import MONGO_TESTDB
+from .constants import DB_NAME, WORKSPACES_DIR
 from .utils_test import parse_resource_id
 
 
 @pytest.fixture(autouse=True)
 def run_around_tests(mongo_client):
     # Before each test (until yield):
-    mongo_client[MONGO_TESTDB]["workspace"].delete_many({})
+    mongo_client[DB_NAME]["workspace"].delete_many({})
     yield
     # After each test:
 
@@ -124,8 +123,6 @@ def test_delete_workspace_non_existing(client, auth, workspace_mongo_coll, asset
     response = client.delete(f"/workspace/{workspace_id}", auth=auth)
     assert_status_code(response.status_code, expected_floor=4)  # Not available
 
-    # TODO: Do database checks
-
 
 def test_get_workspace(client, auth, asset_workspace3):
     response = client.post("/workspace", files=asset_workspace3, auth=auth)
@@ -136,13 +133,9 @@ def test_get_workspace(client, auth, asset_workspace3):
     assert response.headers.get('content-type').find("zip") > -1, \
         "content-type should be something with 'zip'"
 
-    # TODO: Do database checks
-
 
 def test_get_workspace_non_existing(client):
     headers = {"accept": "application/vnd.ocrd+zip"}
     response = client.get(f"/workspace/non-existing-workspace-id", headers=headers)
     assert response.status_code == 404, \
         "expect 404 error code for non existing workspace"
-
-    # TODO: Do database checks

@@ -1,14 +1,8 @@
 from os.path import exists, join
-from ocrd_webapi.constants import (
-    BASE_DIR,
-    WORKFLOWS_ROUTER,
-    WORKSPACES_ROUTER
+from .constants import (
+    WORKFLOWS_DIR,
+    WORKSPACES_DIR
 )
-
-# TODO: Utilize the Workflow manager instead of this
-WORKFLOWS_DIR = join(BASE_DIR, WORKFLOWS_ROUTER)
-# TODO: Utilize the Workspace manager instead of this
-WORKSPACES_DIR = join(BASE_DIR, WORKSPACES_ROUTER)
 
 
 def assert_db_entry_created(resource_from_db, resource_id, db_key):

@@ -7,12 +7,6 @@ import requests
 from pymongo import MongoClient
 
 from fastapi.testclient import TestClient
-from ocrd_webapi.constants import (
-    BASE_DIR,
-    WORKFLOWS_ROUTER,
-    WORKSPACES_ROUTER,
-    DB_URL
-)
 from ocrd_webapi.main import app
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
@@ -21,21 +15,17 @@ from ocrd_webapi.rabbitmq.publisher import RMQPublisher
 from ocrd_webapi.rabbitmq.consumer import RMQConsumer
 
 from .asserts_test import assert_status_code
-from .constants import MONGO_TESTDB
+from .constants import (
+    DB_NAME,
+    DB_URL,
+    RABBITMQ_TEST_DEFAULT,
+    WORKFLOWS_DIR,
+    WORKSPACES_DIR
+)
 from .utils_test import (
     allocate_asset,
     parse_resource_id,
 )
-
-
-RABBITMQ_TEST_DEFAULT = "ocrd-webapi-test-default"
-
-
-# TODO: Utilize the Workflow manager instead of this
-WORKFLOWS_DIR = os.path.join(BASE_DIR, WORKFLOWS_ROUTER)
-
-# TODO: Utilize the Workspace manager instead of this
-WORKSPACES_DIR = os.path.join(BASE_DIR, WORKSPACES_ROUTER)
 
 
 @pytest.fixture(scope='session')
@@ -62,10 +52,10 @@ def do_before_all_tests():
     - clean workspace- and workflow-directories
     - make sure mongodb is available
     """
-    shutil.rmtree(WORKSPACES_DIR)
-    os.mkdir(WORKSPACES_DIR)
-    shutil.rmtree(WORKFLOWS_DIR)
-    os.mkdir(WORKFLOWS_DIR)
+    shutil.rmtree(WORKSPACES_DIR, ignore_errors=True)
+    os.makedirs(WORKSPACES_DIR)
+    shutil.rmtree(WORKFLOWS_DIR, ignore_errors=True)
+    os.makedirs(WORKFLOWS_DIR)
 
 
 def is_url_responsive(url, retries: int = 0):
@@ -89,7 +79,7 @@ def docker_compose_project_name(docker_compose_project_name):
 @pytest.fixture(scope="session", name='mongo_client')
 def _fixture_mongo_client(start_mongo_docker):
     # The value of the DB_URL here comes from the pyproject.toml file
-    # -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi
+    # -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/ocrd_webapi_test
     # Not obvious and happens in a wacky way.
     mongo_client = MongoClient(DB_URL, serverSelectionTimeoutMS=3000)
     yield mongo_client
@@ -101,7 +91,7 @@ def _fixture_workspace_mongo_coll(mongo_client):
     # test-ocrd-webapi, the suffix of
     # OCRD_WEB_API_DB_URL inside pyproject.toml file
     # This is again not straightforward to be understood
-    mydb = mongo_client[MONGO_TESTDB]
+    mydb = mongo_client[DB_NAME]
     workspace_coll = mydb["workspace"]
     yield workspace_coll
     workspace_coll.drop()
@@ -109,15 +99,13 @@ def _fixture_workspace_mongo_coll(mongo_client):
 
 @pytest.fixture(scope="session", name='workflow_mongo_coll')
 def _fixture_workflow_mongo_coll(mongo_client):
-    mydb = mongo_client[MONGO_TESTDB]
+    mydb = mongo_client[DB_NAME]
     workflow_coll = mydb["workflow"]
     yield workflow_coll
     workflow_coll.drop()
 
 
-# Authentication and Managers
-# TODO: Managers are not utilized during the tests
-# TODO: Utilize them, once they are completely finalized
+# Dummy authentication
 @pytest.fixture(name='auth')
 def _fixture_auth():
     user = os.getenv("OCRD_WEBAPI_USERNAME", "test")
@@ -125,6 +113,8 @@ def _fixture_auth():
     yield user, pw
 
 
+# TODO: Managers are not utilized during the tests
+# TODO: Utilize them, once they are completely finalized
 @pytest.fixture(name='workspace_manager')
 def _fixture_workspace_manager():
     return WorkspaceManager()
