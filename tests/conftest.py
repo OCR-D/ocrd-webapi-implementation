@@ -7,26 +7,26 @@ import requests
 from pymongo import MongoClient
 
 from fastapi.testclient import TestClient
-
 from ocrd_webapi.constants import (
     BASE_DIR,
     WORKFLOWS_ROUTER,
     WORKSPACES_ROUTER,
-    DB_URL,
-    MONGO_TESTDB,
+    DB_URL
 )
 from ocrd_webapi.main import app
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
-from .utils_test import (
-    allocate_asset,
-    assert_status_code,
-    parse_resource_id,
-)
-
 from ocrd_webapi.rabbitmq.connector import RMQConnector
 from ocrd_webapi.rabbitmq.publisher import RMQPublisher
 from ocrd_webapi.rabbitmq.consumer import RMQConsumer
+
+from .asserts_test import assert_status_code
+from .constants import MONGO_TESTDB
+from .utils_test import (
+    allocate_asset,
+    parse_resource_id,
+)
+
 
 RABBITMQ_TEST_DEFAULT = "ocrd-webapi-test-default"
 

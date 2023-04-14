@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 __all__ = [
     'DB_NAME',
     'DB_URL',
-    'MONGO_TESTDB',
     'SERVER_URL',
     'BASE_DIR',
     'JOBS_ROUTER',
@@ -21,11 +20,6 @@ load_dotenv()
 #  consider: https://fastapi.tiangolo.com/advanced/settings/
 DB_URL: str = getenv("OCRD_WEBAPI_DB_URL", "mongodb://localhost:27018")
 DB_NAME: str = getenv("OCRD_WEBAPI_DB_NAME", "ocrd-webapi-db")
-
-# TODO: This is also confusing. This value has to match exactly with the
-#  value inside pyproject.toml -> OCRD_WEBAPI_DB_URL = mongodb://localhost:6701/test-ocrd-webapi
-#  Moreover, test related constants should not be here but rather somewhere under tests/
-MONGO_TESTDB: str = "test-ocrd-webapi"
 
 # The SERVER_URL, BASE_DIR and *_ROUTERS are used by the ResourceManagers
 SERVER_URL: str = getenv("OCRD_WEBAPI_SERVER_PATH", "http://localhost:8000")

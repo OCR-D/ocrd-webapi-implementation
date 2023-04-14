@@ -6,22 +6,18 @@
   session-state maybe), but didn't try it yet
 """
 import pytest
-from os.path import exists, join
+from os.path import join
 
-from ocrd_webapi.constants import (
-    BASE_DIR,
-    WORKSPACES_ROUTER,
-    MONGO_TESTDB,
-)
-from .utils_test import (
-    assert_status_code,
-    parse_resource_id,
+from .asserts_test import (
     assert_db_entry_created,
     assert_db_entry_deleted,
+    assert_status_code,
+    assert_workspace_dir,
+    assert_not_workspace_dir,
+    WORKSPACES_DIR
 )
-
-# TODO: Utilize the Workspace manager instead of this
-WORKSPACES_DIR = join(BASE_DIR, WORKSPACES_ROUTER)
+from .constants import MONGO_TESTDB
+from .utils_test import parse_resource_id
 
 
 @pytest.fixture(autouse=True)
@@ -30,17 +26,6 @@ def run_around_tests(mongo_client):
     mongo_client[MONGO_TESTDB]["workspace"].delete_many({})
     yield
     # After each test:
-
-
-# Helper assert functions
-def assert_workspace_dir(workspace_id):
-    assert exists(join(WORKSPACES_DIR, workspace_id)), \
-        "workspace-dir not existing"
-
-
-def assert_not_workspace_dir(workspace_id):
-    assert not exists(join(WORKSPACES_DIR, workspace_id)), \
-        "workspace-dir existing"
 
 
 def assert_workspaces_len(client, expected_len):

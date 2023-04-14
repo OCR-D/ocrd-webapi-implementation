@@ -6,23 +6,21 @@
   session-state maybe), but didn't try it yet
 """
 import pytest
-from os.path import exists, join
 from time import sleep
 
-from ocrd_webapi.constants import (
-    BASE_DIR,
-    WORKFLOWS_ROUTER,
-    MONGO_TESTDB,
-)
-from .utils_test import (
+from .asserts_test import (
+    assert_db_entry_created,
+    assert_db_entry_deleted,
     assert_status_code,
+    assert_workflow_dir,
+    assert_not_workflow_dir,
+    WORKFLOWS_DIR
+)
+from .constants import MONGO_TESTDB
+from .utils_test import (
     parse_resource_id,
     parse_job_state,
-    assert_db_entry_created,
 )
-
-# TODO: Utilize the Workflow manager instead of this
-WORKFLOWS_DIR = join(BASE_DIR, WORKFLOWS_ROUTER)
 
 
 # TODO: Database part for Workflows is missing
@@ -33,17 +31,6 @@ def run_around_tests(mongo_client):
     mongo_client[MONGO_TESTDB]["workflow"].delete_many({})
     yield
     # After each test:
-
-
-# Helper assert functions
-def assert_workflow_dir(workflow_id):
-    assert exists(join(WORKFLOWS_DIR, workflow_id)), \
-        "workflow-dir not existing"
-
-
-def assert_not_workflow_dir(workflow_id):
-    assert not exists(join(WORKFLOWS_DIR, workflow_id)), \
-        "workflow-dir existing"
 
 
 def assert_workflows_len(expected_len, client):
