@@ -3,12 +3,17 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from ocrd_webapi.authentication import (
+    authenticate_user,
+    register_user
+)
 from ocrd_webapi.constants import DB_URL, SERVER_URL
 from ocrd_webapi.database import initiate_database
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.routers import (
     discovery,
     processor,
+    user,
     workflow,
     workspace,
 )
@@ -29,6 +34,7 @@ app = FastAPI(
         }
     ],
 )
+app.include_router(user.router)
 app.include_router(discovery.router)
 # app.include_router(processor.router)
 app.include_router(workflow.router)
@@ -49,6 +55,13 @@ async def startup_event():
     Executed once on startup
     """
     await initiate_database(DB_URL)
+
+    # If the default user account is not available
+    # in the DB, create it
+    try:
+        await authenticate_user('test', 'test')
+    except ValueError:
+        await register_user('test', 'test')
 
 
 @app.get("/")

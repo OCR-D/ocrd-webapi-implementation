@@ -38,6 +38,8 @@ test-api:
 	OCRD_WEBAPI_BASE_DIR='/tmp/ocrd_webapi_test' \
 	OCRD_WEBAPI_DB_NAME='ocrd_webapi_test' \
 	OCRD_WEBAPI_DB_URL='mongodb://localhost:6701' \
+	OCRD_WEBAPI_USERNAME='test' \
+	OCRD_WEBAPI_PASSWORD='test' \
 	pytest tests/*_api.py
 
 test-rabbitmq:

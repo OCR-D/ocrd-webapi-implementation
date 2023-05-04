@@ -1,10 +1,33 @@
 from beanie import Document
 from typing import Optional
 
-
 # NOTE: Database models must not reuse any
-# response models [discovery, processor, workflow, workspace]
+# response models [discovery, processor, user, workflow, workspace]
 # Database models are supposed to be low level models
+
+
+class UserAccount(Document):
+    """
+    Model to store a user account in the database
+
+    Attributes:
+        email:          The e-mail address of the user
+        encrypted_pass: The encrypted password of the user
+        salt:           Random salt value used when encrypting the password
+        validated_user: Whether the user is approved by admin
+
+    By default, the registered user's account is not validated.
+    An admin must manually validate the account by assigning True value.
+    """
+    email: str
+    encrypted_pass: str
+    salt: str
+    validated_user: bool = False
+
+    class Settings:
+        name = "user_accounts"
+
+
 class WorkspaceDB(Document):
     """
     Model to store a workspace in the mongo-database.

@@ -8,6 +8,7 @@ from ocrd_webapi.models.database import (
     WorkflowDB,
     WorkflowJobDB,
     WorkspaceDB,
+    UserAccount
 )
 from ocrd_webapi.utils import call_sync, safe_init_logging
 
@@ -23,7 +24,7 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
     if db_name is None:
         db_name = DB_NAME
     if doc_models is None:
-        doc_models = [WorkflowDB, WorkspaceDB, WorkflowJobDB]
+        doc_models = [WorkflowDB, WorkspaceDB, WorkflowJobDB, UserAccount]
 
     if db_url:
         logger.info(f"MongoDB Name: {DB_NAME}")
@@ -288,3 +289,30 @@ async def get_workflow_job_state(job_id) -> Union[str, None]:
 @call_sync
 async def sync_get_workflow_job_state(job_id) -> Union[str, None]:
     return await get_workflow_job_state(job_id)
+
+
+async def get_user(email: str) -> Union[UserAccount, None]:
+    return await UserAccount.find_one(UserAccount.email == email)
+
+
+@call_sync
+async def sync_get_user(email: str) -> Union[UserAccount, None]:
+    return await get_user(email)
+
+
+async def create_user(email: str, encrypted_pass: str, salt: str, validated_account: bool = False
+) -> Union[UserAccount, None]:
+    user_account = UserAccount(
+        email=email,
+        encrypted_pass=encrypted_pass,
+        salt=salt,
+        validated_account=validated_account
+    )
+    await user_account.save()
+    return user_account
+
+
+@call_sync
+async def sync_create_user(email: str, encrypted_pass: str, salt: str, validated_account: bool = False
+) -> Union[UserAccount, None]:
+    return await create_user(email, encrypted_pass, salt, validated_account)
