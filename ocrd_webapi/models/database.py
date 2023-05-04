@@ -6,7 +6,7 @@ from typing import Optional
 # Database models are supposed to be low level models
 
 
-class UserAccount(Document):
+class UserAccountDB(Document):
     """
     Model to store a user account in the database
 
