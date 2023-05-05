@@ -27,6 +27,7 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
             detail="Missing e-mail or password field"
         )
 
+    # Authenticate user e-mail and password
     try:
         await authenticate_user(
             email=email,
