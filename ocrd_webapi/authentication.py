@@ -17,7 +17,7 @@ async def authenticate_user(email: str, password: str):
         raise ValueError(f"User was not validated: {email}")
 
 
-async def register_user(email: str, password: str):
+async def register_user(email: str, password: str, validated_account=False):
     salt, encrypted_password = encrypt_password(password)
     db_user = await get_user(email)
     if db_user:
@@ -26,7 +26,7 @@ async def register_user(email: str, password: str):
         email=email,
         encrypted_pass=encrypted_password,
         salt=salt,
-        validated_account=False
+        validated_account=validated_account
     )
     if not created_user:
         raise ValueError(f"Failed to register user: {email}")
@@ -44,9 +44,9 @@ def get_hex_digest(salt: str, plain_password: str):
 
 
 def get_random_salt() -> str:
-    return sha512(f'{str(random())}{hash}'.encode('utf-8')).hexdigest()[:8]
+    return sha512(f'{hash(str(random()))}'.encode('utf-8')).hexdigest()[:8]
 
 
 def validate_password(plain_password: str, encrypted_password: str) -> bool:
-    salt, hashed_password = encrypted_password.split('$')
+    salt, hashed_password = encrypted_password.split('$', 1)
     return hashed_password == get_hex_digest(salt, plain_password)

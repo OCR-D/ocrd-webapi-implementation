@@ -11,6 +11,11 @@ from .utils_test import (
 )
 
 
+def test_post_workflow_script_unauthorized(client, auth, workflow_mongo_coll, asset_workflow1):
+    response = client.post("/workflow", files=asset_workflow1, auth=("no_user", "no_pass"))
+    assert_status_code(response.status_code, expected_floor=4)
+
+
 # Test cases
 def test_post_workflow_script(client, auth, workflow_mongo_coll, asset_workflow1):
     # Post a new workflow script

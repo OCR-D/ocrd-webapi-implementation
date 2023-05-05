@@ -12,7 +12,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd_webapi.authentication import authenticate_user
+from ocrd_webapi.routers.user import user_login
 from ocrd_webapi.exceptions import (
     ResponseException,
     WorkspaceException,
@@ -94,7 +94,7 @@ async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Dep
 
     curl -X POST http://localhost:8000/workspace -H 'content-type: multipart/form-data' -F workspace=@things/example_ws.ocrd.zip  # noqa
     """
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         ws_url, ws_id = await workspace_manager.create_workspace_from_zip(workspace)
     except WorkspaceNotValidException as e:
@@ -113,7 +113,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str,
     """
     Update or create a workspace
     """
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         updated_workspace_url = await workspace_manager.update_workspace(file=workspace, workspace_id=workspace_id)
     except WorkspaceNotValidException as e:
@@ -132,7 +132,7 @@ async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depen
     Delete a workspace
     curl -v -X DELETE 'http://localhost:8000/workspace/{workspace_id}'
     """
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         deleted_workspace_url = await workspace_manager.delete_workspace(
             workspace_id

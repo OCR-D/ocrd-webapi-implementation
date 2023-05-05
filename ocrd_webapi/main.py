@@ -1,4 +1,5 @@
 from datetime import datetime
+from os import environ
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -26,7 +27,7 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "http://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    version="0.8.2",
+    version="0.11.0",
     servers=[
         {
             "url": SERVER_URL,
@@ -56,12 +57,23 @@ async def startup_event():
     """
     await initiate_database(DB_URL)
 
-    # If the default user account is not available
-    # in the DB, create it
+    default_admin_user = environ.get("OCRD_WEBAPI_USERNAME", "test")
+    default_admin_pass = environ.get("OCRD_WEBAPI_PASSWORD", "test")
+
+    # If the default admin user account is not available in the DB, create it
     try:
-        await authenticate_user('test', 'test')
+        await authenticate_user(
+            default_admin_user,
+            default_admin_pass
+        )
     except ValueError:
-        await register_user('test', 'test')
+        # TODO: Note that this account is never removed from
+        #  the DB automatically in the current implementation
+        await register_user(
+            default_admin_user,
+            default_admin_pass,
+            validated_account=True
+        )
 
 
 @app.get("/")

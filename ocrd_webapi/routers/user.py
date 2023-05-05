@@ -20,7 +20,7 @@ security = HTTPBasic()
 async def user_login(auth: HTTPBasicCredentials = Depends(security)):
     email = auth.username
     password = auth.password
-    if not email or password:
+    if not (email and password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             headers={"WWW-Authenticate": "Basic"},
@@ -46,7 +46,11 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
 @router.post("/user/register")
 async def user_register(email: str, password: str):
     try:
-        await register_user(email=email, password=password)
+        await register_user(
+            email=email,
+            password=password,
+            validated_account=False
+        )
     except ValueError as error:
         logger.info(f"User failed to register: {email}, reason: {error}")
         raise HTTPException(

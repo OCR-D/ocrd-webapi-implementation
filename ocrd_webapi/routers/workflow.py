@@ -13,7 +13,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from ocrd_webapi.authentication import authenticate_user
+from ocrd_webapi.routers.user import user_login
 from ocrd_webapi.exceptions import ResponseException
 from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
@@ -135,7 +135,7 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs,
 
     curl -X POST http://localhost:8000/workflow/{workflow_id}?workspace_id={workspace_id}
     """
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         parameters = await workflow_manager.start_nf_workflow(
             workflow_id=workflow_id,
@@ -173,7 +173,7 @@ async def upload_workflow_script(nextflow_script: UploadFile,
     curl -X POST http://localhost:8000/workflow -F nextflow_script=@things/nextflow.nf  # noqa
     """
 
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         workflow_id, workflow_url = await workflow_manager.create_workflow_space(nextflow_script)
     except Exception as e:
@@ -193,7 +193,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
     curl -X PUT http://localhost:8000/workflow/{workflow_id} -F nextflow_script=@things/nextflow-simple.nf
     """
 
-    await authenticate_user(auth.username, auth.password)
+    await user_login(auth)
     try:
         workflow_id, updated_workflow_url = await workflow_manager.update_workflow_space(
             file=nextflow_script,

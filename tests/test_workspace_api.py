@@ -11,6 +11,11 @@ from .constants import WORKSPACES_DIR
 from .utils_test import parse_resource_id
 
 
+def test_post_workspace_unauthorized(client, asset_workspace1):
+    response = client.post("/workspace", files=asset_workspace1, auth=("no_user", "no_pass"))
+    assert_status_code(response.status_code, expected_floor=4)
+
+
 # Test cases
 def test_post_workspace(client, auth, workspace_mongo_coll, asset_workspace1):
     response = client.post("/workspace", files=asset_workspace1, auth=auth)
