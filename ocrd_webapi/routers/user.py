@@ -50,7 +50,7 @@ async def user_register(email: str, password: str):
         await register_user(
             email=email,
             password=password,
-            validated_account=False
+            approved_user=False
         )
     except ValueError as error:
         logger.info(f"User failed to register: {email}, reason: {error}")

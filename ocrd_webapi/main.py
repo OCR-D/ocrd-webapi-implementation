@@ -62,17 +62,14 @@ async def startup_event():
 
     # If the default admin user account is not available in the DB, create it
     try:
-        await authenticate_user(
-            default_admin_user,
-            default_admin_pass
-        )
+        await authenticate_user(default_admin_user, default_admin_pass)
     except ValueError:
         # TODO: Note that this account is never removed from
         #  the DB automatically in the current implementation
         await register_user(
             default_admin_user,
             default_admin_pass,
-            validated_account=True
+            approved_user=True
         )
 
 

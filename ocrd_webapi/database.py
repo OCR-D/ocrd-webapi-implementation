@@ -300,19 +300,19 @@ async def sync_get_user(email: str) -> Union[UserAccountDB, None]:
     return await get_user(email)
 
 
-async def create_user(email: str, encrypted_pass: str, salt: str, validated_account: bool = False
+async def create_user(email: str, encrypted_pass: str, salt: str, approved_user: bool = False
 ) -> Union[UserAccountDB, None]:
     user_account = UserAccountDB(
         email=email,
         encrypted_pass=encrypted_pass,
         salt=salt,
-        validated_account=validated_account
+        approved_user=approved_user
     )
     await user_account.save()
     return user_account
 
 
 @call_sync
-async def sync_create_user(email: str, encrypted_pass: str, salt: str, validated_account: bool = False
+async def sync_create_user(email: str, encrypted_pass: str, salt: str, approved_user: bool = False
 ) -> Union[UserAccountDB, None]:
-    return await create_user(email, encrypted_pass, salt, validated_account)
+    return await create_user(email, encrypted_pass, salt, approved_user)

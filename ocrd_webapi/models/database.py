@@ -14,7 +14,7 @@ class UserAccountDB(Document):
         email:          The e-mail address of the user
         encrypted_pass: The encrypted password of the user
         salt:           Random salt value used when encrypting the password
-        validated_user: Whether the user is approved by admin
+        approved_user:  Whether the user is approved by the admin
 
     By default, the registered user's account is not validated.
     An admin must manually validate the account by assigning True value.
@@ -22,7 +22,7 @@ class UserAccountDB(Document):
     email: str
     encrypted_pass: str
     salt: str
-    validated_user: bool = False
+    approved_user: bool = False
 
     class Settings:
         name = "user_accounts"

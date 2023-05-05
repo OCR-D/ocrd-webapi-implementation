@@ -14,12 +14,13 @@ async def authenticate_user(email: str, password: str):
         encrypted_password=db_user.encrypted_pass
     )
     if not password_status:
-        raise ValueError(f"Wrong credentials! User was not validated: {email}")
-    if not db_user.validated_user:
-        raise ValueError(f"The account was not validated by an admin account!")
+        raise ValueError(f"Wrong credentials for: {email}")
+    if not db_user.approved_user:
+        raise ValueError(f"The account was not approved by the admin yet. "
+                         f"Contact the admin to get approved.")
 
 
-async def register_user(email: str, password: str, validated_account=False):
+async def register_user(email: str, password: str, approved_user=False):
     salt, encrypted_password = encrypt_password(password)
     db_user = await get_user(email)
     if db_user:
@@ -28,7 +29,7 @@ async def register_user(email: str, password: str, validated_account=False):
         email=email,
         encrypted_pass=encrypted_password,
         salt=salt,
-        validated_account=validated_account
+        approved_user=approved_user
     )
     if not created_user:
         raise ValueError(f"Failed to register user: {email}")
