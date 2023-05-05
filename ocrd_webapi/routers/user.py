@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from ocrd_webapi.authentication import authenticate_user, register_user
+from ocrd_webapi.exceptions import AuthenticationError, RegistrationError
+from ocrd_webapi.models.user import UserAction
 
 router = APIRouter(
     tags=["User"],
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 security = HTTPBasic()
 
 
-@router.get("/user/login")
+@router.get("/user/login", responses={"200": {"model": UserAction}})
 async def user_login(auth: HTTPBasicCredentials = Depends(security)):
     email = auth.username
     password = auth.password
@@ -33,18 +35,18 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
             email=email,
             password=password
         )
-    except ValueError as error:
+    except AuthenticationError as error:
         logger.info(f"User failed to authenticate: {email}, reason: {error}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             headers={"WWW-Authenticate": "Basic"},
-            detail=f"{error}"
+            detail=f"Invalid login credentials or unapproved account."
         )
 
-    return {"200": {"model": "Successfully logged!"}}
+    return UserAction(email=email, action="Successfully logged!")
 
 
-@router.post("/user/register")
+@router.post("/user/register", responses={"201": {"model": UserAction}})
 async def user_register(email: str, password: str):
     try:
         await register_user(
@@ -52,13 +54,13 @@ async def user_register(email: str, password: str):
             password=password,
             approved_user=False
         )
-    except ValueError as error:
+    except RegistrationError as error:
         logger.info(f"User failed to register: {email}, reason: {error}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             headers={"WWW-Authenticate": "Basic"},
-            detail=f"{error}"
+            detail=f"Failed to register user"
         )
-
-    return {"201": {"message": f"Successfully registered new account: {email}. "
-                               f"Please contact the OCR-D team to get your account validated."}}
+    action = f"Successfully registered new account: {email}. " \
+             f"Please contact the OCR-D team to get your account validated."
+    return UserAction(email=email, action=action)

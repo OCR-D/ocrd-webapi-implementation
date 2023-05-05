@@ -1,3 +1,9 @@
+class AuthenticationError(Exception):
+    pass
+
+
+class RegistrationError(Exception):
+    pass
 
 
 # TODO: This needs a better organization and inheritance structure

@@ -10,7 +10,7 @@ from ocrd_webapi.authentication import (
 )
 from ocrd_webapi.constants import DB_URL, SERVER_URL
 from ocrd_webapi.database import initiate_database
-from ocrd_webapi.exceptions import ResponseException
+from ocrd_webapi.exceptions import ResponseException, AuthenticationError
 from ocrd_webapi.routers import (
     discovery,
     processor,
@@ -63,7 +63,7 @@ async def startup_event():
     # If the default admin user account is not available in the DB, create it
     try:
         await authenticate_user(default_admin_user, default_admin_pass)
-    except ValueError:
+    except AuthenticationError:
         # TODO: Note that this account is never removed from
         #  the DB automatically in the current implementation
         await register_user(
