@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocrd_webapi"
-version = "0.10.0"
+version = "0.11.0"
 description = "Implementation of the OCR-D Web API"
 readme = "readme.md"
 requires-python = ">=3.7"
