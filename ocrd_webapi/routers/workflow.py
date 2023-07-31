@@ -211,3 +211,15 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
     # @router.delete("/workflow/{workflow_id}", responses={"200": {"model": WorkflowRsrc}})
     # async def delete_workflow_space(workflow_id: str) -> WorkflowRsrc:
     #   pass
+
+
+@router.get("/workflow/{workflow_id}/{job_id}/log")
+async def get_workflow_log(workflow_id: str, job_id: str) -> FileResponse:
+    """
+    Return content of the nextflow logfile if present
+    """
+    path = workflow_manager.get_logfile_path(workflow_id, job_id)
+    if path:
+        return FileResponse(path)
+    else:
+        return ""

@@ -121,3 +121,8 @@ class WorkflowManager(ResourceManager):
                 # Set to STOPPED, since it probably failed.
                 await db.set_workflow_job_state(job_id=job_id, job_state='STOPPED')
         return wf_job_db
+
+    def get_logfile_path(self, workflow_id: str, job_id: str) -> str:
+        job_dir = self.get_resource_job(workflow_id, job_id, local=True)
+        logfile_path = NextflowManager.get_logfile_path(job_dir)
+        return logfile_path

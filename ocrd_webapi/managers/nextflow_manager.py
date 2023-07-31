@@ -121,3 +121,10 @@ class NextflowManager:
         if exists(report_path):
             return report_path
         return None
+
+    @staticmethod
+    def get_logfile_path(location_dir: str) -> Union[str, None]:
+        logfile_path = join(location_dir, "nextflow_out.txt")
+        if exists(logfile_path):
+            return logfile_path
+        return None
