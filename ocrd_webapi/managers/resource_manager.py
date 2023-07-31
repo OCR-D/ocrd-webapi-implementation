@@ -1,7 +1,7 @@
 from os import listdir, scandir
 from os.path import exists, isdir, join
 from pathlib import Path
-from typing import List, Union, Tuple, Type
+from typing import List, Union, Tuple
 import aiofiles
 import shutil
 import logging

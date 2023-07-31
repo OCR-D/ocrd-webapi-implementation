@@ -13,7 +13,6 @@ from ocrd_webapi.database import initiate_database
 from ocrd_webapi.exceptions import ResponseException, AuthenticationError
 from ocrd_webapi.routers import (
     discovery,
-    processor,
     user,
     workflow,
     workspace,

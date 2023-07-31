@@ -1,6 +1,6 @@
 from os.path import join
 from os import remove, symlink
-from typing import List, Union, Tuple, Type
+from typing import List, Union, Tuple
 
 from ocrd_webapi import database as db
 from ocrd_webapi.constants import WORKSPACES_ROUTER
