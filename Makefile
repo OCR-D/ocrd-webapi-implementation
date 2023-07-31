@@ -1,4 +1,4 @@
-PYTHON ?= python3.7
+PYTHON ?= python3.8
 REQUIREMENTSTXT ?= requirements.txt
 
 help:
@@ -18,8 +18,8 @@ help:
 	@echo "    REQS           Default '$(REQUIREMENTSTXT)'."
 
 venv:
-	$(PYTHON) -m venv webapi-venv
-	webapi-venv/bin/pip install -r $(REQUIREMENTSTXT)
+	$(PYTHON) -m venv venv
+	$(VENV)/bin/pip install -r $(REQUIREMENTSTXT)
 
 start: start-mongo start-rabbitmq start-server
 
