@@ -21,7 +21,7 @@ class WorkflowManager(ResourceManager):
         if self.nf_version:
             self.log.info(f"Detected Nextflow version: {self.nf_version}")
         else:
-            self.log.error(f"Detected Nextflow version: unable to detect")
+            self.log.error("Detected Nextflow version: unable to detect")
 
     def get_workflows(self) -> List[Tuple[str, str]]:
         """

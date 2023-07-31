@@ -30,7 +30,7 @@ async def initiate_database(db_url: str, db_name: str = None, doc_models: List[D
         logger.info(f"MongoDB Name: {DB_NAME}")
         logger.info(f"MongoDB URL: {db_url}")
     else:
-        logger.error(f"MongoDB URL is invalid!")
+        logger.error("MongoDB URL is invalid!")
     client = AsyncIOMotorClient(db_url)
     # Documentation: https://beanie-odm.dev/
     await init_beanie(

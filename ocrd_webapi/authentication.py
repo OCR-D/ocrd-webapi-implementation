@@ -17,7 +17,7 @@ async def authenticate_user(email: str, password: str):
     if not password_status:
         raise AuthenticationError(f"Wrong credentials for: {email}")
     if not db_user.approved_user:
-        raise AuthenticationError(f"The account was not approved by the admin yet.")
+        raise AuthenticationError("The account was not approved by the admin yet.")
 
 
 async def register_user(email: str, password: str, approved_user=False):

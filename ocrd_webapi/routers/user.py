@@ -40,7 +40,7 @@ async def user_login(auth: HTTPBasicCredentials = Depends(security)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             headers={"WWW-Authenticate": "Basic"},
-            detail=f"Invalid login credentials or unapproved account."
+            detail="Invalid login credentials or unapproved account."
         )
 
     return UserAction(email=email, action="Successfully logged!")
@@ -59,7 +59,7 @@ async def user_register(email: str, password: str):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             headers={"WWW-Authenticate": "Basic"},
-            detail=f"Failed to register user"
+            detail="Failed to register user"
         )
     action = f"Successfully registered new account: {email}. " \
              f"Please contact the OCR-D team to get your account validated."

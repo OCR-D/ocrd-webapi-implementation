@@ -86,7 +86,7 @@ class NextflowManager:
         # If None, the input_group set inside the Nextflow script will be used
         if input_group:
             nf_command += f" --input_group {input_group}"
-        nf_command += f" -with-report report.html"
+        nf_command += " -with-report report.html"
         return nf_command
 
     @staticmethod

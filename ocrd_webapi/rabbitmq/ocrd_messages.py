@@ -18,16 +18,16 @@ class OcrdProcessingMessage:
             result_queue_name: str = None,
     ):
         if not job_id:
-            raise ValueError(f"job_id must be set")
+            raise ValueError("job_id must be set")
         if not processor_name:
-            raise ValueError(f"processor_name must be set")
+            raise ValueError("processor_name must be set")
         if not created_time:
             # We should not raise a ValueError but just calculate it
             created_time = int(datetime.utcnow().timestamp())
         if not input_file_grps or len(input_file_grps) == 0:
-            raise ValueError(f"input_file_grps must be set and contain at least 1 element")
+            raise ValueError("input_file_grps must be set and contain at least 1 element")
         if not (workspace_id or path_to_mets):
-            raise ValueError(f"Either `workspace_id` or `path_to_mets` must be set")
+            raise ValueError("Either `workspace_id` or `path_to_mets` must be set")
 
         self.job_id = job_id  # uuid
         self.processor_name = processor_name  # "ocrd-.*"
