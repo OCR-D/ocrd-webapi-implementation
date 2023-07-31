@@ -19,6 +19,7 @@ from ocrd_webapi.managers.workflow_manager import WorkflowManager
 from ocrd_webapi.managers.workspace_manager import WorkspaceManager
 from ocrd_webapi.models.base import WorkflowArgs
 from ocrd_webapi.models.workflow import WorkflowRsrc, WorkflowJobRsrc
+from ocrd_webapi.constants import WORKFLOWS_ROUTER
 
 
 router = APIRouter(
@@ -31,7 +32,7 @@ security = HTTPBasic()
 
 
 # TODO: Refine all the exceptions...
-@router.get("/workflow")
+@router.get(f"/{WORKFLOWS_ROUTER}")
 async def list_workflows() -> List[WorkflowRsrc]:
     """
     Get a list of existing workflow space urls.
@@ -47,7 +48,7 @@ async def list_workflows() -> List[WorkflowRsrc]:
     return response
 
 
-@router.get("/workflow/{workflow_id}", response_model=None)
+@router.get(f"/{WORKFLOWS_ROUTER}/{{workflow_id}}", response_model=None)
 async def get_workflow_script(workflow_id: str, accept: str = Header(default="application/json")
 ) -> Union[WorkflowRsrc, FileResponse]:
     """
@@ -80,7 +81,7 @@ async def get_workflow_script(workflow_id: str, accept: str = Header(default="ap
     return WorkflowRsrc.create(workflow_id=workflow_id, workflow_url=workflow_script_url)
 
 
-@router.get("/workflow/{workflow_id}/{job_id}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
+@router.get(f"/{WORKFLOWS_ROUTER}/{{workflow_id}}/{{job_id}}", responses={"200": {"model": WorkflowJobRsrc}}, response_model=None)
 async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(default="application/json")
 ) -> Union[WorkflowJobRsrc, FileResponse]:
     """
@@ -126,7 +127,7 @@ async def get_workflow_job(workflow_id: str, job_id: str, accept: str = Header(d
     )
 
 
-@router.post("/workflow/{workflow_id}", responses={"201": {"model": WorkflowJobRsrc}})
+@router.post(f"/{WORKFLOWS_ROUTER}/{{workflow_id}}", responses={"201": {"model": WorkflowJobRsrc}})
 async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs,
                        auth: HTTPBasicCredentials = Depends(security)) -> WorkflowJobRsrc:
     """
@@ -164,7 +165,7 @@ async def run_workflow(workflow_id: str, workflow_args: WorkflowArgs,
     )
 
 
-@router.post("/workflow", responses={"201": {"model": WorkflowRsrc}})
+@router.post(f"/{WORKFLOWS_ROUTER}", responses={"201": {"model": WorkflowRsrc}})
 async def upload_workflow_script(nextflow_script: UploadFile,
                                  auth: HTTPBasicCredentials = Depends(security)) -> WorkflowRsrc:
     """
@@ -213,7 +214,7 @@ async def update_workflow_script(nextflow_script: UploadFile, workflow_id: str,
     #   pass
 
 
-@router.get("/workflow/{workflow_id}/{job_id}/log")
+@router.get(f"/{WORKFLOWS_ROUTER}/{{workflow_id}}/{{job_id}}/log")
 async def get_workflow_log(workflow_id: str, job_id: str) -> FileResponse:
     """
     Return content of the nextflow logfile if present

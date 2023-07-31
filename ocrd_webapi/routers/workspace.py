@@ -1,6 +1,7 @@
 import logging
 from os import unlink
 from typing import List, Union
+from ocrd_webapi.constants import WORKSPACES_ROUTER
 
 from fastapi import (
     APIRouter,
@@ -32,7 +33,7 @@ security = HTTPBasic()
 
 
 # TODO: Refine all the exceptions...
-@router.get("/workspace")
+@router.get(f"/{WORKSPACES_ROUTER}")
 async def list_workspaces() -> List[WorkspaceRsrc]:
     """
     Get a list of existing workspace urls
@@ -47,7 +48,7 @@ async def list_workspaces() -> List[WorkspaceRsrc]:
     return response
 
 
-@router.get("/workspace/{workspace_id}", response_model=None)
+@router.get(f"/{WORKSPACES_ROUTER}/{{workspace_id}}", response_model=None)
 async def get_workspace(
         background_tasks: BackgroundTasks,
         workspace_id: str,
@@ -87,7 +88,7 @@ async def get_workspace(
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=workspace_url)
 
 
-@router.post("/workspace", responses={"201": {"model": WorkspaceRsrc}})
+@router.post(f"/{WORKSPACES_ROUTER}", responses={"201": {"model": WorkspaceRsrc}})
 async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
     Create a new workspace
@@ -107,7 +108,7 @@ async def post_workspace(workspace: UploadFile, auth: HTTPBasicCredentials = Dep
     return WorkspaceRsrc.create(workspace_id=ws_id, workspace_url=ws_url)
 
 
-@router.put("/workspace/{workspace_id}", responses={"201": {"model": WorkspaceRsrc}})
+@router.put(f"/{WORKSPACES_ROUTER}/{{workspace_id}}", responses={"201": {"model": WorkspaceRsrc}})
 async def put_workspace(workspace: UploadFile, workspace_id: str,
                         auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
@@ -126,7 +127,7 @@ async def put_workspace(workspace: UploadFile, workspace_id: str,
     return WorkspaceRsrc.create(workspace_id=workspace_id, workspace_url=updated_workspace_url)
 
 
-@router.delete("/workspace/{workspace_id}", responses={"200": {"model": WorkspaceRsrc}})
+@router.delete(f"/{WORKSPACES_ROUTER}/{{workspace_id}}", responses={"200": {"model": WorkspaceRsrc}})
 async def delete_workspace(workspace_id: str, auth: HTTPBasicCredentials = Depends(security)) -> WorkspaceRsrc:
     """
     Delete a workspace

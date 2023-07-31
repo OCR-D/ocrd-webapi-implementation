@@ -28,6 +28,6 @@ BASE_DIR: str = getenv("OCRD_WEBAPI_BASE_DIR", "/tmp/ocrd-webapi-data")
 # Routers are basically the folder names placed under the BASE_DIR
 # TODO: Use `JOBS_ROUTER`. Jobs must not be related to a specific workflow folder (for better consistency)
 JOBS_ROUTER: str = getenv("OCRD_WEBAPI_JOBS_ROUTER", "jobs")
-WORKFLOWS_ROUTER: str = getenv("OCRD_WEBAPI_WORKFLOWS_ROUTER", "workflows")
-WORKSPACES_ROUTER: str = getenv("OCRD_WEBAPI_WORKSPACES_ROUTER", "workspaces")
+WORKFLOWS_ROUTER: str = getenv("OCRD_WEBAPI_WORKFLOWS_ROUTER", "workflow")
+WORKSPACES_ROUTER: str = getenv("OCRD_WEBAPI_WORKSPACES_ROUTER", "workspace")
 # Warning: Don't change the router defaults till everything is configured properly
