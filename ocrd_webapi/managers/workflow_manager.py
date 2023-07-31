@@ -124,5 +124,6 @@ class WorkflowManager(ResourceManager):
 
     def get_logfile_path(self, workflow_id: str, job_id: str) -> str:
         job_dir = self.get_resource_job(workflow_id, job_id, local=True)
-        logfile_path = NextflowManager.get_logfile_path(job_dir)
-        return logfile_path
+        if job_dir:
+            return NextflowManager.get_logfile_path(job_dir)
+        return ""
