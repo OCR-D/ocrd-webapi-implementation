@@ -1,30 +1,6 @@
 version: '3.8'
 
 services:
-  webapi-rabbit-mq:
-    image: rabbitmq
-    container_name: ocrd-rabbitmq
-    # hostname: rabbit-mq-host
-    build:
-      context: ./ocrd_webapi/rabbitmq
-      dockerfile: ./Dockerfile-RabbitMQ
-    environment:
-      - 'OCRD_WEBAPI_RABBIT_MQ_HOST=${OCRD_WEBAPI_RABBIT_MQ_HOST}'
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - ~/.docker-conf/rabbitmq/etc/:/var/etc/rabbitmq/
-      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/
-    networks:
-      - ocrd-webapi
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "0.0.0.0", "5672" ]
-      interval: 120s
-      timeout: 30s
-      retries: 5
-
   webapi:
     build: .
     container_name: ocrd-webapi

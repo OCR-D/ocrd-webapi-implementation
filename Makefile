@@ -7,11 +7,9 @@ help:
 	@echo "    venv           Create virtual-environment for the project"
 	@echo "    start          Start MongoDB Docker + WebAPI Server"
 	@echo "    start-mongo    Start MongoDB Docker container"
-	@echo "    start-rabbitmq Start RabbitMQ Docker container"
 	@echo "    start-server   Start the WebAPI Server"
 	@echo "    test           Run all available tests"
 	@echo "    test-api       Run only API tests (faster)"
-	@echo "    test-rabbitmq  Run only RabbitMQ tests (faster)"
 	@echo ""
 	@echo "  Variables"
 	@echo "    PYTHON         Default '$(PYTHON)'."
@@ -21,18 +19,15 @@ venv:
 	$(PYTHON) -m venv venv
 	$(VENV)/bin/pip install -r $(REQUIREMENTSTXT)
 
-start: start-mongo start-rabbitmq start-server
+start: start-mongo start-server
 
 start-mongo:
 	docker-compose --env-file things/env-template-localdev up -d mongo
 
-start-rabbitmq:
-	docker-compose --env-file things/env-template-localdev up -d webapi-rabbit-mq
-
 start-server:
 	uvicorn ocrd_webapi.main:app --host 0.0.0.0 --reload
 
-test: test-api test-rabbitmq test-utils
+test: test-api test-utils
 
 test-api:
 	OCRD_WEBAPI_BASE_DIR='/tmp/ocrd_webapi_test' \
@@ -41,9 +36,6 @@ test-api:
 	OCRD_WEBAPI_USERNAME='test' \
 	OCRD_WEBAPI_PASSWORD='test' \
 	pytest tests/*_api.py
-
-test-rabbitmq:
-	pytest tests/*rabbit*.py
 
 test-utils:
 	pytest tests/*utils*.py
