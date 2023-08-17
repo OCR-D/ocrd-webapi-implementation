@@ -45,3 +45,4 @@ class ProcessorArgs(BaseModel):
 
 class WorkflowArgs(BaseModel):
     workspace_id: str = None
+    input_file_grp: str = None
