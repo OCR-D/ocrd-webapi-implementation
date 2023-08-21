@@ -17,7 +17,7 @@ help:
 
 venv:
 	$(PYTHON) -m venv venv
-	$(VENV)/bin/pip install -r $(REQUIREMENTSTXT)
+	venv/bin/pip install -r $(REQUIREMENTSTXT)
 
 start: start-mongo start-server
 
